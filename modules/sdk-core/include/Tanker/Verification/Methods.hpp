@@ -16,6 +16,7 @@ enum class Method
   PhoneNumber,
   PreverifiedEmail,
   PreverifiedPhoneNumber,
+  E2ePassphrase,
 
   Last,
 };

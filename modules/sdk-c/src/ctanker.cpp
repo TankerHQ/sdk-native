@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 5)
+  if (cverification->version != 6)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
@@ -70,6 +70,12 @@ Verification::Verification cverificationToVerification(
     if (!cverification->passphrase)
       throw formatEx(Errc::InvalidArgument, "passphrase field is null");
     verification = Passphrase{cverification->passphrase};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE: {
+    if (!cverification->e2e_passphrase)
+      throw formatEx(Errc::InvalidArgument, "e2e_passphrase field is null");
+    verification = E2ePassphrase{cverification->e2e_passphrase};
     break;
   }
   case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY: {
@@ -137,6 +143,9 @@ void cVerificationMethodFromVerificationMethod(
   if (method.holds_alternative<Passphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
+  else if (method.holds_alternative<E2ePassphrase>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE);
   else if (method.holds_alternative<OidcIdToken>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN);
@@ -200,6 +209,8 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL,
                   Verification::Method::Email);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
                   Verification::Method::Passphrase);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE,
+                  Verification::Method::E2ePassphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Verification::Method::VerificationKey);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
@@ -212,7 +223,7 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER,
                   Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 8,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 9,
               "Please update the assertions above if you added a new "
               "unlock method");
 

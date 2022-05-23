@@ -40,6 +40,7 @@ enum tanker_verification_method_type
   TANKER_VERIFICATION_METHOD_PHONE_NUMBER,
   TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL,
   TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER,
+  TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE,
 
   TANKER_VERIFICATION_METHOD_LAST,
 };
@@ -197,16 +198,17 @@ struct tanker_verification
   char const* verification_key;
   tanker_email_verification_t email_verification;
   char const* passphrase;
+  char const* e2e_passphrase;
   char const* oidc_id_token;
   tanker_phone_number_verification_t phone_number_verification;
   char const* preverified_email;
   char const* preverified_phone_number;
 };
 
-#define TANKER_VERIFICATION_INIT                            \
-  {                                                         \
-    5, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, \
-        TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL   \
+#define TANKER_VERIFICATION_INIT                                  \
+  {                                                               \
+    6, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, \
+        TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL         \
   }
 
 struct tanker_verification_method
@@ -432,7 +434,8 @@ CTANKER_EXPORT tanker_future_t* tanker_create_oidc_nonce(tanker_t* tanker);
 /*!
  * Set the nonce to use while testing oidc verification
  */
-CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker, char const* nonce);
+CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker,
+                                                           char const* nonce);
 
 /*!
  * The current Tanker status.
