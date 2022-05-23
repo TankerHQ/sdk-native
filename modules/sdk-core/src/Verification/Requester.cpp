@@ -51,7 +51,7 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
                                        "userId"_a = userId)),
       {{"verification", request}}));
   TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
-      res.value().at("encrypted_verification_key").get<std::string>()));
+      res.value().at("encrypted_verification_key_for_user_secret").get<std::string>()));
 }
 
 tc::cotask<std::vector<
