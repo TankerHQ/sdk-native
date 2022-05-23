@@ -104,8 +104,8 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
   auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
 
   // Only checking nonce format
-  (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(nonce,
-                                                      "oidcIdToken.nonce");
+  (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(
+      nonce, "oidcIdToken.nonce");
 
   auto const challenge = TC_AWAIT(requester.getOidcChallenge(userId, nonce));
   auto const verification = Verification::OidcIdTokenWithChallenge{
@@ -142,6 +142,34 @@ tc::cotask<Verification::RequestWithVerif> formatRequestWithVerif(
 
   TC_RETURN(Verification::makeRequestWithVerif(
       verification, userSecret, secretProvisionalSigKey, withTokenNonce));
+}
+
+// This function is NOT exposed to our users. The key returned by this function
+// is used directly for encryption, so it is important that we never send this
+// hash value to anyone. We use a 'nothing up my sleeve' pepper for this.
+Crypto::SymmetricKey e2ePassphraseKeyDerivation(
+    Tanker::E2ePassphrase const& passphrase)
+{
+  static constexpr char pepper[] =
+      "tanker e2e passphrase key derivation pepper";
+  std::vector<std::uint8_t> buffer(passphrase.begin(), passphrase.end());
+  buffer.insert(buffer.end(), pepper, pepper + sizeof(pepper) - 1);
+  return Tanker::Crypto::generichash<Crypto::SymmetricKey>(
+      gsl::make_span(buffer).template as_span<std::uint8_t const>());
+}
+
+std::vector<std::uint8_t> encryptVerificationKeyForE2ePassphrase(
+    Tanker::E2ePassphrase const& e2ePassphrase,
+    VerificationKey const& verificationKey)
+{
+  auto const passphraseKey = e2ePassphraseKeyDerivation(e2ePassphrase);
+  std::vector<std::uint8_t> encryptedVerificationKeyForE2ePassphrase(
+      EncryptorV2::encryptedSize(verificationKey.size()));
+  EncryptorV2::encryptSync(
+      encryptedVerificationKeyForE2ePassphrase,
+      gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
+      passphraseKey);
+  return encryptedVerificationKeyForE2ePassphrase;
 }
 }
 
@@ -428,22 +456,45 @@ tc::cotask<void> Core::registerIdentityImpl(
       deviceKeys.signatureKeyPair.publicKey,
       deviceKeys.encryptionKeyPair.publicKey,
       userCreation.userKeyPair);
-
   auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
-
-  TC_AWAIT(_session->requesters().createUser(
-      _session->trustchainId(),
-      _session->userId(),
-      Serialization::serialize(userCreation.entry),
-      Serialization::serialize(firstDeviceEntry),
+  auto const verifRequest =
       TC_AWAIT(formatRequestWithVerif(_session->requesters(),
                                       *_oidcManager,
                                       _session->userId(),
                                       verification,
                                       _session->userSecret(),
                                       std::nullopt,
-                                      withTokenNonce)),
-      userCreation.verificationKey));
+                                      withTokenNonce));
+
+  if (auto const e2ePassphrase =
+          boost::variant2::get_if<E2ePassphrase>(&verification))
+  {
+    auto const verificationKey = userCreation.ghostDevice.toVerificationKey();
+    auto const encryptedVerificationKeyForUserKey = Crypto::sealEncrypt(
+        gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
+        userCreation.userKeyPair.publicKey);
+    auto const encryptedVerificationKeyForE2ePassphrase =
+        encryptVerificationKeyForE2ePassphrase(*e2ePassphrase, verificationKey);
+
+    TC_AWAIT(_session->requesters().createUserE2e(
+        _session->trustchainId(),
+        _session->userId(),
+        Serialization::serialize(userCreation.entry),
+        Serialization::serialize(firstDeviceEntry),
+        verifRequest,
+        encryptedVerificationKeyForE2ePassphrase,
+        encryptedVerificationKeyForUserKey));
+  }
+  else
+  {
+    TC_AWAIT(_session->requesters().createUser(
+        _session->trustchainId(),
+        _session->userId(),
+        Serialization::serialize(userCreation.entry),
+        Serialization::serialize(firstDeviceEntry),
+        verifRequest,
+        userCreation.verificationKey));
+  }
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
@@ -695,8 +746,8 @@ tc::cotask<void> Core::share(
 
   auto const resourceIds =
       sresourceIds | ranges::views::transform([](auto&& resourceId) {
-        return decodeArgument<mgs::base64, Trustchain::ResourceId>(resourceId,
-                                                            "resource id");
+        return decodeArgument<mgs::base64, Trustchain::ResourceId>(
+            resourceId, "resource id");
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
 
@@ -735,8 +786,8 @@ tc::cotask<void> Core::updateGroupMembers(
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove)
 {
   assertStatus(Status::Ready, "updateGroupMembers");
-  auto const groupId =
-      decodeArgument<mgs::base64, Trustchain::GroupId>(groupIdString, "group id");
+  auto const groupId = decodeArgument<mgs::base64, Trustchain::GroupId>(
+      groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(

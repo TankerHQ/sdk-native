@@ -107,7 +107,7 @@ tc::cotask<void> Requester::createUser(
     gsl::span<uint8_t const> userCreation,
     gsl::span<uint8_t const> firstDevice,
     RequestWithVerif const& verificationRequest,
-    gsl::span<uint8_t const> encryptedVerificationKey)
+    gsl::span<uint8_t const> encryptedVerificationKeyForUserSecret)
 {
   nlohmann::json body{
       {"app_id", trustchainId},
@@ -115,7 +115,35 @@ tc::cotask<void> Requester::createUser(
       {"ghost_device_creation", mgs::base64::encode(userCreation)},
       {"first_device_creation", mgs::base64::encode(firstDevice)},
       {"v2_encrypted_verification_key",
-       mgs::base64::encode(encryptedVerificationKey)},
+       mgs::base64::encode(encryptedVerificationKeyForUserSecret)},
+      {"verification", verificationRequest},
+  };
+  auto const target = _httpClient->makeUrl(
+      fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
+
+  auto const res = TC_AWAIT(_httpClient->asyncPost(target, std::move(body)));
+  auto accessToken = res.value().at("access_token").get<std::string>();
+  _httpClient->setAccessToken(std::move(accessToken));
+}
+
+tc::cotask<void> Requester::createUserE2e(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    gsl::span<uint8_t const> userCreation,
+    gsl::span<uint8_t const> firstDevice,
+    RequestWithVerif const& verificationRequest,
+    gsl::span<uint8_t const> encryptedVerificationKeyForE2ePassphrase,
+    gsl::span<uint8_t const> encryptedVerificationKeyForUserKey)
+{
+  nlohmann::json body{
+      {"app_id", trustchainId},
+      {"user_id", userId},
+      {"ghost_device_creation", mgs::base64::encode(userCreation)},
+      {"first_device_creation", mgs::base64::encode(firstDevice)},
+      {"encrypted_verification_key_for_e2e_passphrase",
+       mgs::base64::encode(encryptedVerificationKeyForE2ePassphrase)},
+      {"encrypted_verification_key_for_user_key",
+       mgs::base64::encode(encryptedVerificationKeyForUserKey)},
       {"verification", verificationRequest},
   };
   auto const target = _httpClient->makeUrl(

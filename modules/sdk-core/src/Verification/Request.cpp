@@ -53,7 +53,7 @@ Tanker::Trustchain::HashedE2ePassphrase prehashE2eVerificationPassphrase(
 {
   static constexpr char pepper[] = "tanker e2e verification passphrase pepper";
   std::vector<std::uint8_t> buffer(passphrase.begin(), passphrase.end());
-  buffer.insert(buffer.end(), pepper, pepper + sizeof(pepper));
+  buffer.insert(buffer.end(), pepper, pepper + sizeof(pepper) - 1);
   return Tanker::Crypto::generichash<Tanker::Trustchain::HashedE2ePassphrase>(
       gsl::make_span(buffer).template as_span<std::uint8_t const>());
 }
