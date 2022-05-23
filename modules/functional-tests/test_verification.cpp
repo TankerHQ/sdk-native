@@ -148,6 +148,14 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
     REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
+  SECTION("registerIdentity throws if e2e passphrase is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(E2ePassphrase{""})),
+        Errc::InvalidArgument);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
+  }
+
   SECTION("registerIdentity throws if email is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
