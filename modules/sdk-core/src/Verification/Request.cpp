@@ -41,6 +41,22 @@ Ret hashField(T const& field)
   return Tanker::Crypto::generichash<Ret>(
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
+
+// This function is NOT exposed to our users. It is important that others
+// prehash passwords differently than we do, otherwise when the password is the
+// same, both parties would know the value that the other accepts as password
+// hash. The 'nothing up my sleeve' pepper constant provides confidence it
+// wasn't picked to match a value that might be already in use elsewhere
+// (whether accidentally or maliciously).
+Tanker::Trustchain::HashedE2ePassphrase prehashE2eVerificationPassphrase(
+    Tanker::E2ePassphrase const& passphrase)
+{
+  static constexpr char pepper[] = "tanker e2e verification passphrase pepper";
+  std::vector<std::uint8_t> buffer(passphrase.begin(), passphrase.end());
+  buffer.insert(buffer.end(), pepper, pepper + sizeof(pepper));
+  return Tanker::Crypto::generichash<Tanker::Trustchain::HashedE2ePassphrase>(
+      gsl::make_span(buffer).template as_span<std::uint8_t const>());
+}
 }
 
 namespace Tanker::Verification
@@ -95,6 +111,11 @@ RequestWithVerif makeRequestWithVerif(
           [](Passphrase const& p) -> RequestVerificationPayload {
             checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
+          },
+          [](E2ePassphrase const& p) -> RequestVerificationPayload {
+            checkNotEmpty(p.string(), "e2ePassphrase");
+            return Trustchain::HashedE2ePassphrase{
+                prehashE2eVerificationPassphrase(p)};
           },
           [](VerificationKey const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "verificationKey");
@@ -245,6 +266,9 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;
+          },
+          [&](Trustchain::HashedE2ePassphrase const& p) {
+            j["hashed_e2e_passphrase"] = p;
           },
           [&](OidcIdToken const& t) { j["oidc_id_token"] = t; },
           [&](Verification::OidcIdTokenWithChallenge const& t) {

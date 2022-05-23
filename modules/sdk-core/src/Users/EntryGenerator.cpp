@@ -55,6 +55,9 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
           [](Passphrase const& p) -> VerificationMethodType {
             return VerificationMethodType::Passphrase;
           },
+          [](E2ePassphrase const& p) -> VerificationMethodType {
+            return VerificationMethodType::E2ePassphrase;
+          },
           [](VerificationKey const& v) -> VerificationMethodType {
             return VerificationMethodType::VerificationKey;
           },

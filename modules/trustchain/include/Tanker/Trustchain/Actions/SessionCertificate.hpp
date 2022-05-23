@@ -27,6 +27,7 @@ enum class VerificationMethodType : uint32_t
   VerificationKey = 3,
   OidcIdToken = 4,
   PhoneNumber = 5,
+  E2ePassphrase = 6,
 };
 
 std::uint8_t* to_serialized(std::uint8_t* it, VerificationMethodType const& mt);

@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
+#include <Tanker/Trustchain/HashedE2ePassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/OidcChallenge.hpp>
@@ -61,6 +62,7 @@ struct OidcIdTokenWithChallenge
 using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      ByEmail,
                                                      Passphrase,
+                                                     E2ePassphrase,
                                                      OidcIdTokenWithChallenge,
                                                      ByPhoneNumber,
                                                      PreverifiedEmail,
@@ -70,6 +72,7 @@ using RequestVerificationPayload =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
+                             Trustchain::HashedE2ePassphrase,
                              OidcIdToken,
                              OidcIdTokenWithChallenge,
                              EncryptedPhoneNumberVerification,

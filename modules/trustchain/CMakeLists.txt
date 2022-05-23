@@ -43,6 +43,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/ProvisionalUserId.hpp
   include/Tanker/Trustchain/HashedPassphrase.hpp
+  include/Tanker/Trustchain/HashedE2ePassphrase.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/ComputeHash.hpp
   include/Tanker/Trustchain/Serialization.hpp
