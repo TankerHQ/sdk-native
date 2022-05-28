@@ -32,7 +32,7 @@ public:
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::UserId const& userId,
-      RequestWithVerif const& request) override;
+      SetVerifMethodRequest const& request) override;
 
   tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::UserId const& userId,

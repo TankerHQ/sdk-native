@@ -103,6 +103,8 @@ void validateVerification(
 
 bool isPreverified(Verification const& v);
 
+bool isE2eVerification(Verification const& v);
+
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {
   return a._variant < b._variant;

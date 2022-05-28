@@ -37,7 +37,9 @@ VerificationMethod VerificationMethod::from(Verification const& v)
   return boost::variant2::visit(
       overloaded{
           [](Passphrase const&) -> VerificationMethod { return Passphrase{}; },
-          [](E2ePassphrase const&) -> VerificationMethod { return E2ePassphrase{}; },
+          [](E2ePassphrase const&) -> VerificationMethod {
+            return E2ePassphrase{};
+          },
           [](VerificationKey const&) -> VerificationMethod {
             return VerificationKey{};
           },
@@ -188,5 +190,10 @@ bool isPreverified(Verification const& v)
   using boost::variant2::holds_alternative;
   return holds_alternative<PreverifiedEmail>(v) ||
          holds_alternative<PreverifiedPhoneNumber>(v);
+}
+
+bool isE2eVerification(Verification const& v)
+{
+  return boost::variant2::holds_alternative<E2ePassphrase>(v);
 }
 }

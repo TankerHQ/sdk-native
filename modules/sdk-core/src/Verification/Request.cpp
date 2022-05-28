@@ -238,6 +238,17 @@ void to_json(nlohmann::json& j, RequestWithSession const& request)
   j = nlohmann::json(request.value);
   j["target"] = to_string(request.target);
 }
+
+void to_json(nlohmann::json& j, SetVerifMethodRequest const& request)
+{
+  j["verification"] = request.verification;
+  if (request.encVkForUserSecret.has_value())
+    j["encrypted_verification_key_for_user_secret"] = *request.encVkForUserSecret;
+  if (request.encVkForUserKey.has_value())
+    j["encrypted_verification_key_for_user_key"] = *request.encVkForUserKey;
+  if (request.encVkForE2ePass.has_value())
+    j["encrypted_verification_key_for_e2e_passphrase"] = *request.encVkForE2ePass;
+}
 }
 
 namespace nlohmann

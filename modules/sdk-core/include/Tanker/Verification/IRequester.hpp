@@ -22,7 +22,8 @@ public:
       Trustchain::UserId const& userId) = 0;
 
   virtual tc::cotask<void> setVerificationMethod(
-      Trustchain::UserId const& userId, RequestWithVerif const& request) = 0;
+      Trustchain::UserId const& userId,
+      SetVerifMethodRequest const& request) = 0;
 
   virtual tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::UserId const& userId,

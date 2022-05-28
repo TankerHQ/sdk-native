@@ -34,12 +34,11 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
 }
 
 tc::cotask<void> Requester::setVerificationMethod(
-    Trustchain::UserId const& userId, RequestWithVerif const& request)
+    Trustchain::UserId const& userId, SetVerifMethodRequest const& request)
 {
-  nlohmann::json payload{{"verification", request}};
   auto const target = _httpClient->makeUrl(fmt::format(
       "users/{userId:#S}/verification-methods", fmt::arg("userId", userId)));
-  TC_AWAIT(_httpClient->asyncPost(target, std::move(payload))).value();
+  TC_AWAIT(_httpClient->asyncPost(target, request)).value();
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(

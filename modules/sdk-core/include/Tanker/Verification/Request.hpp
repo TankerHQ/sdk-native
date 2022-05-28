@@ -3,10 +3,13 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Identity/TargetType.hpp>
-#include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Trustchain/HashedE2ePassphrase.hpp>
+#include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
+#include <Tanker/Types/EncryptedVerificationKeyForE2ePassphrase.hpp>
+#include <Tanker/Types/EncryptedVerificationKeyForUserKey.hpp>
+#include <Tanker/Types/EncryptedVerificationKeyForUserSecret.hpp>
 #include <Tanker/Types/OidcChallenge.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
@@ -86,6 +89,16 @@ struct RequestWithVerif
 };
 
 void to_json(nlohmann::json&, RequestWithVerif const&);
+
+struct SetVerifMethodRequest
+{
+  RequestWithVerif verification;
+  std::optional<EncryptedVerificationKeyForUserSecret> encVkForUserSecret;
+  std::optional<EncryptedVerificationKeyForUserKey> encVkForUserKey;
+  std::optional<EncryptedVerificationKeyForE2ePassphrase> encVkForE2ePass;
+};
+
+void to_json(nlohmann::json&, SetVerifMethodRequest const&);
 
 RequestWithVerif makeRequestWithVerif(
     RequestVerification const& verification,

@@ -298,10 +298,13 @@ tc::future<VerificationKey> AsyncCore::generateVerificationKey()
 }
 
 tc::future<std::optional<std::string>> AsyncCore::setVerificationMethod(
-    Verification::Verification const& method, Core::VerifyWithToken withToken)
+    Verification::Verification const& method,
+    Core::VerifyWithToken withToken,
+    Core::AllowE2eMethodSwitch allowE2eSwitch)
 {
   return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
-    TC_RETURN(TC_AWAIT(this->_core.setVerificationMethod(method, withToken)));
+    TC_RETURN(TC_AWAIT(
+        this->_core.setVerificationMethod(method, withToken, allowE2eSwitch)));
   });
 }
 

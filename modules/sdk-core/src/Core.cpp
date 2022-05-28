@@ -29,6 +29,7 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -170,6 +171,29 @@ std::vector<std::uint8_t> encryptVerificationKeyForE2ePassphrase(
       gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
       passphraseKey);
   return encryptedVerificationKeyForE2ePassphrase;
+}
+
+tc::cotask<std::vector<uint8_t>> decryptVerificationKeyWithUserCreds(
+    boost::variant2::variant<EncryptedVerificationKeyForUserKey,
+                             EncryptedVerificationKeyForUserSecret> const&
+        encVerifKey,
+    Users::LocalUser const& localUser,
+    Session const& session)
+{
+  TC_RETURN(TC_AWAIT(boost::variant2::visit(
+      overloaded{
+          [&](EncryptedVerificationKeyForUserKey const& evk)
+              -> tc::cotask<std::vector<uint8_t>> {
+            TC_RETURN(Crypto::sealDecrypt(evk, localUser.currentKeyPair()));
+          },
+          [&](EncryptedVerificationKeyForUserSecret const& evk)
+              -> tc::cotask<std::vector<uint8_t>> {
+            std::vector<uint8_t> vk(EncryptorV2::decryptedSize(evk));
+            TC_AWAIT(EncryptorV2::decrypt(vk, session.userSecret(), evk));
+            TC_RETURN(vk);
+          },
+      },
+      encVerifKey)));
 }
 }
 
@@ -803,8 +827,12 @@ tc::cotask<void> Core::updateGroupMembers(
 }
 
 tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
-    Verification::Verification const& method, VerifyWithToken withToken)
+    Verification::Verification const& method,
+    VerifyWithToken withToken,
+    AllowE2eMethodSwitch allowE2eSwitch)
 {
+  using boost::variant2::holds_alternative;
+
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
   {
@@ -813,17 +841,70 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
   }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
 
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  auto encVerifKey = TC_AWAIT(
+      _session->requesters().fetchEncryptedVerificationKey(_session->userId()));
+  bool isE2eMethod = isE2eVerification(method);
+  bool switchingOnE2e =
+      isE2eMethod &&
+      holds_alternative<EncryptedVerificationKeyForUserSecret>(encVerifKey);
+  bool switchingOffE2e =
+      !isE2eMethod &&
+      holds_alternative<EncryptedVerificationKeyForUserKey>(encVerifKey);
+  if (switchingOnE2e && allowE2eSwitch == AllowE2eMethodSwitch::No)
+    throw formatEx(
+        Errc::InvalidArgument,
+        "must set allowE2eMethodSwitch flag to turn on E2E verification");
+  if (switchingOffE2e && allowE2eSwitch == AllowE2eMethodSwitch::No)
+    throw formatEx(
+        Errc::InvalidArgument,
+        "must set allowE2eMethodSwitch flag to turn off E2E verification");
+
+  Tanker::Verification::SetVerifMethodRequest request;
+  request.verification = TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                                         *_oidcManager,
+                                                         _session->userId(),
+                                                         method,
+                                                         _session->userSecret(),
+                                                         std::nullopt,
+                                                         withTokenNonce));
+  if (switchingOffE2e)
+  {
+    auto verifKey = TC_AWAIT(
+        decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
+    std::vector<uint8_t> encryptedVerificationKey(
+        EncryptorV2::encryptedSize(verifKey.size()));
+    EncryptorV2::encryptSync(encryptedVerificationKey,
+                             gsl::make_span(verifKey).as_span<uint8_t const>(),
+                             _session->userSecret());
+    request.encVkForUserSecret = {
+        EncryptedVerificationKeyForUserSecret{encryptedVerificationKey}};
+  }
+  else if (isE2eMethod)
+  {
+    auto verifKey = TC_AWAIT(
+        decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
+    request.encVkForUserKey = {
+        EncryptedVerificationKeyForUserKey{Crypto::sealEncrypt(
+            gsl::make_span(verifKey).as_span<std::uint8_t const>(),
+            localUser.currentKeyPair().publicKey)}};
+
+    auto const passphraseKey =
+        e2ePassphraseKeyDerivation(boost::variant2::get<E2ePassphrase>(method));
+    std::vector<std::uint8_t> encVkForE2ePass(
+        EncryptorV2::encryptedSize(verifKey.size()));
+    EncryptorV2::encryptSync(
+        encVkForE2ePass,
+        gsl::make_span(verifKey).as_span<std::uint8_t const>(),
+        passphraseKey);
+    request.encVkForE2ePass = {
+        EncryptedVerificationKeyForE2ePassphrase{encVkForE2ePass}};
+  }
+
   try
   {
-    TC_AWAIT(_session->requesters().setVerificationMethod(
-        _session->userId(),
-        TC_AWAIT(formatRequestWithVerif(_session->requesters(),
-                                        *_oidcManager,
-                                        _session->userId(),
-                                        method,
-                                        _session->userSecret(),
-                                        std::nullopt,
-                                        withTokenNonce))));
+    TC_AWAIT(_session->requesters().setVerificationMethod(_session->userId(),
+                                                          request));
   }
   catch (Errors::Exception const& e)
   {
