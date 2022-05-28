@@ -42,6 +42,10 @@ public:
       Trustchain::UserId const& userId,
       RequestWithVerif const& verificationRequest) override;
 
+  tc::cotask<boost::variant2::variant<EncryptedVerificationKeyForUserKey,
+                                      EncryptedVerificationKeyForUserSecret>>
+  fetchEncryptedVerificationKey(Trustchain::UserId const& userId) override;
+
   tc::cotask<std::vector<boost::variant2::variant<VerificationMethod,
                                                   EncryptedVerificationMethod>>>
   fetchVerificationMethods(Trustchain::UserId const& userId) override;

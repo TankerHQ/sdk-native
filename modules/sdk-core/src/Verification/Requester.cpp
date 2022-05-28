@@ -51,7 +51,9 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
                                        "userId"_a = userId)),
       {{"verification", request}}));
   TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
-      res.value().at("encrypted_verification_key_for_user_secret").get<std::string>()));
+      res.value()
+          .at("encrypted_verification_key_for_user_secret")
+          .get<std::string>()));
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchE2eVerificationKey(
@@ -63,7 +65,31 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchE2eVerificationKey(
                                        "userId"_a = userId)),
       {{"verification", request}}));
   TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
-      res.value().at("encrypted_verification_key_for_e2e_passphrase").get<std::string>()));
+      res.value()
+          .at("encrypted_verification_key_for_e2e_passphrase")
+          .get<std::string>()));
+}
+
+tc::cotask<boost::variant2::variant<EncryptedVerificationKeyForUserKey,
+                                    EncryptedVerificationKeyForUserSecret>>
+Requester::fetchEncryptedVerificationKey(Trustchain::UserId const& userId)
+{
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncGet(
+      _httpClient->makeUrl("encrypted-verification-key")));
+
+  if (auto vkForUs =
+          res.value().at("encrypted_verification_key_for_user_secret");
+      !vkForUs.is_null())
+    TC_RETURN(mgs::base64::decode<EncryptedVerificationKeyForUserSecret>(
+        vkForUs.get<std::string>()));
+  else
+  {
+    auto vkForUk = res.value()
+                       .at("encrypted_verification_key_for_user_key")
+                       .get<std::string>();
+    TC_RETURN(mgs::base64::decode<EncryptedVerificationKeyForUserKey>(vkForUk));
+  }
 }
 
 tc::cotask<std::vector<
