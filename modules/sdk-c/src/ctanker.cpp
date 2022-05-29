@@ -188,15 +188,34 @@ Tanker::Core::VerifyWithToken withTokenFromVerifOptions(
 
   if (!cverif_opts)
     return VerifyWithToken::No;
-  if (cverif_opts->version != 1)
+  if (cverif_opts->version != 2)
     throw Exception(
         make_error_code(Errc::InvalidArgument),
         fmt::format("options version should be {:d} instead of {:d}",
-                    1,
+                    2,
                     cverif_opts->version));
 
   bool withToken = cverif_opts->with_session_token;
   return withToken ? VerifyWithToken::Yes : VerifyWithToken::No;
+}
+
+Tanker::Core::AllowE2eMethodSwitch allowE2eMethodSwitchFromVerifOptions(
+    tanker_verification_options_t const* cverif_opts)
+{
+  using AllowE2eMethodSwitch = Tanker::Core::AllowE2eMethodSwitch;
+
+  if (!cverif_opts)
+    return AllowE2eMethodSwitch::No;
+  if (cverif_opts->version != 2)
+    throw Exception(
+        make_error_code(Errc::InvalidArgument),
+        fmt::format("options version should be {:d} instead of {:d}",
+                    2,
+                    cverif_opts->version));
+
+  bool allowE2eMethodSwitch = cverif_opts->allow_e2e_method_switch;
+  return allowE2eMethodSwitch ? AllowE2eMethodSwitch::Yes :
+                                AllowE2eMethodSwitch::No;
 }
 
 #define STATIC_ENUM_CHECK(cval, cppval)           \
@@ -550,8 +569,11 @@ tanker_future_t* tanker_set_verification_method(
   return makeFuture(
       tc::sync([&] {
         auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto allowE2eMethodSwitch =
+            allowE2eMethodSwitchFromVerifOptions(cverif_opts);
         auto const verification = cverificationToVerification(cverification);
-        return tanker->setVerificationMethod(verification, withToken);
+        return tanker->setVerificationMethod(
+            verification, withToken, allowE2eMethodSwitch);
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {

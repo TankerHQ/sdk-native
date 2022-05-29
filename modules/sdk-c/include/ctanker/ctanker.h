@@ -226,11 +226,12 @@ struct tanker_verification_options
 {
   uint8_t version;
   bool with_session_token;
+  bool allow_e2e_method_switch;
 };
 
 #define TANKER_VERIFICATION_OPTIONS_INIT \
   {                                      \
-    1, false                             \
+    2, false, false                      \
   }
 
 struct tanker_encrypt_options
