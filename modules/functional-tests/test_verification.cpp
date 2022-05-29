@@ -137,8 +137,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
   auto core2 = device2.createCore();
 
   auto const passphrase = Passphrase{"my passphrase"};
-  auto const e2ePassphrase =
-      E2ePassphrase{"Now that's what I call a passphrase"};
   auto const email = makeEmail();
   auto const phoneNumber = makePhoneNumber();
 
@@ -146,14 +144,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(Passphrase{""})),
-        Errc::InvalidArgument);
-    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
-  }
-
-  SECTION("registerIdentity throws if e2e passphrase is empty")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->registerIdentity(E2ePassphrase{""})),
         Errc::InvalidArgument);
     REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
@@ -370,22 +360,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
         TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
   }
 
-  SECTION("it sets an E2E passphrase and adds a new device")
-  {
-    REQUIRE_NOTHROW(TC_AWAIT(
-        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
-
-    CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core1->getVerificationMethods()), {E2ePassphrase{}}));
-
-    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
-            Status::IdentityVerificationNeeded);
-    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(e2ePassphrase)));
-
-    CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core2->getVerificationMethods()), {E2ePassphrase{}}));
-  }
-
   SECTION("it sets an email and adds a new device")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
@@ -510,19 +484,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
             Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(Passphrase{"wrongPass"})),
-        Errc::InvalidVerification);
-    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
-  }
-
-  SECTION("it throws when trying to verify with an invalid E2E passphrase")
-  {
-    REQUIRE_NOTHROW(TC_AWAIT(
-        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
-
-    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
-            Status::IdentityVerificationNeeded);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core2->verifyIdentity(E2ePassphrase{"wrongPass"})),
         Errc::InvalidVerification);
     REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
@@ -811,6 +772,58 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
     CHECK_NOTHROW(
         checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
                                  {phoneNumber, preverifiedEmail}));
+  }
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Verification with E2E passphrase")
+{
+  auto alice = trustchain.makeUser();
+  auto device1 = alice.makeDevice();
+  auto core1 = device1.createCore();
+  REQUIRE(TC_AWAIT(core1->start(alice.identity)) ==
+          Status::IdentityRegistrationNeeded);
+
+  auto device2 = alice.makeDevice();
+  auto core2 = device2.createCore();
+
+  auto const passphrase = Passphrase{"average passphrase"};
+  auto const e2ePassphrase = E2ePassphrase{"Correct horse battery staple"};
+
+  SECTION("registerIdentity throws if e2e passphrase is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(E2ePassphrase{""})),
+        Errc::InvalidArgument);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
+  }
+
+  SECTION("it sets an E2E passphrase and adds a new device")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {E2ePassphrase{}}));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(e2ePassphrase)));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core2->getVerificationMethods()), {E2ePassphrase{}}));
+  }
+
+  SECTION("it throws when trying to verify with an invalid E2E passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(E2ePassphrase{"wrongPass"})),
+        Errc::InvalidVerification);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 }
 
