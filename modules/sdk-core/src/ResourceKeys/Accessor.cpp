@@ -77,7 +77,7 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
 {
   auto const requested =
       resourceIds | ranges::to<std::vector> | ranges::actions::sort;
-  auto const got = result | ranges::views::transform(&KeyResult::resourceId) |
+  auto const got = result | ranges::views::transform(&KeyResult::id) |
                    ranges::to<std::vector> | ranges::actions::sort;
   auto const missing = ranges::views::set_difference(requested, got);
 

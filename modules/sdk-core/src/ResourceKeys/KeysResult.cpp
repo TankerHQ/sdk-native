@@ -6,7 +6,7 @@ namespace Tanker::ResourceKeys
 {
 bool operator==(KeyResult const& lhs, KeyResult const& rhs)
 {
-  return std::tie(lhs.key, lhs.resourceId) == std::tie(rhs.key, rhs.resourceId);
+  return std::tie(lhs.key, lhs.id) == std::tie(rhs.key, rhs.id);
 }
 
 bool operator!=(KeyResult const& lhs, KeyResult const& rhs)

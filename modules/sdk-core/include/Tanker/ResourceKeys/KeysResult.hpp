@@ -11,7 +11,7 @@ namespace Tanker::ResourceKeys
 struct KeyResult
 {
   Crypto::SymmetricKey key;
-  Trustchain::ResourceId resourceId;
+  Trustchain::ResourceId id;
 };
 
 bool operator==(KeyResult const& lhs, KeyResult const& rhs);
