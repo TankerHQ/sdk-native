@@ -669,11 +669,12 @@ TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
         TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
 
     std::string expectedMethod = "passphrase";
-    auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                             trustchain.authToken,
-                                             alice.spublicIdentity().string(),
-                                             *sessionToken,
-                                             expectedMethod));
+    auto method =
+        TC_AWAIT(checkSessionToken(trustchain.id,
+                                   TestConstants::verificationApiToken(),
+                                   alice.spublicIdentity().string(),
+                                   *sessionToken,
+                                   expectedMethod));
     CHECK(method == expectedMethod);
   }
 
@@ -692,7 +693,7 @@ TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
     std::string wrongMethod = "oidc_id_token";
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(checkSessionToken(trustchain.id,
-                                   trustchain.authToken,
+                                   TestConstants::verificationApiToken(),
                                    alice.spublicIdentity().string(),
                                    *sessionToken,
                                    wrongMethod)),
@@ -714,7 +715,7 @@ TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
     std::string verifMethod = "passphrase";
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(checkSessionToken(trustchain.id,
-                                   trustchain.authToken,
+                                   TestConstants::verificationApiToken(),
                                    alice.spublicIdentity().string(),
                                    sessionToken,
                                    verifMethod)),
@@ -740,11 +741,12 @@ TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
         {{"type", "passphrase"}},
         {{"type", "email"}, {"email", aliceEmail.string()}},
     };
-    auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                             trustchain.authToken,
-                                             alice.spublicIdentity().string(),
-                                             *sessionToken,
-                                             expectedMethods));
+    auto method =
+        TC_AWAIT(checkSessionToken(trustchain.id,
+                                   TestConstants::verificationApiToken(),
+                                   alice.spublicIdentity().string(),
+                                   *sessionToken,
+                                   expectedMethods));
     CHECK(method == "email");
   }
 }

@@ -12,15 +12,16 @@
 
 namespace Tanker
 {
-tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
-                                          std::string const& authToken,
-                                          std::string const& publicIdentity,
-                                          std::string const& sessionToken,
-                                          nlohmann::json const& allowedMethods)
+tc::cotask<std::string> checkSessionToken(
+    Trustchain::TrustchainId appId,
+    std::string const& verificationApiToken,
+    std::string const& publicIdentity,
+    std::string const& sessionToken,
+    nlohmann::json const& allowedMethods)
 {
   using namespace fetchpp::http;
   auto const body = nlohmann::json({{"app_id", mgs::base64::encode(appId)},
-                                    {"auth_token", authToken},
+                                    {"auth_token", verificationApiToken},
                                     {"public_identity", publicIdentity},
                                     {"session_token", sessionToken},
                                     {"allowed_methods", allowedMethods}});
@@ -40,14 +41,15 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
   TC_RETURN(response.json().at("verification_method").get<std::string>());
 }
 
-tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
-                                          std::string const& authToken,
-                                          std::string const& publicIdentity,
-                                          std::string const& sessionToken,
-                                          std::string const& allowedMethod)
+tc::cotask<std::string> checkSessionToken(
+    Trustchain::TrustchainId appId,
+    std::string const& verificationApiToken,
+    std::string const& publicIdentity,
+    std::string const& sessionToken,
+    std::string const& allowedMethod)
 {
   TC_RETURN(TC_AWAIT(checkSessionToken(appId,
-                                       authToken,
+                                       verificationApiToken,
                                        publicIdentity,
                                        sessionToken,
                                        {{{"type", allowedMethod}}})));

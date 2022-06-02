@@ -74,7 +74,6 @@ auto errorReport(Errors::AppdErrc err_code,
 void from_json(nlohmann::json const& j, App& app)
 {
   j.at("id").get_to(app.id);
-  j.at("auth_token").get_to(app.authToken);
   j.at("secret").get_to(app.secret);
   if (auto value = j.at("oidc_client_id").get<std::string>(); !value.empty())
     app.oidcClientId = value;
@@ -175,11 +174,12 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 tc::cotask<VerificationCode> getVerificationCode(
     std::string_view host_url,
     Tanker::Trustchain::TrustchainId const& appId,
-    std::string const& authToken,
+    std::string const& verificationApiToken,
     Email const& email)
 {
-  auto const body = nlohmann::json(
-      {{"email", email}, {"app_id", appId}, {"auth_token", authToken}});
+  auto const body = nlohmann::json({{"email", email},
+                                    {"app_id", appId},
+                                    {"auth_token", verificationApiToken}});
   auto req = fetchpp::http::request(
       verb::post, url("/verification/email/code", url(host_url)));
   req.content(body.dump());
@@ -198,12 +198,12 @@ tc::cotask<VerificationCode> getVerificationCode(
 tc::cotask<VerificationCode> getVerificationCode(
     std::string_view host_url,
     Tanker::Trustchain::TrustchainId const& appId,
-    std::string const& authToken,
+    std::string const& verificationApiToken,
     PhoneNumber const& phoneNumber)
 {
   auto const body = nlohmann::json({{"phone_number", phoneNumber},
                                     {"app_id", appId},
-                                    {"auth_token", authToken}});
+                                    {"auth_token", verificationApiToken}});
   auto req = fetchpp::http::request(
       verb::post, url("/verification/sms/code", url(host_url)));
   req.content(body.dump());

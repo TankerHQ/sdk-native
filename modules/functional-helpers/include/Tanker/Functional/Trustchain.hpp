@@ -19,7 +19,6 @@ struct TrustchainConfig
 {
   std::string url;
   Tanker::Trustchain::TrustchainId id;
-  std::string authToken;
   Crypto::PrivateSignatureKey privateKey;
 };
 
@@ -42,19 +41,16 @@ public:
 
   std::string url;
   Tanker::Trustchain::TrustchainId id;
-  std::string authToken;
   Crypto::SignatureKeyPair keyPair;
 
   static Ptr make(TrustchainConfig const& config);
   static Ptr make(std::string url,
                   Tanker::Trustchain::TrustchainId id,
-                  std::string authToken,
                   Crypto::PrivateSignatureKey privateSignatureKey);
 
   Trustchain(TrustchainConfig const& config);
   Trustchain(std::string url,
              Tanker::Trustchain::TrustchainId id,
-             std::string authToken,
              Crypto::PrivateSignatureKey privateSignatureKey);
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
@@ -67,11 +63,11 @@ public:
   template <typename T>
   tc::cotask<VerificationCode> getVerificationCode(T&& emailOrPhone)
   {
-    TC_RETURN(
-        TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
-                                            id,
-                                            authToken,
-                                            std::forward<T>(emailOrPhone))));
+    TC_RETURN(TC_AWAIT(
+        Admin::getVerificationCode(TestConstants::trustchaindUrl(),
+                                   id,
+                                   TestConstants::verificationApiToken(),
+                                   std::forward<T>(emailOrPhone))));
   }
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);

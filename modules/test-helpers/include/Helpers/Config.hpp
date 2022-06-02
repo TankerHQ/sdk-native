@@ -34,6 +34,7 @@ std::string const& appManagementUrl();
 std::string const& appdUrl();
 std::string const& environmentName();
 std::string const& trustchaindUrl();
+std::string const& verificationApiToken();
 OidcConfig const& oidcConfig();
 std::chrono::minutes maxExecutionTimeout();
 }

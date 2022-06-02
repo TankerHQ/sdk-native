@@ -87,5 +87,11 @@ std::string const& trustchaindUrl()
   static auto const value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
   return value;
 }
+
+std::string const& verificationApiToken()
+{
+  static auto const value = getSafeEnv("TANKER_VERIFICATION_API_TEST_TOKEN");
+  return value;
+}
 }
 }
