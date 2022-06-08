@@ -22,6 +22,8 @@
 #include <range/v3/view/set_algorithm.hpp>
 #include <range/v3/view/transform.hpp>
 
+#include <boost/container/flat_set.hpp>
+
 TLOG_CATEGORY("GroupAccessor");
 
 static constexpr auto ChunkSize = 100;
@@ -69,61 +71,120 @@ Accessor::getPublicEncryptionKeys(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   PublicEncryptionKeyPullResult out;
+  boost::container::flat_set<Trustchain::GroupId> found;
+
+  auto entries = TC_AWAIT(_getPublicEncryptionKeyInProgress.run(
+      [&](std::vector<Trustchain::GroupId> const& ids)
+          -> tc::cotask<std::vector<GroupEntry>> {
+        TC_RETURN(TC_AWAIT(getPublicEncryptionKeysImpl(ids)));
+      },
+      groupIds));
+
+  for (auto const& entry : entries)
+  {
+    found.insert(entry.id);
+    out.found.push_back(getPublicEncryptionKey(entry.group));
+  }
+
+  for (auto const& groupId : groupIds)
+    if (found.find(groupId) == found.end())
+      out.notFound.push_back(groupId);
+
+  TC_RETURN(std::move(out));
+}
+
+tc::cotask<std::vector<Accessor::GroupEntry>>
+Accessor::getPublicEncryptionKeysImpl(
+    gsl::span<Trustchain::GroupId const> groupIds)
+{
+  std::vector<GroupEntry> out;
+  std::vector<Trustchain::GroupId> notFound;
   for (auto const& groupId : groupIds)
   {
     auto const group = TC_AWAIT(_groupStore->findById(groupId));
     if (group)
-      out.found.push_back(getPublicEncryptionKey(*group));
+      out.push_back({getGroupId(*group), *group});
     else
-      out.notFound.push_back(groupId);
+      notFound.push_back(groupId);
   }
 
-  if (!out.notFound.empty())
+  if (!notFound.empty())
   {
-    auto groupPullResult = TC_AWAIT(getGroups(std::move(out.notFound)));
+    auto groupPullResult = TC_AWAIT(getGroups(std::move(notFound)));
 
-    out.notFound = std::move(groupPullResult.notFound);
     for (auto const& group : groupPullResult.found)
-      out.found.push_back(getPublicEncryptionKey(group));
+      out.push_back({getGroupId(group), group});
   }
 
-  TC_RETURN(out);
+  TC_RETURN(std::move(out));
 }
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
+  auto const keys = std::vector{publicEncryptionKey};
+  auto const keyPairs = TC_AWAIT(_getEncryptionKeyPairInProgress.run(
+      [&](std::vector<Crypto::PublicEncryptionKey> const& publicKeys)
+          -> tc::cotask<std::vector<EncryptionKeyPairEntry>> {
+        TC_RETURN(TC_AWAIT(getEncryptionKeyPairsImpl(publicKeys)));
+      },
+      keys));
+
+  if (keyPairs.size() != 1)
+    TC_RETURN(std::nullopt);
+
+  TC_RETURN(std::make_optional(keyPairs[0].keyPair));
+}
+
+tc::cotask<std::vector<Accessor::EncryptionKeyPairEntry>>
+Accessor::getEncryptionKeyPairsImpl(
+    gsl::span<Crypto::PublicEncryptionKey const> publicEncryptionKeys)
+{
+  std::vector<EncryptionKeyPairEntry> out;
+
+  for (auto const& publicEncryptionKey : publicEncryptionKeys)
   {
-    auto const group = TC_AWAIT(
-        _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
-    if (group)
-      TC_RETURN(group->encryptionKeyPair);
+    {
+      auto const group = TC_AWAIT(
+          _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
+      if (group)
+      {
+        out.push_back({
+            group->encryptionKeyPair.publicKey,
+            group->encryptionKeyPair,
+        });
+        continue;
+      }
+    }
+
+    auto const entries =
+        TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
+    if (entries.empty())
+      continue;
+
+    auto const group =
+        TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
+                                                   *_userAccessor,
+                                                   *_provisionalUserAccessor,
+                                                   std::nullopt,
+                                                   entries));
+    if (!group)
+      throw Errors::AssertionError(
+          fmt::format("group {} has no blocks", publicEncryptionKey));
+
+    // add the group to cache
+    TC_AWAIT(_groupStore->put(*group));
+
+    if (auto const internalGroup =
+            boost::variant2::get_if<InternalGroup>(&group.value()))
+      out.push_back({
+          internalGroup->encryptionKeyPair.publicKey,
+          internalGroup->encryptionKeyPair,
+      });
   }
 
-  auto const entries =
-      TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
-  if (entries.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const group =
-      TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
-                                                 *_userAccessor,
-                                                 *_provisionalUserAccessor,
-                                                 std::nullopt,
-                                                 entries));
-  if (!group)
-    throw Errors::AssertionError(
-        fmt::format("group {} has no blocks", publicEncryptionKey));
-
-  // add the group to cache
-  TC_AWAIT(_groupStore->put(*group));
-
-  if (auto const internalGroup =
-          boost::variant2::get_if<InternalGroup>(&*group))
-    TC_RETURN(internalGroup->encryptionKeyPair);
-  else
-    TC_RETURN(std::nullopt);
+  TC_RETURN(std::move(out));
 }
 
 auto Accessor::partitionGroups(std::vector<Trustchain::GroupAction> entries)
