@@ -116,7 +116,7 @@ Trustchain TrustchainFixtureSimple::createOtherTrustchain()
   Crypto::randomFill(trustchainId);
   auto keyPair = Crypto::makeSignatureKeyPair();
   return Trustchain(
-      "tcp://other.trustchain:1234", trustchainId, "none", keyPair.privateKey);
+      "tcp://other.trustchain:1234", trustchainId, keyPair.privateKey);
 }
 
 tc::cotask<void> TrustchainFixtureSimple::enableOidc()

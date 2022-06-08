@@ -43,10 +43,8 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
     std::string const& name)
 {
   auto const app = TC_AWAIT(_admin->createTrustchain(name));
-  TC_RETURN(Trustchain::make(TestConstants::appdUrl(),
-                             std::move(app.id),
-                             std::move(app.authToken),
-                             std::move(app.secret)));
+  TC_RETURN(Trustchain::make(
+      TestConstants::appdUrl(), std::move(app.id), std::move(app.secret)));
 }
 
 tc::cotask<void> TrustchainFactory::enableOidc(

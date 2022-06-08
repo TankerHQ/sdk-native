@@ -22,7 +22,6 @@ namespace Tanker::Admin
 struct App
 {
   Trustchain::TrustchainId id;
-  std::string authToken;
   Crypto::PrivateSignatureKey secret;
   std::optional<std::string> oidcProvider;
   std::optional<std::string> oidcClientId;
@@ -64,12 +63,12 @@ private:
 tc::cotask<VerificationCode> getVerificationCode(
     std::string_view url,
     Tanker::Trustchain::TrustchainId const& appId,
-    std::string const& authToken,
+    std::string const& verificationApiToken,
     Email const& email);
 
 tc::cotask<VerificationCode> getVerificationCode(
     std::string_view url,
     Tanker::Trustchain::TrustchainId const& appId,
-    std::string const& authToken,
+    std::string const& verificationApiToken,
     PhoneNumber const& phoneNumber);
 }

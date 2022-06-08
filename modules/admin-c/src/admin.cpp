@@ -48,7 +48,6 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
         TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
             duplicateString(name),
             duplicateString(to_string(app.id)),
-            duplicateString(app.authToken),
             duplicateString(to_string(app.secret)),
         }));
       }));
@@ -69,7 +68,6 @@ void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
 {
   free(const_cast<char*>(app->name));
   free(const_cast<char*>(app->id));
-  free(const_cast<char*>(app->auth_token));
   free(const_cast<char*>(app->private_key));
   delete app;
 }
@@ -80,39 +78,41 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
       [admin = reinterpret_cast<Admin::Client*>(admin)] { delete admin; }));
 }
 
-tanker_future_t* tanker_get_email_verification_code(char const* url,
-                                                    char const* app_id,
-                                                    char const* auth_token,
-                                                    char const* user_email)
+tanker_future_t* tanker_get_email_verification_code(
+    char const* url,
+    char const* app_id,
+    char const* verification_api_token,
+    char const* user_email)
 {
   return makeFuture(tc::async_resumable(
       [url = std::string(url),
        appId = std::string(app_id),
-       authToken = std::string(auth_token),
+       apiToken = std::string(verification_api_token),
        email = std::string(user_email)]() -> tc::cotask<void*> {
         auto verifCode = TC_AWAIT(Admin::getVerificationCode(
             url,
             mgs::base64::decode<Trustchain::TrustchainId>(appId),
-            authToken,
+            apiToken,
             Email{email}));
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
       }));
 }
 
-tanker_future_t* tanker_get_sms_verification_code(char const* url,
-                                                  char const* app_id,
-                                                  char const* auth_token,
-                                                  char const* user_phone_number)
+tanker_future_t* tanker_get_sms_verification_code(
+    char const* url,
+    char const* app_id,
+    char const* verification_api_token,
+    char const* user_phone_number)
 {
   return makeFuture(tc::async_resumable(
       [url = std::string(url),
        appId = std::string(app_id),
-       authToken = std::string(auth_token),
+       apiToken = std::string(verification_api_token),
        phoneNumber = std::string(user_phone_number)]() -> tc::cotask<void*> {
         auto verifCode = TC_AWAIT(Admin::getVerificationCode(
             url,
             mgs::base64::decode<Trustchain::TrustchainId>(appId),
-            authToken,
+            apiToken,
             PhoneNumber{phoneNumber}));
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
       }));
