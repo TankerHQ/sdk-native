@@ -73,7 +73,7 @@ Accessor::getPublicEncryptionKeys(
   PublicEncryptionKeyPullResult out;
   boost::container::flat_set<Trustchain::GroupId> found;
 
-  auto entries = TC_AWAIT(_getPublicEncryptionKeyInProgress.run(
+  auto entries = TC_AWAIT(_getPublicEncryptionKeyCoalescer.run(
       [&](std::vector<Trustchain::GroupId> const& ids)
           -> tc::cotask<std::vector<GroupEntry>> {
         TC_RETURN(TC_AWAIT(getPublicEncryptionKeysImpl(ids)));
@@ -124,7 +124,7 @@ Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   auto const keys = std::vector{publicEncryptionKey};
-  auto const keyPairs = TC_AWAIT(_getEncryptionKeyPairInProgress.run(
+  auto const keyPairs = TC_AWAIT(_getEncryptionKeyPairCoalescer.run(
       [&](std::vector<Crypto::PublicEncryptionKey> const& publicKeys)
           -> tc::cotask<std::vector<EncryptionKeyPairEntry>> {
         TC_RETURN(TC_AWAIT(getEncryptionKeyPairsImpl(publicKeys)));

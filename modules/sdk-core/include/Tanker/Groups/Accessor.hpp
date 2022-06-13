@@ -63,8 +63,8 @@ private:
   Store* _groupStore;
   Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
-  TaskCoalescer<EncryptionKeyPairEntry> _getEncryptionKeyPairInProgress;
-  TaskCoalescer<GroupEntry> _getPublicEncryptionKeyInProgress;
+  TaskCoalescer<EncryptionKeyPairEntry> _getEncryptionKeyPairCoalescer;
+  TaskCoalescer<GroupEntry> _getPublicEncryptionKeyCoalescer;
 
   using GroupMap =
       boost::container::flat_map<Trustchain::GroupId,
