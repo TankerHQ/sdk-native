@@ -31,6 +31,7 @@ add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
+  include/Tanker/TaskCoalescer.hpp
   include/Tanker/Core.hpp
   include/Tanker/Session.hpp
   include/Tanker/DataStore/Errors/Errc.hpp

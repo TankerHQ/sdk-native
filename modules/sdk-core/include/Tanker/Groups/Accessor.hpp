@@ -5,6 +5,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
+#include <Tanker/TaskCoalescer.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
 #include <boost/container/flat_map.hpp>
@@ -45,11 +46,25 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
 
 private:
+  struct EncryptionKeyPairEntry
+  {
+    Crypto::PublicEncryptionKey id;
+    Crypto::EncryptionKeyPair keyPair;
+  };
+
+  struct GroupEntry
+  {
+    Trustchain::GroupId id;
+    Group group;
+  };
+
   Groups::IRequester* _requester;
   Users::IUserAccessor* _userAccessor;
   Store* _groupStore;
   Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
+  TaskCoalescer<EncryptionKeyPairEntry> _getEncryptionKeyPairCoalescer;
+  TaskCoalescer<GroupEntry> _getPublicEncryptionKeyCoalescer;
 
   using GroupMap =
       boost::container::flat_map<Trustchain::GroupId,
@@ -62,5 +77,9 @@ private:
   tc::cotask<Accessor::GroupPullResult> getGroups(
       std::vector<Trustchain::GroupId> groupIds);
   tc::cotask<std::vector<Group>> processGroupEntries(GroupMap const& groups);
+  tc::cotask<std::vector<EncryptionKeyPairEntry>> getEncryptionKeyPairsImpl(
+      gsl::span<Crypto::PublicEncryptionKey const> publicEncryptionKeys);
+  tc::cotask<std::vector<GroupEntry>> getPublicEncryptionKeysImpl(
+      gsl::span<Trustchain::GroupId const> groupIds);
 };
 }

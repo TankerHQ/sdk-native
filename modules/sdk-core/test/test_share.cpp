@@ -64,7 +64,7 @@ void assertKeyPublishToUsersTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
+    CHECK(keyPublishes[i].resourceId() == resourceKey.id);
     CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
                               userKeyPairs[i]) == resourceKey.key);
   }
@@ -83,7 +83,7 @@ void assertKeyPublishToUsersTargetedAt(
           provisionalUsers[i].appSignatureKeyPair.publicKey);
     CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
           provisionalUsers[i].tankerSignatureKeyPair.publicKey);
-    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
+    CHECK(keyPublishes[i].resourceId() == resourceKey.id);
     CHECK(Crypto::sealDecrypt(
               Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
                                   provisionalUsers[i].tankerEncryptionKeyPair),
@@ -102,7 +102,7 @@ void assertKeyPublishToGroupTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
+    CHECK(keyPublishes[i].resourceId() == resourceKey.id);
     CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
                               userKeyPairs[i]) == resourceKey.key);
   }

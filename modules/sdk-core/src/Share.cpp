@@ -52,7 +52,7 @@ std::vector<Trustchain::Actions::KeyPublishToUser> generateShareBlocksToUsers(
                                          deviceId,
                                          signatureKey,
                                          recipientKey,
-                                         keyResource.resourceId,
+                                         keyResource.id,
                                          keyResource.key));
   return out;
 }
@@ -74,7 +74,7 @@ generateShareBlocksToProvisionalUsers(
                                                     deviceId,
                                                     signatureKey,
                                                     recipientKey,
-                                                    keyResource.resourceId,
+                                                    keyResource.id,
                                                     keyResource.key));
   return out;
 }
@@ -95,7 +95,7 @@ generateShareBlocksToGroups(
                                           deviceId,
                                           signatureKey,
                                           recipientKey,
-                                          keyResource.resourceId,
+                                          keyResource.id,
                                           keyResource.key));
   return out;
 }
