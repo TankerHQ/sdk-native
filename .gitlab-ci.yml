@@ -525,21 +525,21 @@ pages:
 # bridge-deploy stage #
 #######################
 
-bridge/bump-native-compat-tests:
-  extends:
-    - .bridge-deploy
-    - .variables/bridge-common
-  rules:
-    - if: !reference [.if-web-pipeline, if]
-      when: manual
-  variables:
-    SDK_NATIVE_RELEASE_VERSION: $SDK_NATIVE_RELEASE_VERSION
-    UPSTREAM_JOB_NAME: deploy
-    UPSTREAM_JOB_TARGET: linux
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-  allow_failure: true
+# bridge/bump-native-compat-tests:
+#   extends:
+#     - .bridge-deploy
+#     - .variables/bridge-common
+#   rules:
+#     - if: !reference [.if-web-pipeline, if]
+#       when: manual
+#   variables:
+#     SDK_NATIVE_RELEASE_VERSION: $SDK_NATIVE_RELEASE_VERSION
+#     UPSTREAM_JOB_NAME: deploy
+#     UPSTREAM_JOB_TARGET: linux
+#   trigger:
+#     project: TankerHQ/compatibility-tests
+#     strategy: depend
+#   allow_failure: true
 
 bridge/ios/deploy:
   extends:
