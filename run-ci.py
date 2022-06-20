@@ -51,7 +51,7 @@ def benchmark_artifact(
         )
 
 
-def deploy() -> None:
+def deploy(remote: str) -> None:
     # first, clear cache to avoid uploading trash
     tankerci.conan.run("remove", "*", "--force")
 
@@ -76,10 +76,10 @@ def deploy() -> None:
         )
     latest_reference = f"tanker/{version}@"
     alias = "tanker/latest-stable@"
-    tankerci.conan.upload(latest_reference)
+    tankerci.conan.upload(latest_reference, remote=remote)
     if "alpha" not in version and "beta" not in version:
         tankerci.conan.alias(alias, latest_reference)
-        tankerci.conan.upload(alias)
+        tankerci.conan.upload(alias, remote=remote)
 
 
 def get_branch_name() -> Optional[str]:
@@ -290,7 +290,7 @@ def main() -> None:
             clean_on_exit=True,
             config_branch="backport/1.45",
         ):
-            deploy()
+            deploy(args.remote)
     else:
         parser.print_help()
         sys.exit(1)
