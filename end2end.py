@@ -33,12 +33,15 @@ def main() -> None:
     )
     parser.add_argument("--profile", required=True)
     parser.add_argument("--use-local-sources", action="store_true", default=False)
+    parser.add_argument("--remote", default="artifactory")
 
     args = parser.parse_args()
     artifact_path = Path().cwd() / "package"
+    user_home = None
     if args.home_isolation:
-        tankerci.conan.set_home_isolation()
-        tankerci.conan.update_config()
+        user_home = Path.cwd() / ".cache" / "conan" / args.remote
+        ctx = tankerci.conan.ConanContextManager([args.remote], conan_home=user_home)
+        ctx.isolate()
 
     if args.use_local_sources:
         base_path = Path.cwd().parent
@@ -64,6 +67,7 @@ def main() -> None:
             "prepare",
             f"--use-tanker={args.tanker_source.value}",
             f"--profile={args.profile}",
+            f"--remote={args.remote}"
         )
         tankerci.run("poetry", "install")
 

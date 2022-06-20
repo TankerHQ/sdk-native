@@ -1,12 +1,17 @@
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, tools
+from conan.tools.cmake import CMake
+from conan.tools.layout import cmake_layout
 import os
 
 
 class TankerNativeTestPackage(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake"
+    generators = "CMakeToolchain", "CMakeDeps"
     options = {"tankerlib_shared": [True, False]}
-    default_options = "tankerlib_shared=False"
+    default_options = {"tankerlib_shared": False}
+
+    def layout(self):
+        cmake_layout(self)
 
     def configure(self):
         del self.settings.compiler.libcxx
@@ -24,5 +29,5 @@ class TankerNativeTestPackage(ConanFile):
         self.copy("*.so", dst="bin", src="lib")
 
     def test(self):
-        if not tools.cross_building(self.settings):
-            self.run(os.path.join("bin", "example"), run_environment=True)
+        if not tools.cross_building(self):
+            self.run(os.path.join(self.cpp.build.bindirs[0], "example"))

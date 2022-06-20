@@ -20,12 +20,12 @@ target_link_libraries(tankeradmin
   tankererrors
   tankercacerts
   ttracer
-  
-  CONAN_PKG::gsl-lite
-  CONAN_PKG::mgs
-  CONAN_PKG::tconcurrent
-  CONAN_PKG::nlohmann_json
-  CONAN_PKG::fetchpp
+
+  gsl-lite::gsl-lite
+  mgs::mgs
+  tconcurrent::tconcurrent
+  nlohmann_json::nlohmann_json
+  fetchpp::fetchpp
 )
 
 install(DIRECTORY include DESTINATION .)

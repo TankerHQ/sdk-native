@@ -3,6 +3,6 @@ add_executable(test_errors
 
   main.cpp
 )
-target_link_libraries(test_errors tankererrors CONAN_PKG::catch2)
+target_link_libraries(test_errors tankererrors catch2::catch2)
 
 add_test(NAME test_errors COMMAND test_errors)

@@ -63,12 +63,12 @@ target_link_libraries(
   tankerserialization
   tankererrors
 
-  CONAN_PKG::libsodium
-  CONAN_PKG::mgs
-  CONAN_PKG::gsl-lite
-  CONAN_PKG::nlohmann_json
-  CONAN_PKG::fmt
-  CONAN_PKG::range-v3
+  libsodium::libsodium
+  mgs::mgs
+  gsl-lite::gsl-lite
+  nlohmann_json::nlohmann_json
+  fmt::fmt
+  range-v3::range-v3
 )
 
 install(TARGETS tankercrypto

@@ -39,8 +39,8 @@ target_link_libraries(tankerstreams
   tankertrustchain
   tankererrors
 
-  CONAN_PKG::tconcurrent
-  CONAN_PKG::gsl-lite
+  tconcurrent::tconcurrent
+  gsl-lite::gsl-lite
 )
 
 install(DIRECTORY include DESTINATION .)

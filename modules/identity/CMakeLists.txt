@@ -47,10 +47,10 @@ target_link_libraries(
   tankercrypto
   tankererrors
 
-  CONAN_PKG::nlohmann_json
-  CONAN_PKG::gsl-lite
-  CONAN_PKG::mgs
-  CONAN_PKG::range-v3
+  nlohmann_json::nlohmann_json
+  gsl-lite::gsl-lite
+  mgs::mgs
+  range-v3::range-v3
 )
 
 install(TARGETS tankeridentity

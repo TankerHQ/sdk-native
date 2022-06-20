@@ -15,6 +15,6 @@ add_executable(test_trustchain
 
   main.cpp
 )
-target_link_libraries(test_trustchain tankertrustchain tankertesthelpers CONAN_PKG::catch2)
+target_link_libraries(test_trustchain tankertrustchain tankertesthelpers catch2::catch2)
 
 add_test(NAME test_trustchain COMMAND test_trustchain)

@@ -28,7 +28,7 @@ tanker_link_libraries(tankerdatastoretests
   tanker_utils-c
   ctankerdatastore
 
-  CONAN_PKG::catch2
+  catch2::catch2
 
   ${_additional_link_flags}
 )

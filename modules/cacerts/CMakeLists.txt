@@ -29,8 +29,8 @@ target_include_directories(tankercacerts PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(tankercacerts
   tankerlog
   tankererrors
-  CONAN_PKG::boost
-  CONAN_PKG::libressl
+  Boost
+  libressl::libressl
 )
 
 if(TANKER_EMBED_CERTIFICATES)
