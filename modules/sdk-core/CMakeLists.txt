@@ -27,6 +27,13 @@ if (WITH_FETCHPP)
   )
 endif()
 
+if (WITH_CURL)
+  set(TANKER_CORE_HTTP_SRC
+    include/Tanker/Network/CurlBackend.hpp
+    src/Network/CurlBackend.cpp
+  )
+endif()
+
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/AttachResult.hpp
@@ -213,7 +220,11 @@ target_link_libraries(tankercore
 )
 
 if(WITH_FETCHPP)
-  target_link_libraries(tankercore tankercacerts fetchpp::fetchpp)
+  target_link_libraries(tankercore tankercacerts skyr-url::skyr-url fetchpp::fetchpp)
+endif()
+
+if(WITH_CURL)
+  target_link_libraries(tankercore tankercacerts tcurl)
 endif()
 
 if(WITH_SQLITE)

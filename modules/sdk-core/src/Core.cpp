@@ -41,7 +41,10 @@
 
 #ifdef TANKER_WITH_FETCHPP
 #include <Tanker/Network/FetchppBackend.hpp>
+#elif TANKER_WITH_CURL
+#include <Tanker/Network/CurlBackend.hpp>
 #endif
+
 #ifdef TANKER_WITH_SQLITE
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
 #endif
@@ -221,6 +224,8 @@ Core::Core(std::string url,
                         std::move(networkBackend) :
 #if TANKER_WITH_FETCHPP
                         std::make_unique<Network::FetchppBackend>(_info)
+#elif TANKER_WITH_CURL
+                        std::make_unique<Network::CurlBackend>(_info)
 #else
                         nullptr
 #endif
