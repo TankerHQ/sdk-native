@@ -66,10 +66,11 @@ def deploy() -> None:
     build_profile = tankerci.conan.get_build_profile()
     for profile in profiles:
         package_folder = artifacts_folder / profile
+        host_profile = tankerci.conan.import_profile(package_folder / ".conan_profile.json")
         tankerci.conan.export_pkg(
             recipe,
             package_folder=package_folder,
-            host_profile=Profile(profile),
+            host_profile=host_profile,
             build_profile=build_profile,
             force=True,
         )
