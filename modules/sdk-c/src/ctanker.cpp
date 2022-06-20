@@ -605,29 +605,30 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
                                 uint64_t data_size,
                                 tanker_encrypt_options_t const* options)
 {
-  std::vector<SPublicIdentity> spublicIdentities{};
-  std::vector<SGroupId> sgroupIds{};
-  bool shareWithSelf = true;
-  std::optional<uint32_t> paddingStepOpt;
-  if (options)
-  {
-    if (options->version != 4)
-    {
-      return makeFuture(tc::make_exceptional_future<void>(
-          formatEx(Errc::InvalidArgument,
-                   "unsupported tanker_encrypt_options struct version")));
-    }
-    spublicIdentities = to_vector<SPublicIdentity>(
-        options->share_with_users, options->nb_users, "share_with_users");
-    sgroupIds = to_vector<SGroupId>(
-        options->share_with_groups, options->nb_groups, "share_with_groups");
-    shareWithSelf = options->share_with_self;
-
-    paddingStepOpt = cPaddingToOptPadding(options->padding_step);
-  }
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
       tc::sync([&] {
+        std::vector<SPublicIdentity> spublicIdentities{};
+        std::vector<SGroupId> sgroupIds{};
+        bool shareWithSelf = true;
+        std::optional<uint32_t> paddingStepOpt;
+        if (options)
+        {
+          if (options->version != 4)
+          {
+            throw formatEx(Errc::InvalidArgument,
+                           "unsupported tanker_encrypt_options struct version");
+          }
+          spublicIdentities = to_vector<SPublicIdentity>(
+              options->share_with_users, options->nb_users, "share_with_users");
+          sgroupIds = to_vector<SGroupId>(options->share_with_groups,
+                                          options->nb_groups,
+                                          "share_with_groups");
+          shareWithSelf = options->share_with_self;
+
+          paddingStepOpt = cPaddingToOptPadding(options->padding_step);
+        }
+
+        auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
         return tanker->encrypt(
             gsl::span(encrypted_data,
                       AsyncCore::encryptedSize(data_size, paddingStepOpt)),
