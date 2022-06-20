@@ -6,12 +6,11 @@
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
-#include <fetchpp/client.hpp>
-#include <fetchpp/http/url.hpp>
-
 #include <tconcurrent/coroutine.hpp>
 
 #include <nlohmann/json_fwd.hpp>
+
+#include <tcurl.hpp>
 
 #include <optional>
 #include <string>
@@ -42,8 +41,7 @@ class Client
 public:
   Client(std::string_view appManagementUrl,
          std::string_view appManagementToken,
-         std::string_view environmentName,
-         fetchpp::net::any_io_executor ex);
+         std::string_view environmentName);
 
   tc::cotask<App> createTrustchain(std::string_view name);
   tc::cotask<App> update(Trustchain::TrustchainId const& trustchainId,
@@ -52,12 +50,12 @@ public:
       Trustchain::TrustchainId const& trustchainId);
 
 private:
-  fetchpp::http::url make_url(
+  std::string make_url(
       std::optional<Trustchain::TrustchainId> id = std::nullopt) const;
-  fetchpp::http::url const _baseUrl;
+  std::string const _baseUrl;
   std::string _appManagementToken;
   std::string _environmentName;
-  fetchpp::client _client;
+  tcurl::multi _client;
 };
 
 tc::cotask<VerificationCode> getVerificationCode(

@@ -29,10 +29,7 @@ tanker_future_t* tanker_admin_connect(char const* app_management_url,
         Crypto::init();
         Cacerts::init();
         const auto admin = new Admin::Client(
-            appManagementUrl,
-            appManagementToken,
-            environmentName,
-            tc::get_default_executor().get_io_service().get_executor());
+            appManagementUrl, appManagementToken, environmentName);
         TC_RETURN(static_cast<void*>(admin));
       }));
 }

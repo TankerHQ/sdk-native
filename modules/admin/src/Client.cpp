@@ -8,18 +8,8 @@
 
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/Trustchain/ComputeHash.hpp>
 
-#include <fetchpp/fetch.hpp>
-#include <fetchpp/http/authorization.hpp>
-#include <fetchpp/http/request.hpp>
-
-#include <fetchpp/alias/http.hpp>
-
-#include <tconcurrent/asio_use_future.hpp>
+#include <nlohmann/json.hpp>
 
 #include <chrono>
 
@@ -27,9 +17,6 @@ TLOG_CATEGORY(Admin);
 
 namespace Tanker::Admin
 {
-using namespace fetchpp::http;
-
-using Tanker::Trustchain::Actions::Nature;
 using namespace Tanker::Errors;
 
 namespace
@@ -37,7 +24,7 @@ namespace
 struct ServerErrorMessage
 {
   std::string code;
-  fetchpp::http::status status;
+  int status;
   std::string message;
   std::string requestId;
 };
@@ -45,19 +32,20 @@ struct ServerErrorMessage
 void from_json(nlohmann::json const& j, ServerErrorMessage& msg)
 {
   j.at("code").get_to(msg.code);
-  msg.status = fetchpp::http::int_to_status(j.at("status").get<int>());
+  msg.status = j.at("status").get<int>();
   j.at("message").get_to(msg.message);
   j.at("trace_id").get_to(msg.requestId);
 }
 
 auto errorReport(Errors::AppdErrc err_code,
                  std::string_view customMessage,
-                 fetchpp::http::response const& response)
+                 tcurl::read_all_result const& response)
 {
   try
   {
-    auto const serverMsg =
-        response.json().at("error").get<ServerErrorMessage>();
+    auto const json =
+        nlohmann::json::parse(response.data.begin(), response.data.end());
+    auto const serverMsg = json.at("error").get<ServerErrorMessage>();
     return Errors::formatEx(err_code,
                             "{}: {} {}",
                             customMessage,
@@ -67,7 +55,10 @@ auto errorReport(Errors::AppdErrc err_code,
   catch (...)
   {
     return Errors::formatEx(
-        err_code, "{}: invalid error: {}", customMessage, response.text());
+        err_code,
+        "{}: invalid error: {}",
+        customMessage,
+        std::string(response.data.begin(), response.data.end()));
   }
 }
 }
@@ -83,41 +74,47 @@ void from_json(nlohmann::json const& j, App& app)
 
 Client::Client(std::string_view appManagementUrl,
                std::string_view appManagementToken,
-               std::string_view environmentName,
-               fetchpp::net::any_io_executor ex)
-  : _baseUrl("/v1/apps", fetchpp::http::url(appManagementUrl)),
+               std::string_view environmentName)
+  : _baseUrl(fmt::format("{}/v1/apps", appManagementUrl)),
     _appManagementToken(appManagementToken),
-    _environmentName(environmentName),
-    _client(ex, std::chrono::seconds(10), Cacerts::create_ssl_context())
+    _environmentName(environmentName)
 {
 }
 
-fetchpp::http::url Client::make_url(
-    std::optional<Trustchain::TrustchainId> id) const
+std::string Client::make_url(std::optional<Trustchain::TrustchainId> id) const
 {
-  using fetchpp::http::url;
   if (id)
-    return url(fmt::format("/v1/apps/{:#S}", id.value()), _baseUrl);
+    return fmt::format("{}/{:#S}", _baseUrl, id.value());
   return _baseUrl;
 }
 
 tc::cotask<App> Client::createTrustchain(std::string_view name)
 {
-  auto message = nlohmann::json{
-      {"name", name},
-      {"environment_name", _environmentName},
-  };
+  auto message =
+      nlohmann::json{
+          {"name", name},
+          {"environment_name", _environmentName},
+      }
+          .dump();
 
-  auto request = fetchpp::http::request(verb::post, make_url());
-  request.content(message.dump());
-  request.set(authorization::bearer(_appManagementToken));
-  request.set(field::accept, "application/json");
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(make_url());
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+  request->add_header(
+      fmt::format("Authorization: Bearer {}", _appManagementToken));
+  request->add_header("Content-type: application/json");
 
-  auto const response =
-      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
-  if (response.result() == status::created)
+  auto const response = TC_AWAIT(tcurl::read_all(_client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode == 201)
   {
-    auto app = response.json().at("app").get<App>();
+    auto const jresponse =
+        nlohmann::json::parse(response.data.begin(), response.data.end());
+    auto app = jresponse.at("app").get<App>();
     TINFO("created trustchain {} {:#S} on environment {}",
           name,
           app.secret,
@@ -132,14 +129,17 @@ tc::cotask<App> Client::createTrustchain(std::string_view name)
 tc::cotask<void> Client::deleteTrustchain(
     Trustchain::TrustchainId const& trustchainId)
 {
-  auto request = fetchpp::http::request(fetchpp::http::verb::delete_,
-                                        make_url(trustchainId));
-  request.set(authorization::bearer(_appManagementToken));
-  request.set(field::accept, "application/json");
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(make_url(trustchainId));
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "DELETE");
+  request->add_header(
+      fmt::format("Authorization: Bearer {}", _appManagementToken));
+
   TINFO("deleting trustchain {:#S}", trustchainId);
-  auto response =
-      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
-  if (response.result() == status::ok)
+  auto response = TC_AWAIT(tcurl::read_all(_client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode == 200)
     TC_RETURN();
   throw errorReport(
       Errors::AppdErrc::InternalError, "could not delete trustchain", response);
@@ -158,14 +158,28 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
     body["preverified_verification_enabled"] = *options.preverifiedVerification;
   if (options.userEnrollment)
     body["enroll_users_enabled"] = *options.userEnrollment;
-  auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
-  request.content(body.dump());
-  request.set(authorization::bearer(_appManagementToken));
-  request.set(field::accept, "application/json");
-  auto const response =
-      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
-  if (response.result() == status::ok)
-    TC_RETURN(response.json().at("app"));
+
+  auto const message = body.dump();
+
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(make_url(trustchainId));
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "PATCH");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+  request->add_header(
+      fmt::format("Authorization: Bearer {}", _appManagementToken));
+  request->add_header("Content-type: application/json");
+
+  auto const response = TC_AWAIT(tcurl::read_all(_client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode == 200)
+  {
+    auto const jresponse =
+        nlohmann::json::parse(response.data.begin(), response.data.end());
+    TC_RETURN(jresponse.at("app"));
+  }
 
   throw errorReport(
       Errors::AppdErrc::InternalError, "could not update trustchain", response);
@@ -180,19 +194,27 @@ tc::cotask<VerificationCode> getVerificationCode(
   auto const body = nlohmann::json({{"email", email},
                                     {"app_id", appId},
                                     {"auth_token", verificationApiToken}});
-  auto req = fetchpp::http::request(
-      verb::post, url("/verification/email/code", url(host_url)));
-  req.content(body.dump());
-  req.set(field::accept, "application/json");
-  auto const response = TC_AWAIT(fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      std::move(req),
-      tc::asio::use_future));
-  if (response.result() != status::ok)
+  auto const message = body.dump();
+
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(fmt::format("{}/verification/email/code", host_url));
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+  request->add_header("Content-type: application/json");
+
+  tcurl::multi client;
+  auto const response = TC_AWAIT(tcurl::read_all(client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200)
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "could not retrieve verification code for {}",
                            email);
-  TC_RETURN(response.json().at("verification_code").get<std::string>());
+  auto const jresponse =
+      nlohmann::json::parse(response.data.begin(), response.data.end());
+  TC_RETURN(jresponse.at("verification_code").get<std::string>());
 }
 
 tc::cotask<VerificationCode> getVerificationCode(
@@ -204,18 +226,26 @@ tc::cotask<VerificationCode> getVerificationCode(
   auto const body = nlohmann::json({{"phone_number", phoneNumber},
                                     {"app_id", appId},
                                     {"auth_token", verificationApiToken}});
-  auto req = fetchpp::http::request(
-      verb::post, url("/verification/sms/code", url(host_url)));
-  req.content(body.dump());
-  req.set(field::accept, "application/json");
-  auto const response = TC_AWAIT(fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      std::move(req),
-      tc::asio::use_future));
-  if (response.result() != status::ok)
+  auto const message = body.dump();
+
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(fmt::format("{}/verification/sms/code", host_url));
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+  request->add_header("Content-type: application/json");
+
+  tcurl::multi client;
+  auto const response = TC_AWAIT(tcurl::read_all(client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200)
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "could not retrieve verification code for {}",
                            phoneNumber);
-  TC_RETURN(response.json().at("verification_code").get<std::string>());
+  auto const jresponse =
+      nlohmann::json::parse(response.data.begin(), response.data.end());
+  TC_RETURN(jresponse.at("verification_code").get<std::string>());
 }
 }

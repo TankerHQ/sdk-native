@@ -91,12 +91,11 @@ class TankerConan(ConanFile):
         private = self.options.tankerlib_shared
 
         self.requires("boost/1.78.0-r4", private=private)
-        if self.options.with_http_backend:
-            self.requires("libressl/3.2.5", private=private)
-            if self.options.with_http_backend == "libcurl":
-                self.requires("libcurl/7.80.0-r1", private=private)
-            elif self.options.with_http_backend == "fetchpp":
-                self.requires("fetchpp/0.15.3-r1", private=private)
+        self.requires("libressl/3.2.5", private=private)
+        if self.options.with_http_backend == "fetchpp":
+            self.requires("fetchpp/0.15.3-r1", private=private)
+        else:
+            self.requires("libcurl/7.80.0-r1", private=private)
         if self.options.with_sqlite:
             self.requires("sqlpp11/0.60-r2", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r2", private=private)
@@ -201,6 +200,9 @@ class TankerConan(ConanFile):
                     "tankercacerts",
                 ]
             )
+            # In case of libcurl or None
+            if self.options.with_http_backend != "fetchpp":
+                libs.append("tcurl")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
