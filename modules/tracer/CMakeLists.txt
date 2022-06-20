@@ -49,7 +49,7 @@ else()
   )
 
   target_link_libraries(ttracer
-    CONAN_PKG::tconcurrent
+    tconcurrent::tconcurrent
     lttng-ust
     dl
   )

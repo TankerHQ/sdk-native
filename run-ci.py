@@ -14,7 +14,7 @@ import tempfile
 import gitlab
 
 import tankerci
-import tankerci.conan
+from tankerci.conan import Profile
 import tankerci.cpp
 import tankerci.git
 import tankerci.reporting
@@ -22,8 +22,15 @@ import tankerci.benchmark
 
 
 def build(profiles: List[str], coverage: bool, test: bool) -> None:
-    for profile in profiles:
-        build_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage)
+    build_profile = tankerci.conan.get_build_profile()
+    for host_profile in profiles:
+
+        build_path = tankerci.cpp.build(
+            host_profile=host_profile,
+            build_profile=build_profile,
+            make_package=True,
+            coverage=coverage,
+        )
         if test:
             tankerci.cpp.check(build_path, coverage=coverage)
     recipe = Path.cwd() / "conanfile.py"
@@ -56,10 +63,15 @@ def deploy() -> None:
 
     profiles = [d.name for d in artifacts_folder.iterdir() if d.is_dir()]
 
+    build_profile = tankerci.conan.get_build_profile()
     for profile in profiles:
         package_folder = artifacts_folder / profile
         tankerci.conan.export_pkg(
-            recipe, package_folder=package_folder, profile=profile, force=True
+            recipe,
+            package_folder=package_folder,
+            host_profile=Profile(profile),
+            build_profile=build_profile,
+            force=True,
         )
     latest_reference = f"tanker/{version}@"
     alias = "tanker/latest-stable@"
@@ -221,10 +233,16 @@ def main() -> None:
 
     build_parser = subparsers.add_parser("build")
     build_parser.add_argument(
-        "--profile", dest="profiles", action="append", required=True
+        "--profile",
+        dest="profiles",
+        action="append",
+        nargs="+",
+        type=str,
+        required=True,
     )
     build_parser.add_argument("--coverage", action="store_true")
     build_parser.add_argument("--test", action="store_true")
+    build_parser.add_argument("--remote", default="artifactory")
 
     benchmark_artifact_parser = subparsers.add_parser("benchmark-artifact")
     benchmark_artifact_parser.add_argument(
@@ -241,15 +259,20 @@ def main() -> None:
     bump_files_parser = subparsers.add_parser("bump-files")
     bump_files_parser.add_argument("--version", required=True)
 
-    subparsers.add_parser("deploy")
+    deploy_parser = subparsers.add_parser("deploy")
+    deploy_parser.add_argument("--remote", default="artifactory")
 
     args = parser.parse_args()
+    user_home = None
     if args.home_isolation:
-        tankerci.conan.set_home_isolation()
-        tankerci.conan.update_config()
+        user_home = Path.cwd() / ".cache" / "conan" / args.remote
 
     if args.command == "build":
-        build(args.profiles, args.coverage, args.test)
+        with tankerci.conan.ConanContextManager(
+            [args.remote], conan_home=user_home, config_branch="backport/1.45"
+        ):
+            profiles = [Profile(p) for p in args.profiles]
+            build(profiles, args.coverage, args.test)
     elif args.command == "benchmark-artifact":
         benchmark_artifact(
             profiles=args.profiles,
@@ -260,7 +283,13 @@ def main() -> None:
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
-        deploy()
+        with tankerci.conan.ConanContextManager(
+            [args.remote],
+            conan_home=user_home,
+            clean_on_exit=True,
+            config_branch="backport/1.45",
+        ):
+            deploy()
     else:
         parser.print_help()
         sys.exit(1)

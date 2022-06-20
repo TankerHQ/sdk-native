@@ -15,7 +15,7 @@ generate_export_header(${PROJECT_NAME}
   EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/ctanker/async/export.h
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC tankererrors CONAN_PKG::tconcurrent)
+target_link_libraries(${PROJECT_NAME} PUBLIC tankererrors tconcurrent::tconcurrent)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

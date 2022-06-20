@@ -79,7 +79,7 @@ tanker_link_libraries(ctanker PUBLIC
   tankercrypto
   tankeridentity
 
-  CONAN_PKG::mgs
+  mgs::mgs
 
   ${_additional_link_flags}
 

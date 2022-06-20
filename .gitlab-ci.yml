@@ -7,6 +7,19 @@ include:
   after_script:
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
 
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      variables:
+        CONAN_REMOTE: "artifactory"
+    - if: '$CI_MERGE_REQUEST_TITLE =~ /.*\[preview].*/'
+      variables:
+        CONAN_REMOTE: "artifactory-preview"
+    - when: always
+      variables:
+        CONAN_REMOTE: "artifactory-staging"
+
+
 ###############
 # build stage #
 ###############
@@ -33,7 +46,7 @@ build/linux:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64
   tags: !reference [.tags/compilation-linux, tags]
 
 build/linux/shared:
@@ -44,7 +57,7 @@ build/linux/shared:
     - .after-script/branch_name
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared
   tags: !reference [.tags/compilation-linux, tags]
 
 build/linux/shared/no-http-backend:
@@ -55,7 +68,7 @@ build/linux/shared/no-http-backend:
     - .after-script/branch_name
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release-shared-no-http-backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared no-fetchpp
   tags: !reference [.tags/compilation-linux, tags]
 
 build/windows:
@@ -66,7 +79,7 @@ build/windows:
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile windows-x86_64
   tags: !reference [.tags/compilation-windows, tags]
 
 build/windows/shared:
@@ -77,7 +90,7 @@ build/windows/shared:
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile windows-x86_64 shared
   tags: !reference [.tags/compilation-windows, tags]
 
 build/macos/x86_64:
@@ -89,7 +102,7 @@ build/macos/x86_64:
     - .after-script/branch_name
   script:
     - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-x86_64
   tags: !reference [.tags/macos/x86_64, tags]
 
 build/macos/arm:
@@ -100,7 +113,7 @@ build/macos/arm:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8
   tags: !reference [.tags/macos/arm, tags]
 
 build/macos/x86_64/shared/no-http-backend:
@@ -112,7 +125,7 @@ build/macos/x86_64/shared/no-http-backend:
     - .after-script/branch_name
   script:
     - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared-no-http-backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-x86_64 shared no-fetchpp
   tags: !reference [.tags/macos/x86_64, tags]
 
 build/macos/arm/shared/no-http-backend:
@@ -123,7 +136,7 @@ build/macos/arm/shared/no-http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release-shared-no-http-backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8 shared no-fetchpp
   tags: !reference [.tags/macos/arm, tags]
 
 build/android/shared:
@@ -134,7 +147,7 @@ build/android/shared:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 --profile android-armv8 --profile android-x86 --profile android-x86_64 --profile linux-x86_64 shared
   tags: !reference [.tags/compilation-linux, tags]
 
 build/android/static/http-backend:
@@ -145,7 +158,7 @@ build/android/static/http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release-static-http_backend --profile android-armv8-release-static-http_backend --profile android-x86-release-static-http_backend --profile android-x86_64-release-static-http_backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 tanker-static http-backend --profile android-armv8 tanker-static http-backend --profile android-x86 tanker-static http-backend --profile android-x86_64 tanker-static http-backend
   tags: !reference [.tags/compilation-linux, tags]
 
 build/ios:
@@ -156,7 +169,7 @@ build/ios:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile ios_simulator-armv8 --profile ios_simulator-x86 --profile ios_simulator-x86_64 --profile ios-armv7 --profile ios-armv7s --profile ios-armv8
   # build everything on the fast one
   tags: !reference [.tags/macos/arm, tags]
 
@@ -168,7 +181,7 @@ build/ios/http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release-http_backend --profile ios-simulator-x86-release-http_backend --profile ios-simulator-x86_64-release-http_backend --profile ios-armv7-release-http_backend --profile ios-armv7s-release-http_backend --profile ios-armv8-release-http_backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile ios_simulator-armv8 http-backend --profile ios_simulator-x86 http-backend --profile ios_simulator-x86_64 http-backend --profile ios-armv7 http-backend --profile ios-armv7s http-backend --profile ios-armv8 http-backend
   # build everything on the fast one
   tags: !reference [.tags/macos/arm, tags]
 
@@ -178,7 +191,7 @@ nightly/coverage:
     - .rules/nightly
   script:
     # Using linux-release profile, but CI script will force debug for Tanker only
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release --coverage
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-release --coverage
     - mv build/linux-release/coverage coverage
   artifacts:
     paths:
@@ -476,7 +489,7 @@ check/e2e:
   needs:
     - build/linux
   script:
-    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile linux-release
+    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile linux-x86_64 --remote $CONAN_REMOTE
   tags: !reference [.tags/compilation-linux, tags]
 
 ################
@@ -491,7 +504,7 @@ deploy:
     description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
     tag_name: v$SDK_NATIVE_RELEASE_VERSION
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home deploy
+    - poetry run python run-ci.py --isolate-conan-user-home deploy --remote $CONAN_REMOTE
   tags: !reference [.tags/linux, tags]
 
 pages:
