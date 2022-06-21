@@ -4,7 +4,6 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
-#include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
@@ -70,15 +69,6 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
                                 Trustchain::Context const& context,
                                 DeviceCreation const& secondDeviceEntry)
 {
-  SECTION("it should reject a device creation when author device is revoked")
-  {
-    auto& authorDevice = tankerUser.devices().front();
-    unconstify(authorDevice).setRevoked();
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(secondDeviceEntry, context, tankerUser),
-        Errc::InvalidAuthor);
-  }
-
   SECTION("it should reject an incorrectly signed delegation for a device")
   {
     unconstify(secondDeviceEntry.delegationSignature())[0]++;
@@ -114,46 +104,6 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
   {
     CHECK_NOTHROW(
         Verif::verifyDeviceCreation(secondDeviceEntry, context, tankerUser));
-  }
-}
-
-void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
-                                  Users::User& user)
-{
-  SECTION("should reject an incorrectly signed DeviceRevocation")
-  {
-    unconstify(deviceRevocation.signature())[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(deviceRevocation, user),
-        Errc::InvalidSignature);
-  }
-
-  SECTION("should reject a revocation from a revoked device")
-  {
-    unconstify(user.devices()[0]).setRevoked();
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(deviceRevocation, user),
-        Errc::AuthorIsRevoked);
-  }
-
-  SECTION("should reject a revocation when user is not found")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(deviceRevocation, std::nullopt),
-        Errc::InvalidAuthor);
-  }
-
-  SECTION("should reject a revocation of an already revoked device")
-  {
-    unconstify(user.devices()[1]).setRevoked();
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(deviceRevocation, user),
-        Errc::InvalidTargetDevice);
-  }
-
-  SECTION("should accept a valid deviceRevocation")
-  {
-    CHECK_NOTHROW(Verif::verifyDeviceRevocation(deviceRevocation, user));
   }
 }
 
@@ -359,162 +309,6 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, generator.context(), alice),
         Errc::InvalidUserKey);
-  }
-}
-
-TEST_CASE("Verif DeviceRevocationV1")
-{
-  Test::Generator generator;
-
-  auto alice = generator.makeUserV1("alice");
-  auto& secondDevice = alice.addDeviceV1();
-  auto aliceUser = Users::User{alice};
-
-  auto const revokeEntry = alice.revokeDeviceV1(secondDevice);
-
-  SECTION("common")
-  {
-    deviceRevocationCommonChecks(revokeEntry, aliceUser);
-  }
-
-  SECTION("should reject a revocation for another user's device")
-  {
-    auto bob = generator.makeUserV1("bob");
-    auto bobDevice = bob.makeDeviceV1();
-
-    auto const action = alice.revokeDeviceV1(bobDevice);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser), Errc::InvalidUser);
-  }
-
-  SECTION("should reject a revocation whose user has a userKey")
-  {
-    unconstify(aliceUser.userKey()) = Crypto::makeEncryptionKeyPair().publicKey;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(revokeEntry, aliceUser),
-        Errc::InvalidUserKey);
-  }
-}
-
-TEST_CASE("Verif DeviceRevocationV2")
-{
-  Test::Generator generator;
-
-  auto alice = generator.makeUser("alice");
-  auto& secondDevice = alice.addDevice();
-  alice.addDevice();
-  auto aliceUser = Users::User{alice};
-  auto const action = alice.revokeDevice(secondDevice);
-
-  SECTION("common")
-  {
-    deviceRevocationCommonChecks(action, aliceUser);
-  }
-
-  auto bob = generator.makeUserV1("bob");
-  auto& bobDevice = bob.addDeviceV1();
-  auto& bobOtherDevice = bob.addDeviceV1();
-  auto const bobUser = Users::User{bob};
-  auto entryUserV1 = bob.revokeDeviceForMigration(bobDevice, bobOtherDevice);
-
-  SECTION(
-      "should reject a revocation whose user has no userKey when "
-      "PreviousPublicEncryptionKey is not a zero array")
-  {
-    unconstify(entryUserV1.previousPublicEncryptionKey())[0]++;
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(entryUserV1, bobUser),
-        Errc::InvalidEncryptionKey);
-  }
-
-  SECTION(
-      "should reject a revocation whose user has no userKey when the "
-      "EncryptedKeyForPreviousUserKey is not a zero array")
-  {
-    unconstify(entryUserV1.sealedKeyForPreviousUserKey())[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(entryUserV1, bobUser),
-        Errc::InvalidUserKey);
-  }
-
-  SECTION("should reject a revocation for another user's device")
-  {
-    auto const revokeEntry = alice.revokeDevice(bobOtherDevice);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(revokeEntry, bobUser), Errc::InvalidUser);
-  }
-
-  SECTION(
-      "should reject a revocation whose user has a userKey when the "
-      "previousEncryptedKey does not match the userKey")
-  {
-    unconstify(action.previousPublicEncryptionKey())[0]++;
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser),
-        Errc::InvalidEncryptionKey);
-  }
-
-  SECTION(
-      "should reject a DeviceRevocation2 whose userKeys field does not have "
-      "exactly one element per device")
-  {
-    auto& sealedUserKeysForDevices =
-        unconstify(action.sealedUserKeysForDevices());
-    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser),
-        Errc::InvalidUserKeys);
-  }
-
-  SECTION(
-      "should reject a DeviceCreationV2 with a userKey fields that contains "
-      "the target device of the revocation")
-  {
-    auto& sealedUserKeysForDevices =
-        unconstify(action.sealedUserKeysForDevices());
-    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
-    auto const sealedPrivateEncryptionKey =
-        make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    sealedUserKeysForDevices.emplace_back(secondDevice.id(),
-                                          sealedPrivateEncryptionKey);
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser),
-        Errc::InvalidUserKeys);
-  }
-
-  SECTION(
-      "should reject a DeviceRevocation whose userKeys fields has a device "
-      "that does not belong to the author's devices")
-  {
-    auto& sealedUserKeysForDevices =
-        unconstify(action.sealedUserKeysForDevices());
-    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
-
-    auto const sealedPrivateEncryptionKey =
-        make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    sealedUserKeysForDevices.emplace_back(bobDevice.id(),
-                                          sealedPrivateEncryptionKey);
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser),
-        Errc::InvalidUserKeys);
-  }
-
-  SECTION(
-      "should reject a DeviceRevocation whose userKeys fields has a duplicates")
-  {
-    auto& sealedUserKeysForDevices =
-        unconstify(action.sealedUserKeysForDevices());
-    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
-    sealedUserKeysForDevices.push_back(*sealedUserKeysForDevices.begin());
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(action, aliceUser),
-        Errc::InvalidUserKeys);
   }
 }
 
