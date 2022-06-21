@@ -29,9 +29,9 @@ target_link_libraries(
   PUBLIC
   tankererrors
 
-  CONAN_PKG::gsl-lite
- 
-  CONAN_PKG::fmt
+  gsl-lite::gsl-lite
+
+  fmt::fmt
 )
 
 install(DIRECTORY include DESTINATION .)

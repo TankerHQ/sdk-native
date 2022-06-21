@@ -18,7 +18,7 @@ target_include_directories(tankerformat
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankerformat PUBLIC CONAN_PKG::fmt CONAN_PKG::nlohmann_json)
+target_link_libraries(tankerformat PUBLIC fmt::fmt nlohmann_json::nlohmann_json)
 
 install(DIRECTORY include DESTINATION .)
 install(TARGETS tankerformat

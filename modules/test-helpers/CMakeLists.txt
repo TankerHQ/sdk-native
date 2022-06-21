@@ -43,4 +43,4 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankertrustchain tankererrors tankertypes CONAN_PKG::boost CONAN_PKG::nlohmann_json CONAN_PKG::fmt CONAN_PKG::gsl-lite)
+target_link_libraries(tankertesthelpers tankertrustchain tankererrors tankertypes Boost nlohmann_json::nlohmann_json fmt::fmt gsl-lite::gsl-lite)

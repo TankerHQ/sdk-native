@@ -32,7 +32,7 @@ add_executable(test_tanker
 target_link_libraries(test_tanker
   tankercore
   tankertesthelpers
-  CONAN_PKG::catch2
-  CONAN_PKG::trompeloeil
+  catch2::catch2
+  trompeloeil::trompeloeil
 )
 add_test(NAME test_tanker COMMAND test_tanker --durations=true)

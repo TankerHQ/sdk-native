@@ -110,8 +110,8 @@ target_link_libraries(tankertrustchain
   tankererrors
   tankerformat
 
-  CONAN_PKG::nlohmann_json
-  CONAN_PKG::boost
+  nlohmann_json::nlohmann_json
+  Boost
 )
 
 if(BUILD_TESTS)

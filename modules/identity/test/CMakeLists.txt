@@ -3,5 +3,5 @@ add_executable(test_identity
   main.cpp
 )
 
-target_link_libraries(test_identity tankeridentity tankertesthelpers CONAN_PKG::catch2)
+target_link_libraries(test_identity tankeridentity tankertesthelpers catch2::catch2)
 add_test(NAME test_identity COMMAND test_identity --durations=true)

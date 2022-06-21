@@ -5,13 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(TARGETS KEEP_RPATHS)
-
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake;${CMAKE_PREFIX_PATH}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -56,7 +56,9 @@ if (WITH_SQLITE)
 endif()
 
 if(BUILD_TESTS)
-  enable_testing()
+  # Enable testing by including ctest.
+  # This solve ensure we have a configuration file for windows.
+  include(CTest)
 endif()
 
 # CMAKE_C_FLAGS and the like are _strings_, not lists.
@@ -110,6 +112,21 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   # instead of a class
   tanker_add_flags(CMAKE_CXX_FLAGS "-Wno-mismatched-tags")
 endif()
+
+find_package(Boost)
+find_package(catch2)
+find_package(catch2-async)
+find_package(date)
+find_package(docopt.cpp)
+find_package(fetchpp)
+find_package(fmt)
+find_package(gsl-lite)
+find_package(libressl)
+find_package(libsodium)
+find_package(mgs)
+find_package(sqlpp11-connector-sqlite3)
+find_package(tconcurrent)
+find_package(trompeloeil)
 
 add_subdirectory(modules/admin)
 add_subdirectory(modules/admin-c)

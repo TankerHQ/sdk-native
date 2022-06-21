@@ -201,23 +201,23 @@ target_link_libraries(tankercore
   tankerlog
   tankerconfig
   ttracer
-  CONAN_PKG::boost
-  CONAN_PKG::tconcurrent
-  CONAN_PKG::mgs
-  CONAN_PKG::gsl-lite
-  CONAN_PKG::fmt
-  CONAN_PKG::nlohmann_json
-  CONAN_PKG::enum-flags
-  CONAN_PKG::range-v3
-  CONAN_PKG::date
+  Boost
+  tconcurrent::tconcurrent
+  mgs::mgs
+  gsl-lite::gsl-lite
+  fmt::fmt
+  nlohmann_json::nlohmann_json
+  enum-flags::enum-flags
+  range-v3::range-v3
+  date::date
 )
 
 if(WITH_FETCHPP)
-  target_link_libraries(tankercore tankercacerts CONAN_PKG::fetchpp)
+  target_link_libraries(tankercore tankercacerts fetchpp::fetchpp)
 endif()
 
 if(WITH_SQLITE)
-  target_link_libraries(tankercore CONAN_PKG::sqlpp11-connector-sqlite3)
+  target_link_libraries(tankercore sqlpp11-connector-sqlite3::sqlpp11-connector-sqlite3)
 endif()
 
 install(TARGETS tankercore

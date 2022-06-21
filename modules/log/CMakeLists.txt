@@ -18,7 +18,11 @@ target_include_directories(tankerlog
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankerlog tankerconfig tankerformat CONAN_PKG::fmt)
+target_link_libraries(tankerlog tankerconfig tankerformat fmt::fmt)
+
+if(ANDROID)
+  target_link_options(tankerlog PUBLIC "-llog")
+endif()
 
 install(DIRECTORY include DESTINATION .)
 

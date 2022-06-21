@@ -1,4 +1,7 @@
-from conans import tools, CMake, ConanFile
+from conans import tools, ConanFile
+from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps
+from conan.tools.layout import cmake_layout
+from conan.tools.apple.apple import is_apple_os
 import os
 
 
@@ -28,13 +31,12 @@ class TankerConan(ConanFile):
         "with_fetchpp": True,
         "with_sqlite": True,
     }
+    generators = "CMakeDeps", "VirtualBuildEnv"
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
-    generators = "cmake", "json", "ycm"
-    cmake = None
 
     @property
     def cross_building(self):
-        return tools.cross_building(self.settings)
+        return tools.cross_building(self)
 
     @property
     def should_build_tests(self):
@@ -86,84 +88,67 @@ class TankerConan(ConanFile):
         return self.settings.os == "Windows" and self.settings.compiler == "gcc"
 
     def requirements(self):
-        private = self.options.tankerlib_shared == True
+        private = self.options.tankerlib_shared
 
-        self.requires("boost/1.78.0-r3", private=private)
+        self.requires("boost/1.78.0-r4", private=private)
         self.requires("libressl/3.2.5", private=private)
         self.requires("fetchpp/0.15.3-r1", private=private)
         if self.options.with_sqlite:
-            self.requires("sqlpp11/0.60-r1", private=private)
+            self.requires("sqlpp11/0.60-r2", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r2", private=private)
-        self.requires("mgs/0.2.0", private=private)
+        self.requires("mgs/0.2.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("range-v3/0.11.0-r3", private=private)
-        self.requires("fmt/7.1.3", private=private)
+        self.requires("fmt/7.1.3-r1", private=private)
         self.requires("gsl-lite/0.37.0", private=private)
-        self.requires("nlohmann_json/3.10.2", private=private)
+        self.requires("nlohmann_json/3.10.5", private=private)
         self.requires("libsodium/1.0.18", private=private)
         self.requires("tconcurrent/0.40.0-r1", private=private)
-        self.requires("date/3.0.0", private=private)
+        self.requires("date/3.0.0-r1", private=private)
         # catch2 is needed to export datastore tests
         self.requires("catch2/2.13.6-r1", private=private)
-        # Hack to be able to import libc++{abi}.a later on
-        if self.settings.os in ("iOS", "Macos"):
+        if is_apple_os(self.settings.os):
             self.requires("libcxx/11.1.0", private=private)
-        if self.settings.os == "Android":
-            self.requires("android_ndk_installer/r22b", private=private)
-
-    def imports(self):
-        if self.settings.os == "iOS":
-            # on iOS, we need static libs to create universal binaries
-            # Note: libtanker*.a will be copied at install time
-            self.copy("*.a", dst="lib", src="lib")
-        self.copy("license*", dst="licenses", folder=True, ignore_case=True)
-        self.copy("copying", dst="licenses", folder=True, ignore_case=True)
 
     def build_requirements(self):
         if self.should_build_tools:
-            self.build_requires("docopt.cpp/0.6.2")
+            self.test_requires("docopt.cpp/0.6.2-r1")
         if self.should_build_tests:
-            self.build_requires("catch2-async/2.13.6-r2")
-            self.build_requires("trompeloeil/38")
+            self.test_requires("catch2-async/2.13.6-r2")
+            self.test_requires("trompeloeil/38")
 
-    def init_cmake(self):
-        if self.cmake:
-            return
-
-        self.cmake = CMake(self)
-
-        if "CONAN_CXX_FLAGS" not in self.cmake.definitions:
-            self.cmake.definitions["CONAN_CXX_FLAGS"] = ""
-        if "CONAN_C_FLAGS" not in self.cmake.definitions:
-            self.cmake.definitions["CONAN_C_FLAGS"] = ""
+    def generate(self):
+        ct = CMakeToolchain(self)
 
         if self.options.sanitizer:
-            self.cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
-            self.cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
+            ct.variables["CONAN_C_FLAGS"] += self.sanitizer_flag
+            ct.variables["CONAN_CXX_FLAGS"] += self.sanitizer_flag
         if self.options.with_coroutines_ts:
-            self.cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
-        self.cmake.definitions["BUILD_TESTS"] = self.should_build_tests
-        self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer
-        self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
-        self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tools
+            ct.variables["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
+        ct.variables["BUILD_TESTS"] = self.should_build_tests
+        ct.variables["WITH_TRACER"] = self.should_build_tracer
+        ct.variables["WARN_AS_ERROR"] = self.options.warn_as_error
+        ct.variables["BUILD_TANKER_TOOLS"] = self.should_build_tools
         if self.settings.os != "Windows":
             # On Android and iOS OpenSSL can't use system ca-certificates, so we
             # ship mozilla's cacert.pem instead on all platforms but windows
-            self.cmake.definitions["TANKER_EMBED_CERTIFICATES"] = True
-        self.cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
-        self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
-        self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
-        self.cmake.definitions["WITH_FETCHPP"] = self.options.with_fetchpp
-        self.cmake.definitions["WITH_SQLITE"] = self.options.with_sqlite
+            ct.variables["TANKER_EMBED_CERTIFICATES"] = True
+        ct.variables["TANKERLIB_SHARED"] = self.options.tankerlib_shared
+        ct.variables["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
+        ct.variables["WITH_COVERAGE"] = self.options.coverage
+        ct.variables["WITH_FETCHPP"] = self.options.with_fetchpp
+        ct.variables["WITH_SQLITE"] = self.options.with_sqlite
+
+        ct.generate()
 
     def build(self):
-        self.init_cmake()
+        cmake = CMake(self)
         if self.should_configure:
-            self.cmake.configure()
+            cmake.configure()
         if self.should_build:
-            self.cmake.build()
+            cmake.build()
         if self.should_install and self.develop:
-            self.cmake.install()
+            cmake.install()
 
     def deploy(self):
         self.copy("include/*")
@@ -173,15 +158,15 @@ class TankerConan(ConanFile):
         self.copy("*.so")
         self.copy("*.dylib")
         if not self.options.tankerlib_shared:
-            self.copy_deps("*.lib")
-            self.copy_deps("*.a")
+            self.copy_deps("*.lib", dst="lib", keep_path=False)
+            self.copy_deps("*.a", dst="lib", keep_path=False)
 
     def package(self):
-        self.init_cmake()
+        cmake = CMake(self)
         if self.settings.build_type == "Release" and not self.settings.os == "Windows":
-            self.cmake.build(target="install/strip")
+            cmake.build(target="install/strip")
         else:
-            self.cmake.install()
+            cmake.install()
 
     def package_id(self):
         del self.info.options.warn_as_error
@@ -216,4 +201,5 @@ class TankerConan(ConanFile):
         if self.settings.os == "Windows" and not self.options.tankerlib_shared:
             libs.append("crypt32")
 
+        self.cpp_info.includedirs = ["include"]
         self.cpp_info.libs = libs
