@@ -61,7 +61,7 @@ void checkCounts(std::map<int, int> const& counts,
     auto const count = found->second;
     CHECK(count == nbCalls);
   }
-};
+}
 
 void unblock(tc::promise<int>& blockedHandler)
 {
