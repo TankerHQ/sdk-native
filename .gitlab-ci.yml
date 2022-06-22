@@ -190,9 +190,9 @@ nightly/coverage:
     - .build
     - .rules/nightly
   script:
-    # Using linux-release profile, but CI script will force debug for Tanker only
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-release --coverage
-    - mv build/linux-release/coverage coverage
+    # Using linux-x86_64 profile, but CI script will force debug for Tanker only
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 --coverage
+    - mv build/linux-x86_64/coverage coverage
   artifacts:
     paths:
       - coverage/
