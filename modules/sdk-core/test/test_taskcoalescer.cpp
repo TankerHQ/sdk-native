@@ -76,23 +76,16 @@ void unblockAll(std::vector<tc::promise<int>>& blockedHandlers)
 
 struct SyncState
 {
-  std::vector<tc::promise<int>> blockedHandler;
-  std::vector<tc::promise<int>> startedHandler;
-  int handlerIdx;
-
-  void restart(int nbTask)
+  SyncState(size_t nbTask) : startedHandler(nbTask)
   {
-    startedHandler.resize(0);
-    startedHandler.resize(nbTask);
-    handlerIdx = 0;
-  };
+  }
 
   tc::cotask<void> syncStart()
   {
     tc::promise<int> sync;
     blockedHandler.emplace_back(sync);
 
-    startedHandler[handlerIdx++].set_value(0);
+    unblock(startedHandler[handlerIdx++]);
 
     TC_AWAIT(sync.get_future().to_shared());
   };
@@ -102,6 +95,10 @@ struct SyncState
     for (auto& started : startedHandler)
       (void)TC_AWAIT(started.get_future());
   }
+
+  std::vector<tc::promise<int>> startedHandler;
+  std::vector<tc::promise<int>> blockedHandler;
+  int handlerIdx = 0;
 };
 }
 
@@ -123,8 +120,7 @@ TEST_CASE("TaskCoalescer")
   SECTION("forwards errors from already in-progress task")
   {
     taskIds_type ids{0, 1, 2};
-    SyncState state;
-    state.restart(1);
+    SyncState state{1};
 
     auto alwaysError =
         [&](taskIds_type const&) -> tc::cotask<std::vector<Value>> {
@@ -165,8 +161,12 @@ TEST_CASE("TaskCoalescer")
   {
     struct TestState : public SyncState
     {
-      taskIdsArgs_type handledIds;
-      std::map<int, int> counts;
+      TestState(coalescer_type& coalescer, taskIdsArgs_type const& taskIdsArgs)
+        : SyncState{taskIdsArgs.size()}
+      {
+        for (auto const& taskIds : taskIdsArgs)
+          results.emplace_back(DEFER_AWAIT(coalescer.run(handle, taskIds)));
+      }
 
       coalescer_type::task_handler_type handle =
           [&](taskIds_type const& ids) -> tc::cotask<std::vector<Value>> {
@@ -181,19 +181,10 @@ TEST_CASE("TaskCoalescer")
         TC_RETURN(ids | ranges::to<std::vector<Value>>);
       };
 
-      std::vector<result_type> makeFutures(coalescer_type& coalescer,
-                                           taskIdsArgs_type const& taskIdsArgs)
-      {
-        restart(taskIdsArgs.size());
-
-        std::vector<result_type> results;
-        for (auto const& taskIds : taskIdsArgs)
-          results.emplace_back(DEFER_AWAIT(coalescer.run(handle, taskIds)));
-
-        return results;
-      };
+      taskIdsArgs_type handledIds;
+      std::map<int, int> counts;
+      std::vector<result_type> results;
     };
-    TestState state;
 
     SECTION("resolves task responses out of order")
     {
@@ -202,7 +193,7 @@ TEST_CASE("TaskCoalescer")
           {1},
           {2},
       };
-      auto results = state.makeFutures(coalescer, taskIdsArgs);
+      TestState state{coalescer, taskIdsArgs};
 
       AWAIT_VOID(state.awaitReady());
 
@@ -210,7 +201,7 @@ TEST_CASE("TaskCoalescer")
       unblock(state.blockedHandler[0]);
       unblock(state.blockedHandler[2]);
 
-      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(results, taskIdsArgs)));
+      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(state.results, taskIdsArgs)));
       taskIdsArgs_type const expected = {{1}, {0}, {2}};
       CHECK(state.handledIds == expected);
     }
@@ -221,12 +212,12 @@ TEST_CASE("TaskCoalescer")
           {1, 2},
           {2, 3},
       };
-      auto results = state.makeFutures(coalescer, taskIdsArgs);
+      TestState state{coalescer, taskIdsArgs};
 
       AWAIT_VOID(state.awaitReady());
       unblockAll(state.blockedHandler);
 
-      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(results, taskIdsArgs)));
+      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(state.results, taskIdsArgs)));
       taskIdsArgs_type const expected = {{1, 2}, {3}};
       CHECK(state.handledIds == expected);
     }
@@ -237,13 +228,13 @@ TEST_CASE("TaskCoalescer")
     {
       taskIds_type ids{1, 2, 3};
       taskIdsArgs_type taskIdsArgs{ids, ids, {3}};
-      auto results = state.makeFutures(coalescer, taskIdsArgs);
+      TestState state{coalescer, taskIdsArgs};
 
       // The taskHandler is only called once
       AWAIT(state.startedHandler[0].get_future());
       unblockAll(state.blockedHandler);
 
-      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(results, taskIdsArgs)));
+      REQUIRE_NOTHROW(AWAIT_VOID(checkReturns(state.results, taskIdsArgs)));
       taskIdsArgs_type const expected = {ids};
       CHECK(state.handledIds == expected);
       checkCounts(state.counts, {1, 2, 3});
@@ -258,20 +249,20 @@ TEST_CASE("TaskCoalescer")
       };
 
       // first batch
-      auto results = state.makeFutures(coalescer, taskIdsArgs);
-      AWAIT_VOID(state.awaitReady());
-      unblockAll(state.blockedHandler);
+      TestState batch1{coalescer, taskIdsArgs};
+      AWAIT_VOID(batch1.awaitReady());
+      unblockAll(batch1.blockedHandler);
 
-      AWAIT_VOID(checkReturns(results, taskIdsArgs));
-      checkCounts(state.counts, {1, 2, 3}, 1);
+      AWAIT_VOID(checkReturns(batch1.results, taskIdsArgs));
+      checkCounts(batch1.counts, {1, 2, 3}, 1);
 
       // second batch
-      results = state.makeFutures(coalescer, taskIdsArgs);
-      AWAIT_VOID(state.awaitReady());
-      unblockAll(state.blockedHandler);
+      TestState batch2{coalescer, taskIdsArgs};
+      AWAIT_VOID(batch2.awaitReady());
+      unblockAll(batch2.blockedHandler);
 
-      AWAIT_VOID(checkReturns(results, taskIdsArgs));
-      checkCounts(state.counts, {1, 2, 3}, 2);
+      AWAIT_VOID(checkReturns(batch2.results, taskIdsArgs));
+      checkCounts(batch2.counts, {1, 2, 3}, 1);
     }
   }
 }
