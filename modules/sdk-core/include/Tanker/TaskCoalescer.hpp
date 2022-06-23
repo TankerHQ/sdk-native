@@ -93,13 +93,13 @@ private:
         resolveEntry(value.id, std::make_optional<Value>(value));
       });
 
-      auto const requested = newTaskIds | ranges::to<std::vector> | ranges::actions::sort;
+      auto const requested =
+          newTaskIds | ranges::to<std::vector> | ranges::actions::sort;
       auto const got = result |
-                        ranges::views::transform(
-                            [&](auto const& value) { return value.id; }) |
-                        ranges::to<std::vector> | ranges::actions::sort;
-      ranges::for_each(ranges::views::set_difference(
-                          requested , got),
+                       ranges::views::transform(
+                           [&](auto const& value) { return value.id; }) |
+                       ranges::to<std::vector> | ranges::actions::sort;
+      ranges::for_each(ranges::views::set_difference(requested, got),
                        [&](auto const& id) { resolveEntry(id, std::nullopt); });
     }
     catch (...)
