@@ -17,7 +17,7 @@ class TankerConan(ConanFile):
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         "with_coroutines_ts": [True, False],
-        "with_fetchpp": [True, False],
+        "with_http_backend": ["fetchpp", "libcurl", None],
         "with_sqlite": [True, False],
     }
     default_options = {
@@ -28,7 +28,7 @@ class TankerConan(ConanFile):
         "sanitizer": None,
         "coverage": False,
         "with_coroutines_ts": False,
-        "with_fetchpp": True,
+        "with_http_backend": "libcurl",
         "with_sqlite": True,
     }
     generators = "CMakeDeps", "VirtualBuildEnv"
@@ -55,7 +55,7 @@ class TankerConan(ConanFile):
         if self.cross_building:
             return False
 
-        if not self.options.with_fetchpp or not self.options.with_sqlite:
+        if not self.options.with_http_backend or not self.options.with_sqlite:
             return False
 
         return True
@@ -91,8 +91,12 @@ class TankerConan(ConanFile):
         private = self.options.tankerlib_shared
 
         self.requires("boost/1.78.0-r4", private=private)
-        self.requires("libressl/3.2.5", private=private)
-        self.requires("fetchpp/0.15.3-r1", private=private)
+        if self.options.with_http_backend:
+            self.requires("libressl/3.2.5", private=private)
+            if self.options.with_http_backend == "libcurl":
+                self.requires("libcurl/7.80.0-r1", private=private)
+            elif self.options.with_http_backend == "fetchpp":
+                self.requires("fetchpp/0.15.3-r1", private=private)
         if self.options.with_sqlite:
             self.requires("sqlpp11/0.60-r2", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r2", private=private)
@@ -139,7 +143,8 @@ class TankerConan(ConanFile):
         ct.variables["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         ct.variables["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         ct.variables["WITH_COVERAGE"] = self.options.coverage
-        ct.variables["WITH_FETCHPP"] = self.options.with_fetchpp
+        ct.variables["WITH_FETCHPP"] = self.options.with_http_backend == "fetchpp"
+        ct.variables["WITH_CURL"] = self.options.with_http_backend == "libcurl"
         ct.variables["WITH_SQLITE"] = self.options.with_sqlite
 
         ct.generate()
