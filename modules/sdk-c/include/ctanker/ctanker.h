@@ -26,7 +26,6 @@ enum tanker_status
 enum tanker_event
 {
   TANKER_EVENT_SESSION_CLOSED,
-  TANKER_EVENT_DEVICE_REVOKED,
 
   TANKER_EVENT_LAST,
 };
@@ -86,7 +85,6 @@ struct tanker_device_list
 struct tanker_device_list_elem
 {
   char const* device_id;
-  bool is_revoked;
 };
 
 /*!

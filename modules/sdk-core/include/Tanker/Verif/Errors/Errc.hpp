@@ -22,7 +22,6 @@ enum class Errc
   InvalidUserKeys,
   InvalidTargetDevice,
   UserAlreadyExists,
-  AuthorIsRevoked,
 };
 
 std::error_code make_error_code(Errc c) noexcept;

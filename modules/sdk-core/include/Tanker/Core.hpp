@@ -156,8 +156,6 @@ public:
 
   void setHttpSessionToken(std::string_view);
 
-  tc::cotask<void> confirmRevocation();
-
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
   tc::cotask<void> registerIdentityImpl(

@@ -17,11 +17,9 @@ std::string to_string(Nature n)
     NATURE_CASE(TrustchainCreation);
     NATURE_CASE(DeviceCreation1);
     NATURE_CASE(KeyPublishToDevice);
-    NATURE_CASE(DeviceRevocation1);
     NATURE_CASE(DeviceCreation2);
     NATURE_CASE(DeviceCreation3);
     NATURE_CASE(KeyPublishToUser);
-    NATURE_CASE(DeviceRevocation2);
     NATURE_CASE(UserGroupCreation1);
     NATURE_CASE(KeyPublishToUserGroup);
     NATURE_CASE(UserGroupAddition1);

@@ -73,8 +73,6 @@ using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
                                            Actions::DeviceCreation1,
                                            Actions::DeviceCreation2,
                                            Actions::DeviceCreation3,
-                                           Actions::DeviceRevocation1,
-                                           Actions::DeviceRevocation2,
                                            Actions::UserGroupCreation1,
                                            Actions::UserGroupCreation2,
                                            Actions::UserGroupCreation3,
@@ -109,10 +107,6 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<DeviceCreation2>(block);
   case Nature::DeviceCreation3:
     return Serialization::deserialize<DeviceCreation3>(block);
-  case Nature::DeviceRevocation1:
-    return Serialization::deserialize<DeviceRevocation1>(block);
-  case Nature::DeviceRevocation2:
-    return Serialization::deserialize<DeviceRevocation2>(block);
   case Nature::UserGroupCreation1:
     return Serialization::deserialize<UserGroupCreation1>(block);
   case Nature::UserGroupCreation2:

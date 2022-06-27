@@ -11,7 +11,7 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DataStore/Utils.cpp
 )
 
-if (WITH_SQLITE)
+if(WITH_SQLITE)
   set(TANKER_CORE_SQLITE_SRC
     include/Tanker/DataStore/Sqlite/Backend.hpp
     include/Tanker/DataStore/Connection.hpp
@@ -81,7 +81,6 @@ add_library(tankercore STATIC
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
-  include/Tanker/Revocation.hpp
   include/Tanker/Users/User.hpp
   include/Tanker/Users/Updater.hpp
   include/Tanker/Users/IRequester.hpp
@@ -97,7 +96,6 @@ add_library(tankercore STATIC
   include/Tanker/IdentityUtils.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
-  include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
@@ -159,11 +157,9 @@ add_library(tankercore STATIC
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp
   src/Users/Requester.cpp
-  src/Revocation.cpp
   src/Verif/Errors/Errc.cpp
   src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp
-  src/Verif/DeviceRevocation.cpp
   src/Verif/TrustchainCreation.cpp
   src/ProvisionalUsers/Verif/ProvisionalIdentityClaim.cpp
   src/Encryptor.cpp

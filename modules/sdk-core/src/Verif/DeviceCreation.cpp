@@ -52,10 +52,6 @@ DeviceCreation verifyDeviceCreation(DeviceCreation const& deviceCreation,
       Errc::InvalidUserId,
       "Device creation's user id must be the same than its parent device's");
 
-  ensures(!authorDevice->isRevoked(),
-          Errc::InvalidAuthor,
-          "author device must not be revoked");
-
   assert(std::find(user.devices().begin(),
                    user.devices().end(),
                    *authorDevice) != user.devices().end());

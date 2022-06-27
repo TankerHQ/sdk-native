@@ -19,7 +19,6 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Oidc/Nonce.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
@@ -305,9 +304,6 @@ decltype(std::declval<F>()()) Core::resetOnFailure(
   }
   catch (Errors::Exception const& ex)
   {
-    // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
-      throw;
     for (auto const e : additionalErrorsToIgnore)
       if (ex.errorCode() == e)
         throw;
@@ -1229,10 +1225,5 @@ std::optional<std::string> Core::makeWithTokenRandomNonce(
   std::array<uint8_t, 8> randombuf;
   Tanker::Crypto::randomFill(gsl::make_span(randombuf));
   return mgs::base16::encode(randombuf.begin(), randombuf.end());
-}
-
-tc::cotask<void> Core::confirmRevocation()
-{
-  TC_AWAIT(_session->accessors().localUserAccessor.confirmRevocation());
 }
 }

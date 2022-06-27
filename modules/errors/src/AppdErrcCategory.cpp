@@ -26,8 +26,6 @@ std::string AppdErrcCategory::message(int c) const
     return "provisional identity not found";
   case AppdErrc::ProvisionalIdentityAlreadyAttached:
     return "provisional identity already attached";
-  case AppdErrc::DeviceRevoked:
-    return "device revoked";
   case AppdErrc::TooManyAttempts:
     return "too many attempts";
   case AppdErrc::VerificationNeeded:
@@ -94,7 +92,6 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::InvalidChallengeSignature:
   case AppdErrc::InvalidChallengePublicKey:
   case AppdErrc::VerificationNeeded: // Handled internally
-  case AppdErrc::DeviceRevoked:      // Handled internally
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
   case AppdErrc::ProvisionalIdentityAlreadyAttached:

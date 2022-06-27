@@ -59,8 +59,6 @@ public:
   tc::cotask<std::optional<Crypto::EncryptionKeyPair>> pullUserKeyPair(
       Crypto::PublicEncryptionKey const& publicUserKey) override;
 
-  tc::cotask<void> confirmRevocation();
-
 private:
   tc::cotask<void> update();
 

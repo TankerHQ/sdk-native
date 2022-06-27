@@ -1,6 +1,4 @@
-#include <Tanker/Revocation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Users/Updater.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>

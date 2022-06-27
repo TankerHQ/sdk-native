@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <boost/variant2/variant.hpp>
@@ -14,8 +13,7 @@
 
 namespace Tanker::Trustchain
 {
-using UserAction = boost::variant2::variant<Actions::DeviceCreation,
-                                            Actions::DeviceRevocation>;
+using UserAction = boost::variant2::variant<Actions::DeviceCreation>;
 
 Crypto::Hash getHash(UserAction const& action);
 Actions::Nature getNature(UserAction const& action);

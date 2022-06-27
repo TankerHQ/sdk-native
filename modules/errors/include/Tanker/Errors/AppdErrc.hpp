@@ -15,7 +15,6 @@ enum class AppdErrc
   DeviceNotFound,
   ProvisionalIdentityNotFound,
   ProvisionalIdentityAlreadyAttached,
-  DeviceRevoked,
   TooManyAttempts,
   InvalidToken,
   VerificationNeeded,

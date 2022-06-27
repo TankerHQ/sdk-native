@@ -395,9 +395,6 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
     case TANKER_EVENT_SESSION_CLOSED:
       return tanker->connectSessionClosed(
           [=, cb = std::move(cb)] { cb(nullptr, data); });
-    case TANKER_EVENT_DEVICE_REVOKED:
-      return tanker->connectDeviceRevoked(
-          [=, cb = std::move(cb)] { cb(nullptr, data); });
     default:
       throw formatEx(Errc::InvalidArgument,
                      FMT_STRING("unknown event: {:d}"),
@@ -415,9 +412,6 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
     {
     case TANKER_EVENT_SESSION_CLOSED:
       tanker->disconnectSessionClosed();
-      break;
-    case TANKER_EVENT_DEVICE_REVOKED:
-      tanker->disconnectDeviceRevoked();
       break;
     default:
       throw formatEx(Errc::InvalidArgument,
@@ -547,7 +541,6 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
         {
           cDevice->device_id =
               duplicateString(mgs::base64::encode(device.id()));
-          cDevice->is_revoked = device.isRevoked();
           cDevice++;
         }
         return reinterpret_cast<void*>(cDeviceList);

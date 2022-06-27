@@ -65,7 +65,6 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
     // Throw the same exception as if tconcurrent had canceled the call itself
     throw tc::operation_canceled{};
 
-  bool isRevoked = false;
   bool isUnusable = false;
   std::exception_ptr eptr;
   try
@@ -83,14 +82,9 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
   catch (Errors::Exception const& ex)
   {
     eptr = std::current_exception();
-    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
-    {
-      TINFO("Device is revoked: {}", ex.what());
-      isRevoked = true;
-    }
-    else if (ex.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
-             ex.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
-             ex.errorCode() == Errors::AppdErrc::DeviceNotFound)
+    if (ex.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
+        ex.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
+        ex.errorCode() == Errors::AppdErrc::DeviceNotFound)
     {
       eptr = std::current_exception();
       TERROR("Device is unusable: {}", ex.what());
@@ -99,9 +93,7 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
     else
       throw;
   }
-  if (isRevoked)
-    TC_AWAIT(handleDeviceRevocation()); // this is noreturn
-  else if (isUnusable)
+  if (isUnusable)
   {
     TC_AWAIT(handleDeviceUnrecoverable());
     std::rethrow_exception(eptr);
@@ -370,17 +362,6 @@ void AsyncCore::disconnectSessionClosed()
   this->_core.setSessionClosedHandler(nullptr);
 }
 
-void AsyncCore::connectDeviceRevoked(std::function<void()> cb)
-{
-  this->_asyncDeviceRevoked =
-      makeEventHandler(this->_taskCanceler, std::move(cb));
-}
-
-void AsyncCore::disconnectDeviceRevoked()
-{
-  this->_asyncDeviceRevoked = nullptr;
-}
-
 void AsyncCore::setLogHandler(Log::LogHandler handler)
 {
   Log::setLogHandler([handler](Log::Record const& record) {
@@ -447,46 +428,8 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
   });
 }
 
-tc::cotask<void> AsyncCore::handleDeviceRevocation()
-{
-  // If multiple coroutines get here waiting for this lock, one will get the
-  // lock and eventually call _taskCanceler.terminate() which will abort all the
-  // other ones.
-  auto const lock = TC_AWAIT(_quickStopSemaphore.get_scope_lock());
-
-  std::exception_ptr deviceRevokedException;
-  try
-  {
-    TDEBUG("Refreshing user to verify verification");
-    TC_AWAIT(_core.confirmRevocation());
-    TERROR("While trying to confirm revocation, didn't get any error");
-    throw Errors::formatEx(
-        Errors::Errc::InternalError,
-        "server declared this device revoked, but it is not");
-  }
-  catch (Errors::Exception const& ex)
-  {
-    if (ex.errorCode() != Errors::Errc::DeviceRevoked)
-    {
-      TERROR("While trying to confirm revocation, got a different error: {}",
-             ex.what());
-      throw;
-    }
-    else
-    {
-      deviceRevokedException = std::current_exception();
-    }
-  }
-  nukeAndStop();
-  if (_asyncDeviceRevoked)
-    _asyncDeviceRevoked();
-  TINFO("Revocation handled, self-destruct complete");
-  std::rethrow_exception(deviceRevokedException);
-}
-
 tc::cotask<void> AsyncCore::handleDeviceUnrecoverable()
 {
-  // See handleDeviceRevocation
   auto const lock = TC_AWAIT(_quickStopSemaphore.get_scope_lock());
 
   nukeAndStop();
@@ -494,7 +437,7 @@ tc::cotask<void> AsyncCore::handleDeviceUnrecoverable()
 
 void AsyncCore::nukeAndStop()
 {
-  // - This device was revoked or has been deemed unusable, we need to stop so
+  // - This device has been deemed unusable, we need to stop so
   // that Session gets destroyed.
   // - There might be calls in progress on this session, so we
   // must terminate() them before going on.

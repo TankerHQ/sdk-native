@@ -10,9 +10,6 @@ using namespace Tanker::Trustchain;
 using Trustchain::Actions::DeviceCreation;
 using Trustchain::Actions::DeviceCreation1;
 using Trustchain::Actions::DeviceCreation3;
-using Trustchain::Actions::DeviceRevocation;
-using Trustchain::Actions::DeviceRevocation1;
-using Trustchain::Actions::DeviceRevocation2;
 
 namespace
 {
@@ -190,42 +187,6 @@ DeviceCreation3 createNewGhostDeviceAction(
                             encryptionKey,
                             userEncryptionKeys,
                             DeviceCreation::DeviceType::GhostDevice);
-}
-
-DeviceRevocation2 createRevokeDeviceAction(
-    TrustchainId const& trustchainId,
-    DeviceId const& author,
-    Crypto::PrivateSignatureKey const& signatureKey,
-    DeviceId const& toBeRevoked,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
-    DeviceRevocation::v2::SealedKeysForDevices const& userKeys)
-{
-  return DeviceRevocation2{
-      trustchainId,
-      toBeRevoked,
-      publicEncryptionKey,
-      previousPublicEncryptionKey,
-      encryptedKeyForPreviousUserKey,
-      userKeys,
-      static_cast<Crypto::Hash>(author),
-      signatureKey,
-  };
-}
-
-DeviceRevocation1 createRevokeDeviceV1Action(
-    TrustchainId const& trustchainId,
-    DeviceId const& author,
-    Crypto::PrivateSignatureKey const& signatureKey,
-    DeviceId const& toBeRevoked)
-{
-  return DeviceRevocation1{
-      trustchainId,
-      toBeRevoked,
-      static_cast<Crypto::Hash>(author),
-      signatureKey,
-  };
 }
 
 Actions::SessionCertificate createSessionCertificate(
