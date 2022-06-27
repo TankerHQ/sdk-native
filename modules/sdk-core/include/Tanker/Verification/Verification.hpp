@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
+#include <Tanker/Types/E2ePassphrase.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/EncryptedPhoneNumber.hpp>
@@ -44,6 +45,7 @@ struct ByPhoneNumber
 using Verification = boost::variant2::variant<VerificationKey,
                                               ByEmail,
                                               Passphrase,
+                                              E2ePassphrase,
                                               OidcIdToken,
                                               ByPhoneNumber,
                                               PreverifiedEmail,
@@ -55,6 +57,7 @@ class VerificationMethod
                                                        (VerificationKey,
                                                         Email,
                                                         Passphrase,
+                                                        E2ePassphrase,
                                                         OidcIdToken,
                                                         PhoneNumber,
                                                         PreverifiedEmail,
@@ -99,6 +102,8 @@ void validateVerification(
     Identity::SecretProvisionalIdentity const& provisionalIdentity);
 
 bool isPreverified(Verification const& v);
+
+bool isE2eVerification(Verification const& v);
 
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {

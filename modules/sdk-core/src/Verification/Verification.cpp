@@ -37,6 +37,9 @@ VerificationMethod VerificationMethod::from(Verification const& v)
   return boost::variant2::visit(
       overloaded{
           [](Passphrase const&) -> VerificationMethod { return Passphrase{}; },
+          [](E2ePassphrase const&) -> VerificationMethod {
+            return E2ePassphrase{};
+          },
           [](VerificationKey const&) -> VerificationMethod {
             return VerificationKey{};
           },
@@ -112,6 +115,8 @@ void from_json(nlohmann::json const& j,
   auto const isPreverified = j.at("is_preverified").get<bool>();
   if (value == "passphrase")
     m = Passphrase{};
+  else if (value == "e2e_passphrase")
+    m = E2ePassphrase{};
   else if (value == "verificationKey")
     m = VerificationKey{};
   else if (value == "oidc_id_token")
@@ -185,5 +190,10 @@ bool isPreverified(Verification const& v)
   using boost::variant2::holds_alternative;
   return holds_alternative<PreverifiedEmail>(v) ||
          holds_alternative<PreverifiedPhoneNumber>(v);
+}
+
+bool isE2eVerification(Verification const& v)
+{
+  return boost::variant2::holds_alternative<E2ePassphrase>(v);
 }
 }

@@ -32,11 +32,19 @@ public:
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::UserId const& userId,
-      RequestWithVerif const& request) override;
+      SetVerifMethodRequest const& request) override;
 
   tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::UserId const& userId,
       RequestWithVerif const& verificationRequest) override;
+
+  tc::cotask<std::vector<std::uint8_t>> fetchE2eVerificationKey(
+      Trustchain::UserId const& userId,
+      RequestWithVerif const& verificationRequest) override;
+
+  tc::cotask<boost::variant2::variant<EncryptedVerificationKeyForUserKey,
+                                      EncryptedVerificationKeyForUserSecret>>
+  fetchEncryptedVerificationKey(Trustchain::UserId const& userId) override;
 
   tc::cotask<std::vector<boost::variant2::variant<VerificationMethod,
                                                   EncryptedVerificationMethod>>>
@@ -56,7 +64,16 @@ public:
       gsl::span<uint8_t const> userCreation,
       gsl::span<uint8_t const> firstDevice,
       RequestWithVerif const& verificationRequest,
-      gsl::span<uint8_t const> encryptedVerificationKey) override;
+      gsl::span<uint8_t const> encryptedVerificationKeyForUserSecret) override;
+
+  tc::cotask<void> createUserE2e(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      gsl::span<uint8_t const> userCreation,
+      gsl::span<uint8_t const> firstDevice,
+      RequestWithVerif const& verificationRequest,
+      gsl::span<uint8_t const> encryptedVerificationKeyForE2ePassphrase,
+      gsl::span<uint8_t const> encryptedVerificationKeyForUserKey) override;
 
   tc::cotask<void> enrollUser(
       Trustchain::TrustchainId const& trustchainId,

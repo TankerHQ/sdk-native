@@ -112,7 +112,9 @@ public:
 
   tc::future<std::optional<std::string>> setVerificationMethod(
       Verification::Verification const& method,
-      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
+      Core::VerifyWithToken withToken = Core::VerifyWithToken::No,
+      Core::AllowE2eMethodSwitch allowE2eSwitch =
+          Core::AllowE2eMethodSwitch::No);
   tc::future<std::vector<Verification::VerificationMethod>>
   getVerificationMethods();
 

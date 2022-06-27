@@ -34,12 +34,11 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
 }
 
 tc::cotask<void> Requester::setVerificationMethod(
-    Trustchain::UserId const& userId, RequestWithVerif const& request)
+    Trustchain::UserId const& userId, SetVerifMethodRequest const& request)
 {
-  nlohmann::json payload{{"verification", request}};
   auto const target = _httpClient->makeUrl(fmt::format(
       "users/{userId:#S}/verification-methods", fmt::arg("userId", userId)));
-  TC_AWAIT(_httpClient->asyncPost(target, std::move(payload))).value();
+  TC_AWAIT(_httpClient->asyncPost(target, request)).value();
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
@@ -51,7 +50,45 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
                                        "userId"_a = userId)),
       {{"verification", request}}));
   TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
-      res.value().at("encrypted_verification_key").get<std::string>()));
+      res.value()
+          .at("encrypted_verification_key_for_user_secret")
+          .get<std::string>()));
+}
+
+tc::cotask<std::vector<std::uint8_t>> Requester::fetchE2eVerificationKey(
+    Trustchain::UserId const& userId, RequestWithVerif const& request)
+{
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      _httpClient->makeUrl(fmt::format("users/{userId:#S}/verification-key",
+                                       "userId"_a = userId)),
+      {{"verification", request}}));
+  TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
+      res.value()
+          .at("encrypted_verification_key_for_e2e_passphrase")
+          .get<std::string>()));
+}
+
+tc::cotask<boost::variant2::variant<EncryptedVerificationKeyForUserKey,
+                                    EncryptedVerificationKeyForUserSecret>>
+Requester::fetchEncryptedVerificationKey(Trustchain::UserId const& userId)
+{
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncGet(
+      _httpClient->makeUrl("encrypted-verification-key")));
+
+  if (auto vkForUs =
+          res.value().at("encrypted_verification_key_for_user_secret");
+      !vkForUs.is_null())
+    TC_RETURN(mgs::base64::decode<EncryptedVerificationKeyForUserSecret>(
+        vkForUs.get<std::string>()));
+  else
+  {
+    auto vkForUk = res.value()
+                       .at("encrypted_verification_key_for_user_key")
+                       .get<std::string>();
+    TC_RETURN(mgs::base64::decode<EncryptedVerificationKeyForUserKey>(vkForUk));
+  }
 }
 
 tc::cotask<std::vector<
@@ -107,7 +144,7 @@ tc::cotask<void> Requester::createUser(
     gsl::span<uint8_t const> userCreation,
     gsl::span<uint8_t const> firstDevice,
     RequestWithVerif const& verificationRequest,
-    gsl::span<uint8_t const> encryptedVerificationKey)
+    gsl::span<uint8_t const> encryptedVerificationKeyForUserSecret)
 {
   nlohmann::json body{
       {"app_id", trustchainId},
@@ -115,7 +152,35 @@ tc::cotask<void> Requester::createUser(
       {"ghost_device_creation", mgs::base64::encode(userCreation)},
       {"first_device_creation", mgs::base64::encode(firstDevice)},
       {"v2_encrypted_verification_key",
-       mgs::base64::encode(encryptedVerificationKey)},
+       mgs::base64::encode(encryptedVerificationKeyForUserSecret)},
+      {"verification", verificationRequest},
+  };
+  auto const target = _httpClient->makeUrl(
+      fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
+
+  auto const res = TC_AWAIT(_httpClient->asyncPost(target, std::move(body)));
+  auto accessToken = res.value().at("access_token").get<std::string>();
+  _httpClient->setAccessToken(std::move(accessToken));
+}
+
+tc::cotask<void> Requester::createUserE2e(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    gsl::span<uint8_t const> userCreation,
+    gsl::span<uint8_t const> firstDevice,
+    RequestWithVerif const& verificationRequest,
+    gsl::span<uint8_t const> encryptedVerificationKeyForE2ePassphrase,
+    gsl::span<uint8_t const> encryptedVerificationKeyForUserKey)
+{
+  nlohmann::json body{
+      {"app_id", trustchainId},
+      {"user_id", userId},
+      {"ghost_device_creation", mgs::base64::encode(userCreation)},
+      {"first_device_creation", mgs::base64::encode(firstDevice)},
+      {"encrypted_verification_key_for_e2e_passphrase",
+       mgs::base64::encode(encryptedVerificationKeyForE2ePassphrase)},
+      {"encrypted_verification_key_for_user_key",
+       mgs::base64::encode(encryptedVerificationKeyForUserKey)},
       {"verification", verificationRequest},
   };
   auto const target = _httpClient->makeUrl(

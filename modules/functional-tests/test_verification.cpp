@@ -775,6 +775,140 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
   }
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "Verification with E2E passphrase")
+{
+  auto alice = trustchain.makeUser();
+  auto device1 = alice.makeDevice();
+  auto core1 = device1.createCore();
+  REQUIRE(TC_AWAIT(core1->start(alice.identity)) ==
+          Status::IdentityRegistrationNeeded);
+
+  auto device2 = alice.makeDevice();
+  auto core2 = device2.createCore();
+
+  auto const passphrase = Passphrase{"average passphrase"};
+  auto const e2ePassphrase = E2ePassphrase{"Correct horse battery staple"};
+
+  SECTION("registerIdentity throws if e2e passphrase is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(E2ePassphrase{""})),
+        Errc::InvalidArgument);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
+  }
+
+  SECTION("it sets an E2E passphrase and adds a new device")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {E2ePassphrase{}}));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(e2ePassphrase)));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core2->getVerificationMethods()), {E2ePassphrase{}}));
+  }
+
+  SECTION("it throws when trying to verify with an invalid E2E passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->registerIdentity(Verification::Verification{e2ePassphrase})));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(E2ePassphrase{"wrongPass"})),
+        Errc::InvalidVerification);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
+  }
+
+  SECTION(
+      "it can't switch to an e2e passphrase without setting "
+      "the allowE2eMethodSwitch flag")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(passphrase)));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->setVerificationMethod(e2ePassphrase)),
+        Errc::InvalidArgument);
+  }
+
+  SECTION(
+      "it can't switch from an e2e passphrase without setting "
+      "the allowE2eMethodSwitch flag")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(e2ePassphrase)));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->setVerificationMethod(passphrase)),
+        Errc::InvalidArgument);
+  }
+
+  SECTION("it erases previous methods when switching to an e2e passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(passphrase)));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(e2ePassphrase,
+                                     Tanker::Core::VerifyWithToken::No,
+                                     Tanker::Core::AllowE2eMethodSwitch::Yes)));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {E2ePassphrase{}}));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->verifyIdentity(passphrase)),
+                                  Errc::PreconditionFailed);
+  }
+
+  SECTION("it erases previous methods when switching from an e2e passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(e2ePassphrase)));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(passphrase,
+                                     Tanker::Core::VerifyWithToken::No,
+                                     Tanker::Core::AllowE2eMethodSwitch::Yes)));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {Passphrase{}}));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(e2ePassphrase)),
+        Errc::PreconditionFailed);
+  }
+
+  SECTION(
+      "it can switch several times back and forth before setting an e2e "
+      "passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Passphrase{"one"})));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(E2ePassphrase{"two"},
+                                     Tanker::Core::VerifyWithToken::No,
+                                     Tanker::Core::AllowE2eMethodSwitch::Yes)));
+    REQUIRE_NOTHROW(
+        TC_AWAIT(core1->setVerificationMethod(E2ePassphrase{"three"})));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(Passphrase{"four"},
+                                     Tanker::Core::VerifyWithToken::No,
+                                     Tanker::Core::AllowE2eMethodSwitch::Yes)));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(E2ePassphrase{"fifth"},
+                                     Tanker::Core::VerifyWithToken::No,
+                                     Tanker::Core::AllowE2eMethodSwitch::Yes)));
+
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(E2ePassphrase{"fifth"})));
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core2->getVerificationMethods()), {E2ePassphrase{}}));
+  }
+}
+
 TEST_CASE_METHOD(TrustchainFixture,
                  "Verification with preverified phone number")
 {

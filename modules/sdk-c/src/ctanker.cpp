@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 5)
+  if (cverification->version != 6)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
@@ -70,6 +70,12 @@ Verification::Verification cverificationToVerification(
     if (!cverification->passphrase)
       throw formatEx(Errc::InvalidArgument, "passphrase field is null");
     verification = Passphrase{cverification->passphrase};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE: {
+    if (!cverification->e2e_passphrase)
+      throw formatEx(Errc::InvalidArgument, "e2e_passphrase field is null");
+    verification = E2ePassphrase{cverification->e2e_passphrase};
     break;
   }
   case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY: {
@@ -137,6 +143,9 @@ void cVerificationMethodFromVerificationMethod(
   if (method.holds_alternative<Passphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
+  else if (method.holds_alternative<E2ePassphrase>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE);
   else if (method.holds_alternative<OidcIdToken>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN);
@@ -179,15 +188,34 @@ Tanker::Core::VerifyWithToken withTokenFromVerifOptions(
 
   if (!cverif_opts)
     return VerifyWithToken::No;
-  if (cverif_opts->version != 1)
+  if (cverif_opts->version != 2)
     throw Exception(
         make_error_code(Errc::InvalidArgument),
         fmt::format("options version should be {:d} instead of {:d}",
-                    1,
+                    2,
                     cverif_opts->version));
 
   bool withToken = cverif_opts->with_session_token;
   return withToken ? VerifyWithToken::Yes : VerifyWithToken::No;
+}
+
+Tanker::Core::AllowE2eMethodSwitch allowE2eMethodSwitchFromVerifOptions(
+    tanker_verification_options_t const* cverif_opts)
+{
+  using AllowE2eMethodSwitch = Tanker::Core::AllowE2eMethodSwitch;
+
+  if (!cverif_opts)
+    return AllowE2eMethodSwitch::No;
+  if (cverif_opts->version != 2)
+    throw Exception(
+        make_error_code(Errc::InvalidArgument),
+        fmt::format("options version should be {:d} instead of {:d}",
+                    2,
+                    cverif_opts->version));
+
+  bool allowE2eMethodSwitch = cverif_opts->allow_e2e_method_switch;
+  return allowE2eMethodSwitch ? AllowE2eMethodSwitch::Yes :
+                                AllowE2eMethodSwitch::No;
 }
 
 #define STATIC_ENUM_CHECK(cval, cppval)           \
@@ -200,6 +228,8 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL,
                   Verification::Method::Email);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
                   Verification::Method::Passphrase);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE,
+                  Verification::Method::E2ePassphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Verification::Method::VerificationKey);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
@@ -212,7 +242,7 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER,
                   Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 8,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 9,
               "Please update the assertions above if you added a new "
               "unlock method");
 
@@ -539,8 +569,11 @@ tanker_future_t* tanker_set_verification_method(
   return makeFuture(
       tc::sync([&] {
         auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto allowE2eMethodSwitch =
+            allowE2eMethodSwitchFromVerifOptions(cverif_opts);
         auto const verification = cverificationToVerification(cverification);
-        return tanker->setVerificationMethod(verification, withToken);
+        return tanker->setVerificationMethod(
+            verification, withToken, allowE2eMethodSwitch);
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {

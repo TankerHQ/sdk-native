@@ -44,6 +44,12 @@ public:
     Yes,
   };
 
+  enum class AllowE2eMethodSwitch : bool
+  {
+    No,
+    Yes,
+  };
+
   // There are hidden casts of this enum, so grep them if you change the enum
   static_assert(static_cast<int>(ShareWithSelf::No) == 0);
   static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
@@ -103,7 +109,9 @@ public:
       std::vector<SPublicIdentity> const& spublicIdentitiesToRemove);
 
   tc::cotask<std::optional<std::string>> setVerificationMethod(
-      Verification::Verification const& method, VerifyWithToken withToken);
+      Verification::Verification const& method,
+      VerifyWithToken withToken,
+      AllowE2eMethodSwitch allowE2eSwitch);
   tc::cotask<std::vector<Verification::VerificationMethod>>
   getVerificationMethods();
   tc::cotask<VerificationKey> generateVerificationKey() const;
@@ -155,6 +163,10 @@ private:
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Verification::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<VerificationKey> fetchE2eVerificationKey(
+      Verification::Verification const& verification,
+      Crypto::SymmetricKey const& e2eEncryptionKey,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<VerificationKey> getVerificationKey(
       Verification::Verification const& verification,
