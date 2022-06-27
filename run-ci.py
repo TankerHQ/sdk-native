@@ -1,27 +1,23 @@
 import argparse
-import socket
-import os
-import shutil
-import sys
 import json
+import os
 import platform
-import math
-
+import shutil
+import socket
+import sys
 from pathlib import Path
-from typing import List, Optional, Any
-import cli_ui as ui  # noqa
-import tempfile
-import gitlab
+from typing import Dict, List, Optional
 
+import cli_ui as ui  # noqa
 import tankerci
-from tankerci.conan import Profile
+import tankerci.benchmark
 import tankerci.cpp
 import tankerci.git
 import tankerci.reporting
-import tankerci.benchmark
+from tankerci.conan import Profile
 
 
-def build(profiles: List[str], coverage: bool, test: bool) -> None:
+def build(profiles: List[Profile], coverage: bool, test: bool) -> None:
     build_profile = tankerci.conan.get_build_profile()
     for host_profile in profiles:
 
@@ -66,7 +62,9 @@ def deploy(remote: str) -> None:
     build_profile = tankerci.conan.get_build_profile()
     for profile in profiles:
         package_folder = artifacts_folder / profile
-        host_profile = tankerci.conan.import_profile(package_folder / ".conan_profile.json")
+        host_profile = tankerci.conan.import_profile(
+            package_folder / ".conan_profile.json"
+        )
         tankerci.conan.export_pkg(
             recipe,
             package_folder=package_folder,
@@ -129,9 +127,13 @@ def report_performance(
     upload_results: bool,
 ) -> None:
     branch = get_branch_name()
-    if not branch:
+    if branch is None:
         ui.fatal("Not on a branch, can't report benchmarks")
-    _, commit_id = tankerci.git.run_captured(os.getcwd(), "rev-parse", "HEAD")
+
+    # Help mypy infering that branch is no longer of type Optional[str] but str
+    assert branch is not None
+
+    _, commit_id = tankerci.git.run_captured(Path.cwd(), "rev-parse", "HEAD")
 
     if profile not in BENCHMARK_PROFILE_TO_BUILD_TARGET:
         ui.fatal(f"We don't benchmark {profile}")
@@ -163,7 +165,7 @@ def report_performance(
     if not hostname:
         hostname = socket.gethostname()
 
-    benchmark_aggregates = {}
+    benchmark_aggregates: Dict[str, Dict[str, int]] = {}
     for benchmark in bench_results["benchmarks"]:
         name = benchmark["run_name"].lower()
         aggregate = benchmark["aggregate_name"]
@@ -196,7 +198,7 @@ def report_performance(
         master_size = fetch_lib_size_for_branch("master")
         new_size = fetch_lib_size_for_branch(branch)
         result_message = tankerci.benchmark.format_benchmark_table(
-            benchmark_aggregates, master_results, master_size, new_size, "dev"
+            benchmark_aggregates, master_results, master_size, new_size
         )
 
         tankerci.benchmark.post_gitlab_mr_message("sdk-native", result_message)
@@ -269,9 +271,7 @@ def main() -> None:
         user_home = Path.cwd() / ".cache" / "conan" / args.remote
 
     if args.command == "build":
-        with tankerci.conan.ConanContextManager(
-            [args.remote], conan_home=user_home
-        ):
+        with tankerci.conan.ConanContextManager([args.remote], conan_home=user_home):
             profiles = [Profile(p) for p in args.profiles]
             build(profiles, args.coverage, args.test)
     elif args.command == "benchmark-artifact":
@@ -288,7 +288,7 @@ def main() -> None:
             [args.remote],
             conan_home=user_home,
             clean_on_exit=True,
-       ):
+        ):
             deploy(args.remote)
     else:
         parser.print_help()
