@@ -917,19 +917,20 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
 }
 
 inline auto constexpr simpleEncryptionOverhead = 17;
+inline auto constexpr paddedSimpleEncryptionOverhead = simpleEncryptionOverhead + 1;
 
 TEST_CASE_METHOD(TrustchainFixture,
                  "Alice can use the padding encryption option")
 {
   SECTION("encrypt/decrypt with auto padding")
   {
-    std::string const clearData("my clear data is clear");
+    std::string const clearData("my clear data is clear!");
     std::vector<uint8_t> encryptedData;
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
                         *aliceSession, clearData, {}, {}, std::nullopt)));
 
-    auto const lengthWithPadme = 22;
-    REQUIRE(encryptedData.size() - simpleEncryptionOverhead - 1 ==
+    auto const lengthWithPadme = 24;
+    REQUIRE(encryptedData.size() - paddedSimpleEncryptionOverhead ==
             lengthWithPadme);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
@@ -937,7 +938,7 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   SECTION("encrypt/decrypt with no padding")
   {
-    std::string const clearData("my clear data is clear");
+    std::string const clearData("my clear data is clear!");
     std::vector<uint8_t> encryptedData;
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
                         *aliceSession, clearData, {}, {}, Padding::Off)));
@@ -950,13 +951,13 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   SECTION("encrypt/decrypt with a padding step")
   {
-    std::string const clearData("my clear data is clear");
+    std::string const clearData("my clear data is clear!");
     auto const step = 13;
     std::vector<uint8_t> encryptedData;
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                         encrypt(*aliceSession, clearData, {}, {}, step)));
 
-    REQUIRE((encryptedData.size() - simpleEncryptionOverhead - 1) % step == 0);
+    REQUIRE((encryptedData.size() - paddedSimpleEncryptionOverhead) % step == 0);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }
@@ -964,7 +965,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   SECTION(
       "encrypt/decrypt with a huge padding step should select the v8 format")
   {
-    std::string const clearData("my clear data is clear");
+    std::string const clearData("my clear data is clear!");
     auto const step = 2 * 1024 * 1024;
     std::vector<uint8_t> encryptedData;
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
