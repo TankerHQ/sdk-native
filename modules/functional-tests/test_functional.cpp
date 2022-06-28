@@ -769,6 +769,8 @@ TEST_CASE_METHOD(TrustchainFixture,
       TC_AWAIT(aliceSession->share({resourceId}, {eve.publicIdentity}, {})),
       Errors::Errc::InvalidArgument,
       "public identity not in the trustchain");
+
+  TC_AWAIT(trustchainFactory().deleteTrustchain(otherTrustchain->id));
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
