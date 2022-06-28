@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
                                       get_config_app_management_token(),
                                       get_config_environment_name()));
   tanker_app_descriptor_t* app =
-      future_get(tanker_admin_create_app(admin, "functest"));
+      future_get(tanker_admin_create_app(admin, "sdk-native-sdk-c-tests"));
 
   test_sign_up_sign_in(app);
 
