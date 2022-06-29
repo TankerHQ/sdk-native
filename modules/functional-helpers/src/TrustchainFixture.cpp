@@ -27,7 +27,7 @@ tc::cotask<void> createTrustchain()
   assert(!testState.trustchain);
   testState.trustchain =
       TC_AWAIT(TrustchainFixtureSimple::trustchainFactory().createTrustchain(
-          "trustchain_functional_native"));
+          "sdk-native-functional-tests"));
 
   // If you add something here, you might need to delete it in
   // deleteTrustchain() below

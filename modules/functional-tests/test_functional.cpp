@@ -755,7 +755,7 @@ TEST_CASE_METHOD(TrustchainFixture,
                  "Alice cannot share with identity from a different trustchain")
 {
   auto otherTrustchain = TC_AWAIT(trustchainFactory().createTrustchain(
-      "other_trustchain_functional_native"));
+      "sdk-native-functional-tests-other-trustchain"));
   auto eve = otherTrustchain->makeEmailProvisionalUser();
 
   auto const clearData = "my clear data is clear";
