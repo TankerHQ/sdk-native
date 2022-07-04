@@ -32,7 +32,7 @@ public:
 
 private:
   std::optional<std::uint32_t> _paddingStep;
-  std::optional<std::uint32_t> _paddingLeftToAdd;
+  std::optional<std::uint64_t> _paddingLeftToAdd;
 
   tc::cotask<void> encryptChunk();
 };

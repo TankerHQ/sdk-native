@@ -12,7 +12,10 @@ namespace
 {
 uint64_t computeNextMultiple(uint64_t multipleOf, uint64_t biggerThan)
 {
-  return multipleOf * ((biggerThan + multipleOf - 1) / multipleOf);
+  auto remainder = biggerThan % multipleOf;
+  if (remainder == 0)
+    return biggerThan;
+  return biggerThan + multipleOf - remainder;
 }
 }
 
