@@ -29,6 +29,7 @@ tanker_get_device_list
 tanker_get_public_identity
 tanker_get_resource_id
 tanker_get_verification_methods
+tanker_http_handle_response
 tanker_init
 tanker_prehash_password
 tanker_promise_create
