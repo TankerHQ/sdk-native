@@ -128,8 +128,6 @@ public:
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();
 
-  tc::future<SDeviceId> deviceId() const;
-
   static void setLogHandler(Log::LogHandler handler);
 
   static uint64_t encryptedSize(

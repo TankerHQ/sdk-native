@@ -647,7 +647,7 @@ tc::cotask<std::string> Core::getSessionToken(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto sessionCertificate = Users::createSessionCertificate(
       _session->trustchainId(),
-      deviceId(),
+      localUser.deviceId(),
       verification,
       localUser.deviceKeys().signatureKeyPair.privateKey);
   auto const serializedSessCert = Serialization::serialize(sessionCertificate);
@@ -745,12 +745,6 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
   decryptedData.resize(clearSize);
 
   TC_RETURN(std::move(decryptedData));
-}
-
-Trustchain::DeviceId const& Core::deviceId() const
-{
-  assertStatus(Status::Ready, "deviceId");
-  return _session->accessors().localUserAccessor.get().deviceId();
 }
 
 tc::cotask<void> Core::share(

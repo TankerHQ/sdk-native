@@ -518,15 +518,6 @@ enum tanker_status tanker_status(tanker_t* ctanker)
   return static_cast<enum tanker_status>(tanker->status());
 }
 
-tanker_future_t* tanker_device_id(tanker_t* ctanker)
-{
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->deviceId().and_then(
-      tc::get_synchronous_executor(), [](auto const& deviceId) {
-        return static_cast<void*>(duplicateString(deviceId.string()));
-      }));
-}
-
 tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
@@ -738,14 +729,6 @@ tanker_future_t* tanker_verify_provisional_identity(
 void tanker_free_buffer(void const* buffer)
 {
   free(const_cast<void*>(buffer));
-}
-
-void tanker_free_device_list(tanker_device_list_t* list)
-{
-  for (size_t i = 0; i < list->count; ++i)
-    free(const_cast<char*>(list->devices[i].device_id));
-  delete[] list->devices;
-  delete list;
 }
 
 void tanker_free_verification_method_list(

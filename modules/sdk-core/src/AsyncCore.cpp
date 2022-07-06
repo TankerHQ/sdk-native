@@ -332,13 +332,6 @@ tc::future<void> AsyncCore::verifyProvisionalIdentity(
   });
 }
 
-tc::future<SDeviceId> AsyncCore::deviceId() const
-{
-  return tc::submit_to_future<SDeviceId>(_taskCanceler.wrap(tc::lazy::then(
-      tc::lazy::async(tc::get_default_executor()),
-      [this] { return SDeviceId(mgs::base64::encode(_core.deviceId())); })));
-}
-
 void AsyncCore::connectSessionClosed(std::function<void()> cb)
 {
   this->_core.setSessionClosedHandler(

@@ -49,7 +49,6 @@ static const char USAGE[] =
       tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
-      tcli getdeviceid <trustchainurl> <trustchainid> <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--dont-share-with-self] [--share-with-identity=<identity>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
@@ -378,12 +377,6 @@ int main(int argc, char* argv[])
       auto const identity = args.at("<identity>").asString();
       auto const publicIdentity = Tanker::Identity::getPublicIdentity(identity);
       fmt::print("{}\n", publicIdentity);
-    }
-    else if (args.at("getdeviceid").asBool())
-    {
-      auto const core = signIn(args);
-
-      fmt::print("device id: {}", core->deviceId().get());
     }
     else if (args.at("encrypt").asBool())
     {
