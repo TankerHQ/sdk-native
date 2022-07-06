@@ -68,7 +68,7 @@ build/linux/shared/no-http-backend:
     - .after-script/branch_name
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared no-fetchpp
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared no-http-backend
   tags: !reference [.tags/compilation-linux, tags]
 
 build/windows:
@@ -125,7 +125,7 @@ build/macos/x86_64/shared/no-http-backend:
     - .after-script/branch_name
   script:
     - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-x86_64 shared no-fetchpp
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-x86_64 shared no-http-backend
   tags: !reference [.tags/macos/x86_64, tags]
 
 build/macos/arm/shared/no-http-backend:
@@ -136,7 +136,7 @@ build/macos/arm/shared/no-http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8 shared no-fetchpp
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8 shared no-http-backend
   tags: !reference [.tags/macos/arm, tags]
 
 build/android/shared:
