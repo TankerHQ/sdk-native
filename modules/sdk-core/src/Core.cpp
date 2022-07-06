@@ -753,17 +753,6 @@ Trustchain::DeviceId const& Core::deviceId() const
   return _session->accessors().localUserAccessor.get().deviceId();
 }
 
-tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
-{
-  assertStatus(Status::Ready, "getDeviceList");
-  auto const results =
-      TC_AWAIT(_session->accessors().userAccessor.pull({_session->userId()}));
-  if (results.found.size() != 1)
-    throw Errors::AssertionError("Did not find our userId");
-
-  TC_RETURN(results.found.at(0).devices());
-}
-
 tc::cotask<void> Core::share(
     std::vector<SResourceId> const& sresourceIds,
     std::vector<SPublicIdentity> const& spublicIdentities,

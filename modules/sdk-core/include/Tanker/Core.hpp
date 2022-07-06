@@ -126,7 +126,6 @@ public:
       Verification::Verification const& verification);
 
   Trustchain::DeviceId const& deviceId() const;
-  tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
   tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
   makeEncryptionStream(Streams::InputSource,

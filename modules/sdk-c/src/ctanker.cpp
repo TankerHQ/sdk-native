@@ -527,26 +527,6 @@ tanker_future_t* tanker_device_id(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->getDeviceList().and_then(
-      tc::get_synchronous_executor(),
-      [](std::vector<Users::Device> const& deviceList) {
-        auto* cDeviceList = new tanker_device_list_t;
-        cDeviceList->count = deviceList.size();
-        cDeviceList->devices = new tanker_device_list_elem_t[deviceList.size()];
-        tanker_device_list_elem_t* cDevice = cDeviceList->devices;
-        for (auto const& device : deviceList)
-        {
-          cDevice->device_id =
-              duplicateString(mgs::base64::encode(device.id()));
-          cDevice++;
-        }
-        return reinterpret_cast<void*>(cDeviceList);
-      }));
-}
-
 tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);

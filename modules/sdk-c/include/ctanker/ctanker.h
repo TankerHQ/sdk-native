@@ -64,8 +64,6 @@ typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
-typedef struct tanker_device_list_elem tanker_device_list_elem_t;
-typedef struct tanker_device_list tanker_device_list_t;
 typedef struct tanker_verification_method_list
     tanker_verification_method_list_t;
 typedef struct tanker_attach_result tanker_attach_result_t;

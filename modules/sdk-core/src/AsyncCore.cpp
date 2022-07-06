@@ -339,18 +339,6 @@ tc::future<SDeviceId> AsyncCore::deviceId() const
       [this] { return SDeviceId(mgs::base64::encode(_core.deviceId())); })));
 }
 
-tc::future<std::vector<Users::Device>> AsyncCore::getDeviceList()
-{
-  return runResumable([this]() -> tc::cotask<std::vector<Users::Device>> {
-    auto devices = TC_AWAIT(this->_core.getDeviceList());
-    devices.erase(
-        std::remove_if(devices.begin(), devices.end(), [](auto const& device) {
-          return device.isGhostDevice();
-        }));
-    TC_RETURN(devices);
-  });
-}
-
 void AsyncCore::connectSessionClosed(std::function<void()> cb)
 {
   this->_core.setSessionClosedHandler(

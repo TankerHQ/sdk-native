@@ -129,7 +129,6 @@ public:
   void disconnectSessionClosed();
 
   tc::future<SDeviceId> deviceId() const;
-  tc::future<std::vector<Users::Device>> getDeviceList();
 
   static void setLogHandler(Log::LogHandler handler);
 

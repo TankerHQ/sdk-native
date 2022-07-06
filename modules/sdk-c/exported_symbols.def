@@ -25,7 +25,6 @@ tanker_future_is_ready
 tanker_future_then
 tanker_future_wait
 tanker_generate_verification_key
-tanker_get_device_list
 tanker_get_public_identity
 tanker_get_resource_id
 tanker_get_verification_methods
