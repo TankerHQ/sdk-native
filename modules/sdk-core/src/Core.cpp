@@ -39,9 +39,7 @@
 #include <Tanker/Verification/Request.hpp>
 #include <Tanker/Verification/Requester.hpp>
 
-#ifdef TANKER_WITH_FETCHPP
-#include <Tanker/Network/FetchppBackend.hpp>
-#elif TANKER_WITH_CURL
+#ifdef TANKER_WITH_CURL
 #include <Tanker/Network/CurlBackend.hpp>
 #endif
 
@@ -222,9 +220,7 @@ Core::Core(std::string url,
     _cachePath(std::move(cachePath)),
     _networkBackend(networkBackend ?
                         std::move(networkBackend) :
-#if TANKER_WITH_FETCHPP
-                        std::make_unique<Network::FetchppBackend>(_info)
-#elif TANKER_WITH_CURL
+#if TANKER_WITH_CURL
                         std::make_unique<Network::CurlBackend>(_info)
 #else
                         nullptr

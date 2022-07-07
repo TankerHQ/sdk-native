@@ -90,12 +90,11 @@ auto get_certificate_authority()
   CertFreeCertificateContext(pContext);
   CertCloseStore(hStore, 0);
   return certs;
-#else
-#error unsupported build configuration
 #endif
 }
 }
 
+#if TANKER_EMBED_CERTIFICATES
 net::ssl::context create_ssl_context()
 {
   using net::ssl::context;
@@ -118,5 +117,6 @@ net::ssl::context& get_ssl_context()
   static auto context = create_ssl_context();
   return context;
 }
+#endif
 }
 }

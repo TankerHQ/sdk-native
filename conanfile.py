@@ -17,7 +17,7 @@ class TankerConan(ConanFile):
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         "with_coroutines_ts": [True, False],
-        "with_http_backend": ["fetchpp", "libcurl", None],
+        "with_http_backend": ["libcurl", None],
         "with_sqlite": [True, False],
     }
     default_options = {
@@ -92,10 +92,7 @@ class TankerConan(ConanFile):
 
         self.requires("boost/1.78.0-r4", private=private)
         self.requires("libressl/3.2.5", private=private)
-        if self.options.with_http_backend == "fetchpp":
-            self.requires("fetchpp/0.15.3-r1", private=private)
-        else:
-            self.requires("libcurl/7.80.0-r1", private=private)
+        self.requires("libcurl/7.80.0-r1", private=private)
         if self.options.with_sqlite:
             self.requires("sqlpp11/0.60-r2", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r2", private=private)
@@ -142,7 +139,6 @@ class TankerConan(ConanFile):
         ct.variables["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         ct.variables["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         ct.variables["WITH_COVERAGE"] = self.options.coverage
-        ct.variables["WITH_FETCHPP"] = self.options.with_http_backend == "fetchpp"
         ct.variables["WITH_CURL"] = self.options.with_http_backend == "libcurl"
         ct.variables["WITH_SQLITE"] = self.options.with_sqlite
 
@@ -198,11 +194,9 @@ class TankerConan(ConanFile):
                     "tankerlog",
                     "tankerformat",
                     "tankercacerts",
+                    "tcurl",
                 ]
             )
-            # In case of libcurl or None
-            if self.options.with_http_backend != "fetchpp":
-                libs.append("tcurl")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
