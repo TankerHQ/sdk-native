@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -85,7 +86,8 @@ public:
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+      std::optional<uint32_t> paddingStep = std::nullopt);
   tc::future<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                                gsl::span<uint8_t const> encryptedData);
 
@@ -93,8 +95,8 @@ public:
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
-
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+      std::optional<uint32_t> paddingStep = std::nullopt);
   tc::future<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);
 
@@ -133,7 +135,8 @@ public:
 
   static void setLogHandler(Log::LogHandler handler);
 
-  static uint64_t encryptedSize(uint64_t clearSize);
+  static uint64_t encryptedSize(
+      uint64_t clearSize, std::optional<uint32_t> paddingStep = std::nullopt);
 
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
@@ -143,7 +146,8 @@ public:
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+      std::optional<uint32_t> paddingStep = std::nullopt);
 
   tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
       makeDecryptionStream(Streams::InputSource);
@@ -151,7 +155,8 @@ public:
   tc::future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+      std::optional<uint32_t> paddingStep = std::nullopt);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);

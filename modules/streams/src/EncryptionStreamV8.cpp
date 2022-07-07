@@ -52,7 +52,7 @@ tc::cotask<void> EncryptionStreamV8::encryptChunk()
   clearInput.push_back(0x80);
   if (_paddingLeftToAdd && clearInput.size() - 1 < currentClearChunkSize)
   {
-    auto const paddingForCurrentChunk = std::min<std::int32_t>(
+    auto const paddingForCurrentChunk = std::min<std::int64_t>(
         currentClearChunkSize - (clearInput.size() - 1), *_paddingLeftToAdd);
     clearInput.resize(clearInput.size() + paddingForCurrentChunk, 0x00);
     *_paddingLeftToAdd -= paddingForCurrentChunk;

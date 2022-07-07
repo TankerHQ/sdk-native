@@ -15,7 +15,8 @@ tc::cotask<std::vector<uint8_t>> encrypt(
     AsyncCore& core,
     std::string const& data,
     std::vector<SPublicIdentity> const& publicIdentities = {},
-    std::vector<SGroupId> const& groupIds = {});
+    std::vector<SGroupId> const& groupIds = {},
+    std::optional<uint32_t> paddingStep = std::nullopt);
 
 tc::cotask<std::string> decrypt(AsyncCore& core,
                                 std::vector<uint8_t> const& encryptedData);

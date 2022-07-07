@@ -1,6 +1,7 @@
 #include <Tanker/Encryptor.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v4.hpp>
@@ -24,6 +25,8 @@ namespace Encryptor
 {
 namespace
 {
+constexpr auto STREAM_THRESHOLD = 1024 * 1024;
+
 template <typename Callable>
 decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 {
@@ -50,16 +53,28 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 }
 }
 
-bool isHugeClearData(uint64_t dataSize)
+bool isHugeClearData(uint64_t dataSize, std::optional<uint32_t> paddingStep)
 {
-  return dataSize > Streams::Header::defaultEncryptedChunkSize;
+  return Padding::paddedFromClearSize(dataSize, paddingStep) >=
+         STREAM_THRESHOLD;
 }
 
-uint64_t encryptedSize(uint64_t clearSize)
+uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 {
-  if (isHugeClearData(clearSize))
-    return EncryptorV4::encryptedSize(clearSize);
-  return EncryptorV3::encryptedSize(clearSize);
+  if (isHugeClearData(clearSize, paddingStep))
+  {
+    if (paddingStep == Padding::Off)
+      return EncryptorV4::encryptedSize(clearSize);
+    else
+      return EncryptorV8::encryptedSize(clearSize, paddingStep);
+  }
+  else
+  {
+    if (paddingStep == Padding::Off)
+      return EncryptorV3::encryptedSize(clearSize);
+    else
+      return EncryptorV6::encryptedSize(clearSize, paddingStep);
+  }
 }
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
@@ -76,11 +91,25 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 }
 
 tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
-                                       gsl::span<uint8_t const> clearData)
+                                       gsl::span<uint8_t const> clearData,
+                                       std::optional<uint32_t> paddingStep)
 {
-  if (isHugeClearData(clearData.size()))
-    TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
-  TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+  if (isHugeClearData(clearData.size(), paddingStep))
+  {
+    if (paddingStep == Padding::Off)
+      TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
+    else
+      TC_RETURN(TC_AWAIT(
+          EncryptorV8::encrypt(encryptedData, clearData, paddingStep)));
+  }
+  else
+  {
+    if (paddingStep == Padding::Off)
+      TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+    else
+      TC_RETURN(TC_AWAIT(
+          EncryptorV6::encrypt(encryptedData, clearData, paddingStep)));
+  }
 }
 
 tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,

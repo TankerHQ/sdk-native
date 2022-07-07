@@ -1,7 +1,10 @@
 #include <ctanker/encryptionsession.h>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Streams/EncryptionStreamV4.hpp>
+#include <Tanker/Crypto/Padding.hpp>
+
+#include "CPadding.hpp"
+#include "Stream.hpp"
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
@@ -19,9 +22,10 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
         std::vector<SPublicIdentity> spublicIdentities;
         std::vector<SGroupId> sgroupIds;
         bool shareWithSelf = true;
+        std::optional<uint32_t> paddingStepOpt;
         if (options)
         {
-          if (options->version != 3)
+          if (options->version != 4)
           {
             throw formatEx(Errc::InvalidArgument,
                            "unsupported tanker_encrypt_options struct version");
@@ -32,13 +36,15 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
                                           options->nb_groups,
                                           "share_with_groups");
           shareWithSelf = options->share_with_self;
+          paddingStepOpt = cPaddingToOptPadding(options->padding_step);
         }
 
         auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
         return tanker->makeEncryptionSession(
             spublicIdentities,
             sgroupIds,
-            static_cast<Core::ShareWithSelf>(shareWithSelf));
+            static_cast<Core::ShareWithSelf>(shareWithSelf),
+            paddingStepOpt);
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto sess) {
@@ -54,10 +60,11 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
   return makeFuture(tc::async([=] { delete session; }));
 }
 
-CTANKER_EXPORT uint64_t
-tanker_encryption_session_encrypted_size(uint64_t clearSize)
+CTANKER_EXPORT uint64_t tanker_encryption_session_encrypted_size(
+    tanker_encryption_session_t* csession, uint64_t clearSize)
 {
-  return EncryptionSession::encryptedSize(clearSize);
+  auto const session = reinterpret_cast<EncryptionSession*>(csession);
+  return session->encryptedSize(clearSize);
 }
 
 CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(

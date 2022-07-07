@@ -7,6 +7,7 @@
 
 #include <mgs/base64.hpp>
 
+#include "CPadding.hpp"
 #include "Stream.hpp"
 #include <ctanker/private/Utils.hpp>
 
@@ -38,10 +39,11 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
         std::vector<SPublicIdentity> spublicIdentities{};
         std::vector<SGroupId> sgroupIds{};
         bool shareWithSelf = true;
+        std::optional<uint32_t> paddingStepOpt;
 
         if (options)
         {
-          if (options->version != 3)
+          if (options->version != 4)
           {
             throw formatEx(Errc::InvalidArgument,
                            "unsupported tanker_encrypt_options struct version");
@@ -52,13 +54,16 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
                                           options->nb_groups,
                                           "share_with_groups");
           shareWithSelf = options->share_with_self;
+
+          paddingStepOpt = cPaddingToOptPadding(options->padding_step);
         }
 
         auto tanker = reinterpret_cast<AsyncCore*>(session);
         return tanker->makeEncryptionStream(wrapCallback(cb, additional_data),
                                             spublicIdentities,
                                             sgroupIds,
-                                            Core::ShareWithSelf{shareWithSelf});
+                                            Core::ShareWithSelf{shareWithSelf},
+                                            paddingStepOpt);
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto encryptor) {

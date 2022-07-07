@@ -1,5 +1,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Encryptor/v4.hpp>
+#include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -32,6 +34,12 @@ using namespace Tanker;
 using namespace Tanker::Errors;
 using namespace type_literals;
 using Tanker::Functional::TrustchainFixture;
+
+namespace
+{
+constexpr auto fiveMiB = 5 * 1024 * 1024;
+constexpr auto almostFiveMiB = fiveMiB - 30;
+}
 
 TEST_CASE_METHOD(TrustchainFixture,
                  "it throws when starting a session when the identity appId "
@@ -289,6 +297,46 @@ TEST_CASE_METHOD(TrustchainFixture,
   REQUIRE(decryptedData == clearData);
 }
 
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt/decrypt a huge buffer with auto padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encryptedData = TC_AWAIT(aliceSession->encrypt(
+      clearData, {}, {}, Core::ShareWithSelf::Yes, std::nullopt));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt/decrypt a huge buffer with no padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encryptedData = TC_AWAIT(aliceSession->encrypt(
+      clearData, {}, {}, Core::ShareWithSelf::Yes, Padding::Off));
+  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(
+    TrustchainFixture,
+    "Alice can encrypt/decrypt a huge buffer with a padding of 500")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encryptedData = TC_AWAIT(
+      aliceSession->encrypt(clearData, {}, {}, Core::ShareWithSelf::Yes, 500));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "Alice can stream encrypt/decrypt")
 {
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
@@ -328,6 +376,65 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 
   auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptorStream));
   CHECK(Core::getResourceId(encryptedData) == decryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can stream-encrypt with auto padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          std::nullopt));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Alice can stream-encrypt with no padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          Padding::Off));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can stream-encrypt with a padding of 500")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          500));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
   CHECK(decryptedData == clearData);
 }
 
@@ -808,5 +915,66 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
     TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->decrypt(encryptedData)),
                                   Errors::Errc::NetworkError);
+  }
+}
+
+inline auto constexpr simpleEncryptionOverhead = 17;
+inline auto constexpr paddedSimpleEncryptionOverhead = simpleEncryptionOverhead + 1;
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can use the padding encryption option")
+{
+  SECTION("encrypt/decrypt with auto padding")
+  {
+    std::string const clearData("my clear data is clear!");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, std::nullopt)));
+
+    auto const lengthWithPadme = 24;
+    REQUIRE(encryptedData.size() - paddedSimpleEncryptionOverhead ==
+            lengthWithPadme);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with no padding")
+  {
+    std::string const clearData("my clear data is clear!");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, Padding::Off)));
+
+    REQUIRE(encryptedData.size() - simpleEncryptionOverhead ==
+            clearData.size());
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with a padding step")
+  {
+    std::string const clearData("my clear data is clear!");
+    auto const step = 13;
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*aliceSession, clearData, {}, {}, step)));
+
+    REQUIRE((encryptedData.size() - paddedSimpleEncryptionOverhead) % step == 0);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION(
+      "encrypt/decrypt with a huge padding step should select the v8 format")
+  {
+    std::string const clearData("my clear data is clear!");
+    auto const step = 2 * 1024 * 1024;
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*aliceSession, clearData, {}, {}, step)));
+
+    CHECK(encryptedData[0] == 0x08);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }
 }
