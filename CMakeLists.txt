@@ -150,7 +150,6 @@ add_subdirectory(modules/streams)
 add_subdirectory(modules/tracer)
 add_subdirectory(modules/trustchain)
 add_subdirectory(modules/types)
-add_subdirectory(modules/cacerts)
 
 if (BUILD_TESTS)
   add_subdirectory(modules/functional-tests)

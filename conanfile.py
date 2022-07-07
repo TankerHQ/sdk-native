@@ -132,10 +132,6 @@ class TankerConan(ConanFile):
         ct.variables["WITH_TRACER"] = self.should_build_tracer
         ct.variables["WARN_AS_ERROR"] = self.options.warn_as_error
         ct.variables["BUILD_TANKER_TOOLS"] = self.should_build_tools
-        if self.settings.os != "Windows":
-            # On Android and iOS OpenSSL can't use system ca-certificates, so we
-            # ship mozilla's cacert.pem instead on all platforms but windows
-            ct.variables["TANKER_EMBED_CERTIFICATES"] = True
         ct.variables["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         ct.variables["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         ct.variables["WITH_COVERAGE"] = self.options.coverage
@@ -193,7 +189,6 @@ class TankerConan(ConanFile):
                     "tankererrors",
                     "tankerlog",
                     "tankerformat",
-                    "tankercacerts",
                     "tcurl",
                 ]
             )
@@ -201,9 +196,6 @@ class TankerConan(ConanFile):
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
-
-        if self.settings.os == "Windows" and not self.options.tankerlib_shared:
-            libs.append("crypt32")
 
         self.cpp_info.includedirs = ["include"]
         self.cpp_info.libs = libs

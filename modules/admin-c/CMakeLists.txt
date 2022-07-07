@@ -41,7 +41,7 @@ if (TANKERLIB_SHARED)
   endif()
 endif()
 
-target_link_libraries(tanker_admin-c tankercacerts)
+target_link_libraries(tanker_admin-c)
 
 tanker_link_libraries(tanker_admin-c
   tankeradmin
