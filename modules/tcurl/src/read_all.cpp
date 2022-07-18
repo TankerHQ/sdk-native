@@ -30,36 +30,6 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
   // creates a cycle, but it will be broken when the request finishes
   ra->_req = std::move(req);
 
-  ra->_req->set_header_callback(
-      [ra](request&, char const* data, std::size_t size) -> std::size_t {
-        // for \r\n
-        if (size < 2)
-          return 0;
-
-        if (size == 2)
-          return size;
-
-        // we may receive a response multiple times, for example for code
-        // 100 Continue. I don't know if there are other examples of that
-        if (size >= 4 && std::strncmp(data, "HTTP", 4) == 0 &&
-            std::find(data, data + size, ':') == data + size)
-          return size;
-
-        // remove the \r\n
-        size -= 2;
-
-        auto const semicolon = std::find(data, data + size, ':');
-        // incorrect header? take into account the space after the semi-colon
-        if (semicolon + 2 > data + size)
-          return 0;
-
-        std::string key(data, semicolon);
-        boost::algorithm::to_lower(key);
-        ra->_header[std::move(key)] = std::string(semicolon + 2, data + size);
-
-        return size + 2;
-      });
-
   ra->_req->set_read_callback(
       [ra](request&, void const* data, std::size_t size) {
         auto u8data = static_cast<uint8_t const*>(data);
@@ -70,7 +40,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
   ra->_req->set_finish_callback([ra](request&, CURLcode code) {
     if (code == CURLE_OK)
       ra->_promise.set_value(
-          {ra->_req, std::move(ra->_header), std::move(ra->_data)});
+          {ra->_req, std::move(ra->_data)});
     else
       ra->_promise.set_exception(std::make_exception_ptr(exception(code)));
     // break the cycles

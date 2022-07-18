@@ -142,7 +142,6 @@ TEST_CASE("curl multiple requests")
   curl_easy_getinfo(req->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode); \
                                                                          \
   CHECK(200 == httpcode);                                                \
-  CHECK(!result.header.empty());                                         \
   CHECK(!result.data.empty());
 
 TEST_CASE("curl failure")

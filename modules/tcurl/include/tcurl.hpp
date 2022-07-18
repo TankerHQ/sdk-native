@@ -153,8 +153,6 @@ private:
 class request
 {
 public:
-  using header_callback =
-      std::function<std::size_t(request&, char const*, std::size_t)>;
   using read_callback =
       std::function<std::size_t(request&, void const*, std::size_t)>;
   using finish_callback = std::function<void(request&, CURLcode)>;
@@ -167,10 +165,6 @@ public:
   request& operator=(request const&) = delete;
   request& operator=(request&&) = delete;
 
-  void set_header_callback(header_callback cb)
-  {
-    _header_cb = std::move(cb);
-  }
   void set_read_callback(read_callback cb)
   {
     _read_cb = std::move(cb);
@@ -202,7 +196,6 @@ private:
   detail::curl_slist_unique_ptr _header;
 
   std::array<char, CURL_ERROR_SIZE> _error;
-  header_callback _header_cb;
   read_callback _read_cb;
   finish_callback _finish_cb;
   abort_callback _abort_cb;
@@ -210,10 +203,8 @@ private:
 
   void notify_abort();
 
-  size_t header_cb(char* ptr, size_t size, size_t nmemb);
   size_t write_cb(void* ptr, size_t size, size_t nmemb);
 
-  static size_t header_cb_c(char* ptr, size_t size, size_t nmemb, void* data);
   static size_t write_cb_c(void* ptr, size_t size, size_t nmemb, void* data);
 
   friend multi;
@@ -227,7 +218,6 @@ struct read_all_result
   using data_type = std::vector<uint8_t>;
 
   request_ptr req;
-  header_type header;
   data_type data;
 };
 

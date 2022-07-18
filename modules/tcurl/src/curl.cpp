@@ -69,11 +69,6 @@ void multi::event_cb_c(std::shared_ptr<bool> alive,
   multi->event_cb(sock, asocket, action, ec);
 }
 
-size_t request::header_cb_c(char* ptr, size_t size, size_t nmemb, void* data)
-{
-  return static_cast<request*>(data)->header_cb(ptr, size, nmemb);
-}
-
 size_t request::write_cb_c(void* ptr, size_t size, size_t nmemb, void* data)
 {
   return static_cast<request*>(data)->write_cb(ptr, size, nmemb);
@@ -394,8 +389,6 @@ request::request() : _easy(curl_easy_init())
   if (!_easy)
     throw std::runtime_error("curl_easy_init() failed");
 
-  curl_easy_setopt(_easy.get(), CURLOPT_HEADERFUNCTION, &header_cb_c);
-  curl_easy_setopt(_easy.get(), CURLOPT_HEADERDATA, this);
   curl_easy_setopt(_easy.get(), CURLOPT_WRITEFUNCTION, &write_cb_c);
   curl_easy_setopt(_easy.get(), CURLOPT_WRITEDATA, this);
   // curl_easy_setopt(_easy.get(), CURLOPT_VERBOSE, 1L);
@@ -426,14 +419,6 @@ void request::notify_abort()
 {
   if (_abort_cb)
     _abort_cb(*this);
-}
-
-size_t request::header_cb(char* ptr, size_t size, size_t nmemb)
-{
-  if (_header_cb)
-    return _header_cb(*this, ptr, size * nmemb);
-  else
-    return size * nmemb;
 }
 
 size_t request::write_cb(void* ptr, size_t size, size_t nmemb)
