@@ -4,7 +4,6 @@ tanker_admin_connect
 tanker_admin_create_app
 tanker_admin_delete_app
 tanker_admin_app_descriptor_free
-tanker_admin_app_update
 tanker_admin_destroy
 tanker_future_destroy
 tanker_future_get_error
@@ -13,8 +12,6 @@ tanker_future_has_error
 tanker_future_is_ready
 tanker_future_then
 tanker_future_wait
-tanker_get_sms_verification_code
-tanker_get_email_verification_code
 tanker_promise_create
 tanker_promise_destroy
 tanker_promise_get_future
