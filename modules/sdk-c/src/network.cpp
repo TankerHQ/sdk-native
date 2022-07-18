@@ -2,9 +2,8 @@
 
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <ctanker/private/CNetwork.hpp>
 #include <ctanker/private/Utils.hpp>
-
-#include "CNetwork.hpp"
 
 #include <tconcurrent/promise.hpp>
 
