@@ -175,7 +175,7 @@ class TankerConan(ConanFile):
         del self.info.options.warn_as_error
 
     def package_info(self):
-        libs = ["tanker_admin-c", "ctanker", "tankerdatastoretests"]
+        libs = ["ctanker", "tankerdatastoretests"]
         if not self.options.tankerlib_shared:
             libs.extend(
                 [
