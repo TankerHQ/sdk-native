@@ -15,20 +15,6 @@ typedef struct tanker_app_descriptor
   char const* private_key;
 } tanker_app_descriptor_t;
 
-typedef struct tanker_app_update_options
-{
-  uint8_t version;
-  char const* oidc_client_id;
-  char const* oidc_client_provider;
-  bool const* preverified_verification;
-  bool const* user_enrollment;
-} tanker_app_update_options_t;
-
-#define TANKER_APP_UPDATE_OPTIONS_INIT \
-  {                                    \
-    4, NULL, NULL, NULL, NULL          \
-  }
-
 typedef struct tanker_admin tanker_admin_t;
 
 /*!
@@ -75,34 +61,6 @@ TANKER_ADMIN_C_EXPORT void tanker_admin_app_descriptor_free(
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_destroy(
     tanker_admin_t* admin);
-
-/*!
- * Gets the email verification code of a user from the server
- */
-TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_email_verification_code(
-    char const* url,
-    char const* app_id,
-    char const* verification_api_token,
-    char const* user_email);
-
-/*!
- * Gets the SMS verification code of a user from the server
- */
-TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_sms_verification_code(
-    char const* url,
-    char const* app_id,
-    char const* verification_api_token,
-    char const* user_phone_number);
-
-/*!
- * Updates app properties.
- * All fields in options may be left NULL individually.
- */
-TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_app_update(
-    tanker_admin_t* admin,
-    char const* app_id,
-    tanker_app_update_options_t* options);
-
 #ifdef __cplusplus
 }
 #endif
