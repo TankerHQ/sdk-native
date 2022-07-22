@@ -22,6 +22,12 @@ struct read_all_helper
   {
   }
 };
+
+void reset_read_all_helper(const std::shared_ptr<read_all_helper>& ra)
+{
+  ra->_promise = {};
+  ra->_req = nullptr;
+}
 }
 
 tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
@@ -44,8 +50,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
     else
       ra->_promise.set_exception(std::make_exception_ptr(exception(code)));
     // break the cycles
-    ra->_promise = {};
-    ra->_req = nullptr;
+    reset_read_all_helper(ra);
   });
 
   ra->_req->set_abort_callback([ra](request&) {
@@ -56,8 +61,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
     ra->_promise.set_exception(
         std::make_exception_ptr(tc::operation_canceled{}));
     // break the cycles
-    ra->_promise = {};
-    ra->_req = nullptr;
+    reset_read_all_helper(ra);
   });
 
   ra->_promise.get_cancelation_token().push_cancelation_callback([ra] {
@@ -69,8 +73,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
       ra->_multi.cancel(*ra->_req);
       ra->_promise.set_exception(
           std::make_exception_ptr(tc::operation_canceled{}));
-      ra->_promise = {};
-      ra->_req = nullptr;
+      reset_read_all_helper(ra);
     };
     if (tc::get_default_executor().is_in_this_context())
       doCancel();
