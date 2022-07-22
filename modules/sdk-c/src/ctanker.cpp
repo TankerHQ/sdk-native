@@ -18,9 +18,9 @@
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/CDataStore.hpp>
+#include <ctanker/private/CNetwork.hpp>
 #include <ctanker/private/Utils.hpp>
 
-#include "CNetwork.hpp"
 #include "CPadding.hpp"
 
 #include <optional>

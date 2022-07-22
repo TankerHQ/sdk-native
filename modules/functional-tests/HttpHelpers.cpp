@@ -1,14 +1,11 @@
 #include "HttpHelpers.hpp"
 
-#include <fetchpp/fetch.hpp>
-#include <fetchpp/http/authorization.hpp>
-#include <fetchpp/http/request.hpp>
-
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 
-#include <tconcurrent/asio_use_future.hpp>
-#include <tconcurrent/executor.hpp>
+#include <nlohmann/json.hpp>
+
+#include <tcurl.hpp>
 
 namespace Tanker
 {
@@ -19,26 +16,32 @@ tc::cotask<std::string> checkSessionToken(
     std::string const& sessionToken,
     nlohmann::json const& allowedMethods)
 {
-  using namespace fetchpp::http;
   auto const body = nlohmann::json({{"app_id", mgs::base64::encode(appId)},
                                     {"auth_token", verificationApiToken},
                                     {"public_identity", publicIdentity},
                                     {"session_token", sessionToken},
                                     {"allowed_methods", allowedMethods}});
-  auto req =
-      fetchpp::http::request(verb::post,
-                             url("/verification/session-token",
-                                 url(Tanker::TestConstants::trustchaindUrl())));
-  req.content(body.dump());
-  req.set(field::accept, "application/json");
-  auto const response = TC_AWAIT(fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      std::move(req),
-      tc::asio::use_future));
-  if (response.result() != status::ok)
+  auto const message = body.dump();
+
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url(fmt::format("{}/verification/session-token",
+                               Tanker::TestConstants::trustchaindUrl()));
+  request->add_header("Content-type: application/json");
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+
+  tcurl::multi client;
+  auto const response = TC_AWAIT(tcurl::read_all(client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200)
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "Failed to check session token");
-  TC_RETURN(response.json().at("verification_method").get<std::string>());
+  auto const jresponse =
+      nlohmann::json::parse(response.data.begin(), response.data.end());
+  TC_RETURN(jresponse.at("verification_method").get<std::string>());
 }
 
 tc::cotask<std::string> checkSessionToken(
@@ -64,23 +67,26 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
       {"grant_type", "refresh_token"},
       {"refresh_token", oidcConfig.users.at(userName).refreshToken},
   };
+  auto const message = payload.dump();
 
-  using namespace fetchpp;
+  auto request = std::make_shared<tcurl::request>();
+  request->set_url("https://www.googleapis.com/oauth2/v4/token");
+  curl_easy_setopt(request->get_curl(), CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(
+      request->get_curl(), CURLOPT_POSTFIELDSIZE, long(message.size()));
+  curl_easy_setopt(request->get_curl(), CURLOPT_COPYPOSTFIELDS, message.data());
+  request->add_header("Content-type: application/json");
 
-  auto const url = http::url("https://www.googleapis.com/oauth2/v4/token");
-  auto req = http::request(http::verb::post, url);
-  req.content(payload.dump());
-  auto response = TC_AWAIT(fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      Cacerts::get_ssl_context(),
-      std::move(req),
-      tc::asio::use_future));
-  if (response.result() != http::status::ok)
+  tcurl::multi client;
+  auto const response = TC_AWAIT(tcurl::read_all(client, request));
+  long httpcode;
+  curl_easy_getinfo(request->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
+  if (httpcode != 200)
     throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status google id token request: {}: {}",
-                           response.result_int(),
-                           http::obsolete_reason(response.result()));
-
-  TC_RETURN(response.json().at("id_token").get<OidcIdToken>());
+                           "invalid status google id token request: {}",
+                           httpcode);
+  auto const jresponse =
+      nlohmann::json::parse(response.data.begin(), response.data.end());
+  TC_RETURN(jresponse.at("id_token").get<OidcIdToken>());
 }
 }

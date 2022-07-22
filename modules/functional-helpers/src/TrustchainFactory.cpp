@@ -18,11 +18,9 @@ namespace Tanker
 namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
-  : _admin(std::make_unique<Admin::Client>(
-        TestConstants::appManagementUrl(),
-        TestConstants::appManagementToken(),
-        TestConstants::environmentName(),
-        tc::get_default_executor().get_io_service().get_executor()))
+  : _admin(std::make_unique<Admin::Client>(TestConstants::appManagementUrl(),
+                                           TestConstants::appManagementToken(),
+                                           TestConstants::environmentName()))
 {
 }
 

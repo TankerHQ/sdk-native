@@ -15,18 +15,19 @@ target_include_directories(tankeradmin
 )
 
 target_link_libraries(tankeradmin
-  tankercrypto
   tankertypes
   tankererrors
   tankercacerts
+  tankercore
   ttracer
+  tcurl
 
   gsl-lite::gsl-lite
   mgs::mgs
   tconcurrent::tconcurrent
   nlohmann_json::nlohmann_json
-  fetchpp::fetchpp
-)
+  libcurl::libcurl
+  )
 
 install(DIRECTORY include DESTINATION .)
 install(TARGETS tankeradmin
