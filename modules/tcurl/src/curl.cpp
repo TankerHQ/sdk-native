@@ -187,11 +187,7 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
 
     if (ec)
     {
-      // An error occurred
-      // TODO proper error handling
-      std::cerr << std::endl
-                << "Couldn't open socket [" << ec << "][" << ec.message()
-                << "]";
+      throw std::runtime_error(std::string("couldn't open socket: ") + ec.message());
     }
     else
     {
