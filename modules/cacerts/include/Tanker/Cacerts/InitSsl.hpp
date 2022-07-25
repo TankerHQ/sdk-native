@@ -7,7 +7,9 @@ namespace Tanker
 namespace Cacerts
 {
 void init();
+#if TANKER_EMBED_CERTIFICATES
 boost::asio::ssl::context& get_ssl_context();
 boost::asio::ssl::context create_ssl_context();
+#endif
 }
 }

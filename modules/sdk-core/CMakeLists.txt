@@ -20,13 +20,6 @@ if (WITH_SQLITE)
   )
 endif()
 
-if (WITH_FETCHPP)
-  set(TANKER_CORE_HTTP_SRC
-    include/Tanker/Network/FetchppBackend.hpp
-    src/Network/FetchppBackend.cpp
-  )
-endif()
-
 if (WITH_CURL)
   set(TANKER_CORE_HTTP_SRC
     include/Tanker/Network/CurlBackend.hpp
@@ -218,10 +211,6 @@ target_link_libraries(tankercore
   range-v3::range-v3
   date::date
 )
-
-if(WITH_FETCHPP)
-  target_link_libraries(tankercore tankercacerts skyr-url::skyr-url fetchpp::fetchpp)
-endif()
 
 if(WITH_CURL)
   target_link_libraries(tankercore tankercacerts tcurl)
