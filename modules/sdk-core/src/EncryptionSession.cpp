@@ -11,7 +11,6 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
-#include <Tanker/Streams/EncryptionStreamV8.hpp>
 
 namespace Tanker
 {
@@ -98,14 +97,8 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
 std::tuple<Streams::InputSource, Trustchain::ResourceId>
 EncryptionSession::makeEncryptionStream(Streams::InputSource cb)
 {
-  if (_paddingStep == Padding::Off)
-    return std::make_tuple(
-        Streams::EncryptionStreamV4(std::move(cb), _resourceId, _sessionKey),
-        _resourceId);
-  else
-    return std::make_tuple(
-        Streams::EncryptionStreamV8(
-            std::move(cb), _resourceId, _sessionKey, _paddingStep),
-        _resourceId);
+  return std::make_tuple(
+      Streams::EncryptionStreamV4(std::move(cb), _resourceId, _sessionKey),
+      _resourceId);
 }
 }
