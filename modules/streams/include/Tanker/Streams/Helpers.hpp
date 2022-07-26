@@ -19,7 +19,7 @@ InputSource bufferToInputSource(std::vector<uint8_t> buffer);
 template <typename T>
 tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
 {
-  int64_t totalRead = 0;
+  auto totalRead = 0lu;
   while (!out.empty())
   {
     auto const nbRead = TC_AWAIT(std::forward<T>(source)(out));
