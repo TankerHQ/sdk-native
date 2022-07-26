@@ -13,7 +13,7 @@ namespace Tanker
 {
 namespace Encryptor
 {
-bool isHugeClearData(uint64_t dataSize, std::optional<uint32_t> paddingStep);
+bool isHugeClearData(uint64_t dataSize);
 
 uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep);
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData);

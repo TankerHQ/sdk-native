@@ -52,7 +52,7 @@ std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
 
 std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
 {
-  if (Encryptor::isHugeClearData(clearSize, _paddingStep))
+  if (Encryptor::isHugeClearData(clearSize))
     return EncryptorV4::encryptedSize(clearSize);
 
   if (_paddingStep == Padding::Off)
@@ -66,7 +66,7 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
     gsl::span<const std::uint8_t> clearData)
 {
   assertSession("encrypt");
-  if (Encryptor::isHugeClearData(clearData.size(), _paddingStep))
+  if (Encryptor::isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
         encryptedData, clearData, _resourceId, _sessionKey)));
   else if (_paddingStep == Padding::Off)
