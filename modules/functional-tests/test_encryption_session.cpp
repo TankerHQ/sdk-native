@@ -108,7 +108,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can session-encrypt a stream")
 }
 
 inline auto const sessionEncryptionOverhead = 57;
-inline auto const paddedSessionEncryptionOverhead = sessionEncryptionOverhead + 1;
 
 TEST_CASE_METHOD(TrustchainFixture,
                  "Alice can use the padding option with an encryption session")
@@ -118,13 +117,13 @@ TEST_CASE_METHOD(TrustchainFixture,
     auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
         {}, {}, Core::ShareWithSelf::Yes, std::nullopt));
 
-    auto const clearData = "my clear data is clear!"s;
-    auto const lengthWithPadme = 24;
+    auto const clearData = "my clear data is clear"s;
+    auto const lengthWithPadme = 22;
     std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
         TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
 
-    CHECK(encryptedData.size() - paddedSessionEncryptionOverhead ==
+    CHECK(encryptedData.size() - sessionEncryptionOverhead - 1 ==
           lengthWithPadme);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
@@ -135,7 +134,7 @@ TEST_CASE_METHOD(TrustchainFixture,
     auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
         {}, {}, Core::ShareWithSelf::Yes, Padding::Off));
 
-    auto const clearData = "my clear data is clear!"s;
+    auto const clearData = "my clear data is clear"s;
     std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
         TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
@@ -151,12 +150,12 @@ TEST_CASE_METHOD(TrustchainFixture,
     auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
         {}, {}, Core::ShareWithSelf::Yes, step));
 
-    auto const clearData = "my clear data is clear!"s;
+    auto const clearData = "my clear data is clear"s;
     std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
         TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
 
-    CHECK((encryptedData.size() - paddedSessionEncryptionOverhead) % step == 0);
+    CHECK((encryptedData.size() - sessionEncryptionOverhead - 1) % step == 0);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }
@@ -169,7 +168,7 @@ TEST_CASE_METHOD(TrustchainFixture,
     auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
         {}, {}, Core::ShareWithSelf::Yes, step));
 
-    auto const clearData = "my clear data is clear!"s;
+    auto const clearData = "my clear data is clear"s;
     std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
         TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
