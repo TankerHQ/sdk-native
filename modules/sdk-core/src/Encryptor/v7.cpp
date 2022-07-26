@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>

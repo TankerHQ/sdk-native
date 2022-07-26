@@ -682,7 +682,7 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
   SECTION("extractResourceId should throw on a truncated buffer")
   {
     std::vector<uint8_t> buf(1);
-    buf[0] = T::version();
+    Serialization::varint_write(buf.data(), T::version());
 
     TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
                                   Errc::InvalidArgument);

@@ -148,9 +148,9 @@ TEST_CASE_METHOD(FixtureSession, "encryption session tests with no padding")
   SECTION("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(encSession.encryptedSize(0));
-    a0[0] = EncryptorV5::version();
+    Serialization::varint_write(a0.data(), EncryptorV5::version());
     std::vector<uint8_t> a42(encSession.encryptedSize(42));
-    a42[0] = EncryptorV5::version();
+    Serialization::varint_write(a42.data(), EncryptorV5::version());
     CHECK(Encryptor::decryptedSize(a0) == 0);
     CHECK(Encryptor::decryptedSize(a42) == 42);
   }
