@@ -7,7 +7,6 @@
 
 #include <mgs/base64.hpp>
 
-#include "CPadding.hpp"
 #include "Stream.hpp"
 #include <ctanker/private/Utils.hpp>
 
@@ -37,7 +36,6 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
   std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
   bool shareWithSelf = true;
-  std::optional<uint32_t> paddingStepOpt;
 
   if (options)
   {
@@ -52,8 +50,6 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
     sgroupIds = to_vector<SGroupId>(
         options->share_with_groups, options->nb_groups, "share_with_groups");
     shareWithSelf = options->share_with_self;
-
-    paddingStepOpt = cPaddingToOptPadding(options->padding_step);
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(session);
@@ -62,8 +58,7 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
         return tanker->makeEncryptionStream(wrapCallback(cb, additional_data),
                                             spublicIdentities,
                                             sgroupIds,
-                                            Core::ShareWithSelf{shareWithSelf},
-                                            paddingStepOpt);
+                                            Core::ShareWithSelf{shareWithSelf});
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto encryptor) {
