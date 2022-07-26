@@ -132,8 +132,7 @@ public:
   makeEncryptionStream(Streams::InputSource,
                        std::vector<SPublicIdentity> const& suserIds,
                        std::vector<SGroupId> const& sgroupIds,
-                       ShareWithSelf shareWithSelf,
-                       std::optional<uint32_t> paddingStep);
+                       ShareWithSelf shareWithSelf);
 
   tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
       makeDecryptionStream(Streams::InputSource);
