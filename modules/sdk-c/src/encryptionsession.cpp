@@ -1,11 +1,7 @@
 #include <ctanker/encryptionsession.h>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
-
-#include "CPadding.hpp"
-#include "Stream.hpp"
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
@@ -21,7 +17,6 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
   std::vector<SPublicIdentity> spublicIdentities;
   std::vector<SGroupId> sgroupIds;
   bool shareWithSelf = true;
-  std::optional<uint32_t> paddingStepOpt;
   if (options)
   {
     if (options->version != 4)
@@ -35,7 +30,6 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     sgroupIds = to_vector<SGroupId>(
         options->share_with_groups, options->nb_groups, "share_with_groups");
     shareWithSelf = options->share_with_self;
-    paddingStepOpt = cPaddingToOptPadding(options->padding_step);
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
@@ -44,8 +38,7 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
         return tanker->makeEncryptionSession(
             spublicIdentities,
             sgroupIds,
-            static_cast<Core::ShareWithSelf>(shareWithSelf),
-            paddingStepOpt);
+            static_cast<Core::ShareWithSelf>(shareWithSelf));
       })
           .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto sess) {

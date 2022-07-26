@@ -1,25 +1,19 @@
 #include <Tanker/EncryptionSession.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
-#include <Tanker/Encryptor/v6.hpp>
-#include <Tanker/Encryptor/v7.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 
 namespace Tanker
 {
-EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession,
-                                     std::optional<std::uint32_t> paddingStep)
+EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession)
   : _tankerSession(tankerSession),
     _taskCanceler{std::make_shared<tc::task_canceler>()},
     _sessionKey{Crypto::makeSymmetricKey()},
-    _resourceId{Crypto::getRandom<Trustchain::ResourceId>()},
-    _paddingStep(paddingStep)
+    _resourceId{Crypto::getRandom<Trustchain::ResourceId>()}
 {
 }
 
@@ -54,11 +48,8 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
 {
   if (Encryptor::isHugeClearData(clearSize))
     return EncryptorV4::encryptedSize(clearSize);
-
-  if (_paddingStep == Padding::Off)
+  else
     return EncryptorV5::encryptedSize(clearSize);
-
-  return EncryptorV7::encryptedSize(clearSize, _paddingStep);
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
@@ -69,12 +60,9 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
   if (Encryptor::isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
         encryptedData, clearData, _resourceId, _sessionKey)));
-  else if (_paddingStep == Padding::Off)
+  else
     TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
         encryptedData, clearData, _resourceId, _sessionKey)));
-  else
-    TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(
-        encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
 }
 
 std::tuple<Streams::InputSource, Trustchain::ResourceId>

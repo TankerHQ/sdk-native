@@ -154,8 +154,7 @@ public:
   tc::future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
-      std::optional<uint32_t> paddingStep = std::nullopt);
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);

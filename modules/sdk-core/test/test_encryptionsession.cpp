@@ -1,11 +1,7 @@
-#include <Tanker/EncryptionSession.hpp>
-
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/v4.hpp>
-#include <Tanker/Encryptor/v5.hpp>
-#include <Tanker/Encryptor/v7.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -27,161 +23,192 @@ auto makeSession()
   return Ptr(tmp, reinterpret_cast<typename Ptr::element_type*>(tmp.get()));
 }
 
-class FixtureSession
+class FixtureEncrytionSession
 {
 public:
-  FixtureSession() : session(makeSession())
+  FixtureEncrytionSession() : session(makeSession()), encSession(session)
   {
   }
 
 protected:
   std::shared_ptr<Session> session;
+  Tanker::EncryptionSession encSession;
 };
 
-void commonEncSessionTests(std::shared_ptr<Session>& session,
-                           EncryptionSession encSession)
-{
-  SECTION("encrypt should never give the same result twice")
-  {
-    auto clearData = make_buffer("this is the data to encrypt");
-
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData.size()));
-    AWAIT(encSession.encrypt(encryptedData1, clearData));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData.size()));
-    AWAIT(encSession.encrypt(encryptedData2, clearData));
-
-    CHECK(encryptedData1 != encryptedData2);
-  }
-
-  SECTION("decrypt should not work with a corrupted buffer")
-  {
-    auto const clearData = make_buffer("this is very secret");
-
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
-    auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
-
-    std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-
-    encryptedData[2]++;
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
-        Errc::DecryptionFailed);
-  }
-
-  SECTION("Session's resourceId should match metadata and V7 resource ID")
-  {
-    auto clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
-
-    auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
-
-    CHECK(encSession.resourceId() == metadata.resourceId);
-    CHECK(Encryptor::extractResourceId(encryptedData) == metadata.resourceId);
-  }
-
-  SECTION("resourceId is the same for all session encryptions")
-  {
-    auto clearData1 = make_buffer("Rotating locomotion in living systems");
-    auto clearData2 = make_buffer("Gondwanatheria, an enigmatic extinct group");
-
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData1.size()));
-    auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData2.size()));
-    auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
-
-    CHECK(meta1.resourceId == meta2.resourceId);
-  }
-
-  SECTION("encryption key is the same for all session encryptions")
-  {
-    auto clearData1 =
-        make_buffer("The Australian Cattle Dog is energetic and intelligent");
-    auto clearData2 = make_buffer("It nests in hollows of gum trees");
-
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData1.size()));
-    auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData2.size()));
-    auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
-
-    CHECK(meta1.resourceId == meta2.resourceId);
-  }
-
-  SECTION("cannot encrypt if a session has been reset")
-  {
-    auto clearData = make_buffer("It nests in hollows of gum trees");
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
-
-    session.reset();
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(encSession.encrypt(encryptedData, clearData)),
-        Errc::PreconditionFailed);
-
-    TANKER_CHECK_THROWS_WITH_CODE(encSession.resourceId(),
-                                  Errc::PreconditionFailed);
-
-    TANKER_CHECK_THROWS_WITH_CODE(encSession.sessionKey(),
-                                  Errc::PreconditionFailed);
-  }
-}
 }
 
-TEST_CASE_METHOD(FixtureSession, "encryption session tests with auto padding")
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encrypt/decrypt should work with an empty buffer")
 {
-  commonEncSessionTests(session, EncryptionSession(session, std::nullopt));
+  std::vector<uint8_t> clearData;
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
+
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
+
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
+
+  CHECK(clearData == decryptedData);
 }
 
-TEST_CASE_METHOD(FixtureSession, "encryption session tests with no padding")
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encrypt/decrypt should work with a normal buffer")
 {
-  auto encSession = EncryptionSession(session, Padding::Off);
-  commonEncSessionTests(session, encSession);
+  auto clearData = make_buffer("this is the data to encrypt");
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
 
-  SECTION("decryptedSize and encryptedSize should be symmetrical")
-  {
-    std::vector<uint8_t> a0(encSession.encryptedSize(0));
-    Serialization::varint_write(a0.data(), EncryptorV5::version());
-    std::vector<uint8_t> a42(encSession.encryptedSize(42));
-    Serialization::varint_write(a42.data(), EncryptorV5::version());
-    CHECK(Encryptor::decryptedSize(a0) == 0);
-    CHECK(Encryptor::decryptedSize(a42) == 42);
-  }
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
+
+  auto const expectedVersionNumber = 5;
+  CHECK(encryptedData[0] == expectedVersionNumber);
+
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
+
+  CHECK(clearData == decryptedData);
 }
 
-TEST_CASE_METHOD(FixtureSession, "encryption session tests with a padding step")
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encrypt/decrypt should work with a huge buffer")
 {
-  auto const step = 13;
-  auto encSession = EncryptionSession(session, step);
-  commonEncSessionTests(session, encSession);
+  std::vector<uint8_t> clearData(1024 * 1024 * 2);
+  Crypto::randomFill(clearData);
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
 
-  SECTION("encrypt multiple messages with the same padding step")
-  {
-    auto const encryptionOverhead = 57;
-    auto const clearDatas = {
-        "",
-        "short",
-        "the length of this message is definitely bigger than the step",
-    };
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
-    for (auto const str : clearDatas)
-    {
-      auto const clearData = make_buffer(str);
-      std::vector<uint8_t> encryptedData(
-          encSession.encryptedSize(clearData.size()));
-      AWAIT(encSession.encrypt(encryptedData, clearData));
+  auto const expectedVersionNumber = 4;
+  CHECK(encryptedData[0] == expectedVersionNumber);
 
-      auto const unpaddedSize = encryptedData.size() - encryptionOverhead - 1;
-      CHECK(unpaddedSize > 0);
-      CHECK(unpaddedSize >= clearData.size());
-      CHECK(unpaddedSize % step == 0);
-    }
-  }
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
+
+  CHECK(clearData == decryptedData);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encrypt should never give the same result twice")
+{
+  auto clearData = make_buffer("this is the data to encrypt");
+
+  std::vector<uint8_t> encryptedData1(
+      encSession.encryptedSize(clearData.size()));
+  AWAIT(encSession.encrypt(encryptedData1, clearData));
+  std::vector<uint8_t> encryptedData2(
+      encSession.encryptedSize(clearData.size()));
+  AWAIT(encSession.encrypt(encryptedData2, clearData));
+
+  CHECK(encryptedData1 != encryptedData2);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: decrypt should not work with a corrupted buffer")
+{
+  auto const clearData = make_buffer("this is very secret");
+
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
+
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+
+  encryptedData[2]++;
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      AWAIT_VOID(
+          Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
+      Errc::DecryptionFailed);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "Session's resourceId should match metadata and V5 resource ID")
+{
+  auto clearData = make_buffer("this is the data to encrypt");
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
+
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
+
+  CHECK(encSession.resourceId() == metadata.resourceId);
+  CHECK(EncryptorV5::extractResourceId(encryptedData) == metadata.resourceId);
+}
+
+TEST_CASE_METHOD(FixtureEncrytionSession,
+                 "Session with huge data's resourceId should match metadata "
+                 "and V4 resource ID")
+{
+  std::vector<uint8_t> clearData(1024 * 1024 * 2);
+  Crypto::randomFill(clearData);
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
+
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
+
+  CHECK(encSession.resourceId() == metadata.resourceId);
+  CHECK(EncryptorV4::extractResourceId(encryptedData) == metadata.resourceId);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: resourceId is the same for all session encryptions")
+{
+  auto clearData1 = make_buffer("Rotating locomotion in living systems");
+  auto clearData2 = make_buffer("Gondwanatheria, an enigmatic extinct group");
+
+  std::vector<uint8_t> encryptedData1(
+      encSession.encryptedSize(clearData1.size()));
+  auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
+  std::vector<uint8_t> encryptedData2(
+      encSession.encryptedSize(clearData2.size()));
+  auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
+
+  CHECK(meta1.resourceId == meta2.resourceId);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encryption key is the same for all session encryptions")
+{
+  auto clearData1 =
+      make_buffer("The Australian Cattle Dog is energetic and intelligent");
+  auto clearData2 = make_buffer("It nests in hollows of gum trees");
+
+  std::vector<uint8_t> encryptedData1(
+      encSession.encryptedSize(clearData1.size()));
+  auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
+  std::vector<uint8_t> encryptedData2(
+      encSession.encryptedSize(clearData2.size()));
+  auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
+
+  CHECK(meta1.resourceId == meta2.resourceId);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: cannot encrypt if a session has been reset")
+{
+  auto clearData = make_buffer("It nests in hollows of gum trees");
+  std::vector<uint8_t> encryptedData(
+      encSession.encryptedSize(clearData.size()));
+
+  session.reset();
+  TANKER_CHECK_THROWS_WITH_CODE(
+      AWAIT(encSession.encrypt(encryptedData, clearData)),
+      Errc::PreconditionFailed);
+
+  TANKER_CHECK_THROWS_WITH_CODE(encSession.resourceId(),
+                                Errc::PreconditionFailed);
+
+  TANKER_CHECK_THROWS_WITH_CODE(encSession.sessionKey(),
+                                Errc::PreconditionFailed);
 }

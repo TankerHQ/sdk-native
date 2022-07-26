@@ -9,7 +9,6 @@
 #include <Tanker/Version.hpp>
 
 #include <mgs/base64.hpp>
-#include <optional>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/lazy/async.hpp>
@@ -437,12 +436,11 @@ AsyncCore::makeDecryptionStream(Streams::InputSource cb)
 tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
-    Core::ShareWithSelf shareWithSelf,
-    std::optional<uint32_t> paddingStep)
+    Core::ShareWithSelf shareWithSelf)
 {
   return runResumable([=]() -> tc::cotask<EncryptionSession> {
     TC_RETURN(TC_AWAIT(this->_core.makeEncryptionSession(
-        publicIdentities, groupIds, shareWithSelf, paddingStep)));
+        publicIdentities, groupIds, shareWithSelf)));
   });
 }
 
