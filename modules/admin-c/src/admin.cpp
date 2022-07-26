@@ -1,7 +1,6 @@
 #include <ctanker/admin.h>
 
 #include <Tanker/Admin/Client.hpp>
-#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Init.hpp>
@@ -27,7 +26,6 @@ tanker_future_t* tanker_admin_connect(char const* app_management_url,
        appManagementToken = std::string(app_management_token),
        environmentName = std::string(environment_name)]() -> tc::cotask<void*> {
         Crypto::init();
-        Cacerts::init();
         const auto admin = new Admin::Client(
             appManagementUrl, appManagementToken, environmentName);
         TC_RETURN(static_cast<void*>(admin));

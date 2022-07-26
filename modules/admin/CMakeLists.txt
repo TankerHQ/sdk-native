@@ -17,7 +17,6 @@ target_include_directories(tankeradmin
 target_link_libraries(tankeradmin
   tankertypes
   tankererrors
-  tankercacerts
   tankercore
   ttracer
   tcurl

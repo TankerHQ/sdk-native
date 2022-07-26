@@ -1,6 +1,5 @@
 #include <Tanker/Network/CurlBackend.hpp>
 
-#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Log/Log.hpp>
 

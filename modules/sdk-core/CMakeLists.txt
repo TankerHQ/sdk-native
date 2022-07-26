@@ -213,7 +213,7 @@ target_link_libraries(tankercore
 )
 
 if(WITH_CURL)
-  target_link_libraries(tankercore tankercacerts tcurl)
+  target_link_libraries(tankercore tcurl)
 endif()
 
 if(WITH_SQLITE)

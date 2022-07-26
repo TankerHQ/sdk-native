@@ -1,6 +1,5 @@
 #include "HttpHelpers.hpp"
 
-#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 
 #include <nlohmann/json.hpp>
