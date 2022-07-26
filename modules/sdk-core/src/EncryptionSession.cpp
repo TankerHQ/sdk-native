@@ -7,7 +7,6 @@
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v6.hpp>
 #include <Tanker/Encryptor/v7.hpp>
-#include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
@@ -54,19 +53,12 @@ std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
 std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
 {
   if (Encryptor::isHugeClearData(clearSize, _paddingStep))
-  {
-    if (_paddingStep == Padding::Off)
-      return EncryptorV4::encryptedSize(clearSize);
-    else
-      return EncryptorV8::encryptedSize(clearSize, _paddingStep);
-  }
-  else
-  {
-    if (_paddingStep == Padding::Off)
-      return EncryptorV5::encryptedSize(clearSize);
-    else
-      return EncryptorV7::encryptedSize(clearSize, _paddingStep);
-  }
+    return EncryptorV4::encryptedSize(clearSize);
+
+  if (_paddingStep == Padding::Off)
+    return EncryptorV5::encryptedSize(clearSize);
+
+  return EncryptorV7::encryptedSize(clearSize, _paddingStep);
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
@@ -75,23 +67,14 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
 {
   assertSession("encrypt");
   if (Encryptor::isHugeClearData(clearData.size(), _paddingStep))
-  {
-    if (_paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey)));
-    else
-      TC_RETURN(TC_AWAIT(EncryptorV8::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
-  }
+    TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey)));
+  else if (_paddingStep == Padding::Off)
+    TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey)));
   else
-  {
-    if (_paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey)));
-    else
-      TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
-  }
+    TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
 }
 
 std::tuple<Streams::InputSource, Trustchain::ResourceId>
