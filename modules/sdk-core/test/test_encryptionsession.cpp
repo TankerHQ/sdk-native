@@ -43,7 +43,7 @@ TEST_CASE_METHOD(
 {
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
@@ -60,7 +60,7 @@ TEST_CASE_METHOD(
 {
   auto clearData = make_buffer("this is the data to encrypt");
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
@@ -80,7 +80,7 @@ TEST_CASE_METHOD(
   std::vector<uint8_t> clearData(1024 * 1024 * 2);
   Crypto::randomFill(clearData);
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
@@ -100,10 +100,10 @@ TEST_CASE_METHOD(
   auto clearData = make_buffer("this is the data to encrypt");
 
   std::vector<uint8_t> encryptedData1(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
   AWAIT(encSession.encrypt(encryptedData1, clearData));
   std::vector<uint8_t> encryptedData2(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
   AWAIT(encSession.encrypt(encryptedData2, clearData));
 
   CHECK(encryptedData1 != encryptedData2);
@@ -116,7 +116,7 @@ TEST_CASE_METHOD(
   auto const clearData = make_buffer("this is very secret");
 
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
@@ -135,7 +135,7 @@ TEST_CASE_METHOD(
 {
   auto clearData = make_buffer("this is the data to encrypt");
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
@@ -150,7 +150,7 @@ TEST_CASE_METHOD(FixtureEncrytionSession,
   std::vector<uint8_t> clearData(1024 * 1024 * 2);
   Crypto::randomFill(clearData);
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
@@ -166,10 +166,10 @@ TEST_CASE_METHOD(
   auto clearData2 = make_buffer("Gondwanatheria, an enigmatic extinct group");
 
   std::vector<uint8_t> encryptedData1(
-      encSession.encryptedSize(clearData1.size()));
+      EncryptionSession::encryptedSize(clearData1.size()));
   auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
   std::vector<uint8_t> encryptedData2(
-      encSession.encryptedSize(clearData2.size()));
+      EncryptionSession::encryptedSize(clearData2.size()));
   auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
   CHECK(meta1.resourceId == meta2.resourceId);
@@ -184,10 +184,10 @@ TEST_CASE_METHOD(
   auto clearData2 = make_buffer("It nests in hollows of gum trees");
 
   std::vector<uint8_t> encryptedData1(
-      encSession.encryptedSize(clearData1.size()));
+      EncryptionSession::encryptedSize(clearData1.size()));
   auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
   std::vector<uint8_t> encryptedData2(
-      encSession.encryptedSize(clearData2.size()));
+      EncryptionSession::encryptedSize(clearData2.size()));
   auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
   CHECK(meta1.resourceId == meta2.resourceId);
@@ -199,7 +199,7 @@ TEST_CASE_METHOD(
 {
   auto clearData = make_buffer("It nests in hollows of gum trees");
   std::vector<uint8_t> encryptedData(
-      encSession.encryptedSize(clearData.size()));
+      EncryptionSession::encryptedSize(clearData.size()));
 
   session.reset();
   TANKER_CHECK_THROWS_WITH_CODE(

@@ -44,7 +44,7 @@ std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
   return _taskCanceler;
 }
 
-std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
+std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
 {
   if (Encryptor::isHugeClearData(clearSize))
     return EncryptorV4::encryptedSize(clearSize);
