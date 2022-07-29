@@ -150,7 +150,7 @@ build/android/shared:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 --profile android-armv8 --profile android-x86 --profile android-x86_64 --profile linux-x86_64 shared
   tags: !reference [.tags/compilation-linux, tags]
 
-build/android/static/http-backend:
+build/android/static:
   extends:
     - .build
     - .rules/build/manual
@@ -158,7 +158,7 @@ build/android/static/http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 tanker-static http-backend --profile android-armv8 tanker-static http-backend --profile android-x86 tanker-static http-backend --profile android-x86_64 tanker-static http-backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 tanker-static --profile android-armv8 tanker-static --profile android-x86 tanker-static --profile android-x86_64 tanker-static
   tags: !reference [.tags/compilation-linux, tags]
 
 build/ios:
@@ -170,18 +170,6 @@ build/ios:
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile ios_simulator-armv8 --profile ios_simulator-x86 --profile ios_simulator-x86_64 --profile ios-armv7 --profile ios-armv7s --profile ios-armv8
-  # build everything on the fast one
-  tags: !reference [.tags/macos/arm, tags]
-
-build/ios/http-backend:
-  extends:
-    - .build
-    - .rules/build/manual
-    - .build-artifacts
-    - .before-script/bump-files-on-release/bash
-    - .after-script/branch_name
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile ios_simulator-armv8 http-backend --profile ios_simulator-x86 http-backend --profile ios_simulator-x86_64 http-backend --profile ios-armv7 http-backend --profile ios-armv7s http-backend --profile ios-armv8 http-backend
   # build everything on the fast one
   tags: !reference [.tags/macos/arm, tags]
 
@@ -307,10 +295,10 @@ bridge/rust/ios:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
-    - build/ios/http-backend
+    - build/ios
   variables:
     UPSTREAM_JOB_TARGET: ios
-    UPSTREAM_JOB_NAME: build/ios/http-backend
+    UPSTREAM_JOB_NAME: build/ios
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
@@ -349,10 +337,10 @@ bridge/rust/android:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
-    - build/android/static/http-backend
+    - build/android/static
   variables:
     UPSTREAM_JOB_TARGET: android
-    UPSTREAM_JOB_NAME: build/android/static/http-backend
+    UPSTREAM_JOB_NAME: build/android/static
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
