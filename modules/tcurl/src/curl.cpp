@@ -300,7 +300,6 @@ int multi::multi_timer_cb(CURLM* multi, long timeout_ms)
   else
   {
     // call timeout function immediately
-    boost::system::error_code error;
     timer_cb();
   }
 
