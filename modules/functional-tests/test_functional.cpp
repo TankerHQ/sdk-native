@@ -462,6 +462,18 @@ TEST_CASE_METHOD(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "Alice can share to a duplicate user ID")
+{
+  auto const clearData = "my clear data is clear";
+  auto const encryptedData =
+      TC_AWAIT(encrypt(*aliceSession,
+                       clearData,
+                       {bob.spublicIdentity(), bob.spublicIdentity()}));
+
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
+}
+
 TEST_CASE_METHOD(TrustchainFixture,
                  "Bob can share a key he hasn't received yet")
 {
@@ -919,7 +931,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
 }
 
 inline auto constexpr simpleEncryptionOverhead = 17;
-inline auto constexpr paddedSimpleEncryptionOverhead = simpleEncryptionOverhead + 1;
+inline auto constexpr paddedSimpleEncryptionOverhead =
+    simpleEncryptionOverhead + 1;
 
 TEST_CASE_METHOD(TrustchainFixture,
                  "Alice can use the padding encryption option")
@@ -959,7 +972,8 @@ TEST_CASE_METHOD(TrustchainFixture,
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                         encrypt(*aliceSession, clearData, {}, {}, step)));
 
-    REQUIRE((encryptedData.size() - paddedSimpleEncryptionOverhead) % step == 0);
+    REQUIRE((encryptedData.size() - paddedSimpleEncryptionOverhead) % step ==
+            0);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }

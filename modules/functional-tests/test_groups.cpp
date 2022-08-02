@@ -734,10 +734,9 @@ TEST_CASE_METHOD(TrustchainFixtureSimple,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_METHOD(
-    TrustchainFixtureSimple,
-    "update a group we are not part of",
-    "[groups][remove]")
+TEST_CASE_METHOD(TrustchainFixtureSimple,
+                 "update a group we are not part of",
+                 "[groups][remove]")
 {
   auto alice = UserSession(trustchain);
   auto bob = UserSession(trustchain);
@@ -848,6 +847,24 @@ TEST_CASE_METHOD(TrustchainFixtureSimple,
   auto const resourceId =
       AsyncCore::getResourceId(encryptedBuffer.encryptedData).get();
   REQUIRE_NOTHROW(TC_AWAIT(alice.session->share({resourceId}, {}, {myGroup})));
+
+  TC_AWAIT(checkDecrypt({bob}, {encryptedBuffer}));
+}
+
+TEST_CASE_METHOD(TrustchainFixtureSimple,
+                 "share with duplicate group ID",
+                 "[groups][share]")
+{
+  auto alice = UserSession(trustchain);
+  auto bob = UserSession(trustchain);
+
+  auto myGroup = TC_AWAIT(alice.session->createGroup({bob.spublicIdentity()}));
+
+  auto const encryptedBuffer = TC_AWAIT(encrypt(*alice.session));
+  auto const resourceId =
+      AsyncCore::getResourceId(encryptedBuffer.encryptedData).get();
+  REQUIRE_NOTHROW(
+      TC_AWAIT(alice.session->share({resourceId}, {}, {myGroup, myGroup})));
 
   TC_AWAIT(checkDecrypt({bob}, {encryptedBuffer}));
 }
