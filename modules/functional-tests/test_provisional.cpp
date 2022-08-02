@@ -46,6 +46,31 @@ TEST_CASE_METHOD(TrustchainFixture,
 
 TEST_CASE_METHOD(
     TrustchainFixture,
+    "Alice can encrypt and share with a duplicate provisional user")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(
+      encrypt(*aliceSession,
+              clearData,
+              {bobProvisional.publicIdentity, bobProvisional.publicIdentity}));
+
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  auto const emailVerif =
+      Verification::ByEmail{bobEmail, VerificationCode{bobVerificationCode}};
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
+
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
+}
+
+TEST_CASE_METHOD(
+    TrustchainFixture,
     "Alice cannot encrypt and share with two provisional users who "
     "have the same email address")
 {
