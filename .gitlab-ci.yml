@@ -139,18 +139,7 @@ build/macos/arm/shared/no-http-backend:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8 shared no-http-backend
   tags: !reference [.tags/macos/arm, tags]
 
-build/android/shared:
-  extends:
-    - .build
-    - .rules/build/manual
-    - .build-artifacts
-    - .before-script/bump-files-on-release/bash
-    - .after-script/branch_name
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 --profile android-armv8 --profile android-x86 --profile android-x86_64 --profile linux-x86_64 shared
-  tags: !reference [.tags/compilation-linux, tags]
-
-build/android/static:
+build/android:
   extends:
     - .build
     - .rules/build/manual
@@ -311,10 +300,10 @@ bridge/rust/android:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
-    - build/android/static
+    - build/android
   variables:
     UPSTREAM_JOB_TARGET: android
-    UPSTREAM_JOB_NAME: build/android/static
+    UPSTREAM_JOB_NAME: build/android
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
