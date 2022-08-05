@@ -235,32 +235,6 @@ bridge/compat/linux:
     project: TankerHQ/compatibility-tests
     strategy: depend
 
-bridge/ios:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/ios
-  variables:
-    UPSTREAM_JOB_NAME: build/ios
-  trigger:
-    project: TankerHQ/sdk-ios
-    strategy: depend
-
-bridge/android:
-  extends:
-    - .bridge-check
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/android/shared
-  variables:
-    UPSTREAM_JOB_NAME: build/android/shared
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-
 bridge/rust/linux:
   extends:
     - .bridge-check
@@ -512,38 +486,6 @@ bridge/bump-native-compat-tests:
     strategy: depend
   allow_failure: true
 
-bridge/ios/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/ios
-    - .variables/bridge-common
-  needs:
-    - bridge/ios
-    - deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-ios
-    strategy: depend
-
-bridge/android/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/android
-    - .variables/bridge-common
-  needs:
-    - bridge/android
-    - deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-
 bridge/python/deploy:
   extends:
     - .bridge-deploy
@@ -601,23 +543,3 @@ bridge/rust/deploy:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-#############################
-# react-native-deploy stage #
-#############################
-
-bridge/react-native/deploy:
-  extends:
-    - .react-native-deploy
-    - .rules/bridge-release/react-native
-    - .variables/bridge-common
-  needs:
-    - bridge/android/deploy
-    - bridge/ios/deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_REACT_NATIVE_RELEASE_VERSION: $SDK_REACT_NATIVE_RELEASE_VERSION
-  trigger:
-    project: TankerHQ/sdk-react-native
-    strategy: depend
