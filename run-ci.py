@@ -262,6 +262,11 @@ def main() -> None:
     bump_files_parser = subparsers.add_parser("bump-files")
     bump_files_parser.add_argument("--version", required=True)
 
+    write_bridge_dotenv = subparsers.add_parser("write-bridge-dotenv")
+    write_bridge_dotenv.add_argument(
+        "--downstream", dest="downstreams", action="append", required=True
+    )
+
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument("--remote", default="artifactory")
 
@@ -290,6 +295,18 @@ def main() -> None:
             clean_on_exit=True,
         ):
             deploy(args.remote)
+    elif args.command == "write-bridge-dotenv":
+        branches = [
+            tankerci.git.matching_branch_or_default(repo) for repo in args.downstreams
+        ]
+        keys = [
+            repo.replace("-", "_").upper() + "_BRIDGE_BRANCH"
+            for repo in args.downstreams
+        ]
+        env_list = "\n".join([f"{k}={v}" for k, v in zip(keys, branches)])
+        with open("bridge.env", "a+") as f:
+            f.write(env_list)
+        ui.info(env_list)
     else:
         parser.print_help()
         sys.exit(1)
