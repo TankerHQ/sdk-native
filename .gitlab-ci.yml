@@ -176,6 +176,24 @@ nightly/coverage:
     expire_in: 7 days
   tags: !reference [.tags/compilation-linux, tags]
 
+build/bridge-dotenv:
+  extends:
+    - .build
+  inherit:
+    default: # Skip docker image
+      - "before_script"
+  script:
+    - poetry run python run-ci.py write-bridge-dotenv --downstream sdk-python
+                                                      --downstream sdk-ruby
+                                                      --downstream sdk-rust
+                                                      --downstream benchmarks
+                                                      --downstream compatibility-tests
+  artifacts:
+    expire_in: 7 days
+    reports:
+      dotenv: bridge.env
+  tags: !reference [.tags/linux, tags]
+
 ######################
 # bridge-check stage #
 ######################
@@ -200,6 +218,7 @@ bridge/bench/linux:
   needs:
     - build/linux
     - build/linux/shared
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: build/linux:build/linux/shared
     UPSTREAM_JOB_TARGET: linux
@@ -208,6 +227,7 @@ bridge/bench/linux:
     UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/benchmarks
+    branch: $BENCHMARKS_BRIDGE_BRANCH
     strategy: depend
 
 bridge/compat/linux:
@@ -217,11 +237,13 @@ bridge/compat/linux:
     - .variables/bridge-common
   needs:
     - build/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: build/linux
     UPSTREAM_JOB_TARGET: linux
   trigger:
     project: TankerHQ/compatibility-tests
+    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/linux:
@@ -231,11 +253,13 @@ bridge/rust/linux:
     - .variables/bridge-common
   needs:
     - build/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/windows:
@@ -245,11 +269,13 @@ bridge/rust/windows:
     - .variables/bridge-common
   needs:
     - build/windows/shared
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: windows
     UPSTREAM_JOB_NAME: build/windows/shared
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/ios:
@@ -259,11 +285,13 @@ bridge/rust/ios:
     - .variables/bridge-common
   needs:
     - build/ios
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: ios
     UPSTREAM_JOB_NAME: build/ios
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/macos/x86_64:
@@ -273,11 +301,13 @@ bridge/rust/macos/x86_64:
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/macos/arm:
@@ -287,11 +317,13 @@ bridge/rust/macos/arm:
     - .variables/bridge-common
   needs:
     - build/macos/arm
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/android:
@@ -301,11 +333,13 @@ bridge/rust/android:
     - .variables/bridge-common
   needs:
     - build/android
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: android
     UPSTREAM_JOB_NAME: build/android
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
 bridge/python/linux:
@@ -315,11 +349,13 @@ bridge/python/linux:
     - .variables/bridge-common
   needs:
     - build/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-python
+    branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
 bridge/python/macos/x86_64:
@@ -329,11 +365,13 @@ bridge/python/macos/x86_64:
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64
   trigger:
     project: TankerHQ/sdk-python
+    branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
 bridge/python/macos/arm:
@@ -343,12 +381,14 @@ bridge/python/macos/arm:
     - .variables/bridge-common
   needs:
     - build/macos/arm
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm
     UPSTREAM_JOB_ARCH: arm
   trigger:
     project: TankerHQ/sdk-python
+    branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
 bridge/python/windows:
@@ -358,11 +398,13 @@ bridge/python/windows:
     - .variables/bridge-common
   needs:
     - build/windows
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: windows
     UPSTREAM_JOB_NAME: build/windows
   trigger:
     project: TankerHQ/sdk-python
+    branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
 bridge/ruby/linux:
@@ -372,11 +414,13 @@ bridge/ruby/linux:
     - .variables/bridge-common
   needs:
     - build/linux/shared/no-http-backend
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: $SDK_RUBY_BRIDGE_BRANCH
     strategy: depend
 
 bridge/ruby/macos/x86_64:
@@ -386,11 +430,13 @@ bridge/ruby/macos/x86_64:
     - .variables/bridge-common
   needs:
     - build/macos/x86_64/shared/no-http-backend
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: $SDK_RUBY_BRIDGE_BRANCH
     strategy: depend
 
 bridge/ruby/macos/arm:
@@ -400,11 +446,13 @@ bridge/ruby/macos/arm:
     - .variables/bridge-common
   needs:
     - build/macos/arm/shared/no-http-backend
+    - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: $SDK_RUBY_BRIDGE_BRANCH
     strategy: depend
 
 ###############
@@ -466,12 +514,15 @@ bridge/bump-native-compat-tests:
   rules:
     - if: !reference [.if-web-pipeline, if]
       when: manual
+  needs:
+    - build/bridge-dotenv
   variables:
     SDK_NATIVE_RELEASE_VERSION: $SDK_NATIVE_RELEASE_VERSION
     UPSTREAM_JOB_NAME: deploy
     UPSTREAM_JOB_TARGET: linux
   trigger:
     project: TankerHQ/compatibility-tests
+    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
   allow_failure: true
 
@@ -486,12 +537,14 @@ bridge/python/deploy:
     - bridge/python/macos/x86_64
     - bridge/python/macos/arm
     - bridge/python/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-python
+    branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
 bridge/ruby/deploy:
@@ -504,12 +557,14 @@ bridge/ruby/deploy:
     - bridge/ruby/macos/x86_64
     - bridge/ruby/macos/arm
     - bridge/ruby/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: $SDK_RUBY_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/deploy:
@@ -524,11 +579,13 @@ bridge/rust/deploy:
     - bridge/rust/macos/arm
     - bridge/rust/macos/x86_64
     - bridge/rust/linux
+    - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_RUST_RELEASE_VERSION: $SDK_RUST_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-rust
+    branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
