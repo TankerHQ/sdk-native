@@ -5,8 +5,18 @@ include:
 
 workflow:
   rules:
+    - !reference [.rules/assert-version-tags, rules]
+    # allow everything else
+    - when: always
+
+.rules/assert-version-tags:
+  rules:
     # web pipelines for releases only
-    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION == null && $SDK_NATIVE_LATEST_CONAN_REFERENCE == null)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_LATEST_CONAN_REFERENCE != null)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+((a|b)\d+)?\z/)
       when: never
@@ -14,8 +24,6 @@ workflow:
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUST_RELEASE_VERSION != null && $SDK_RUST_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
-    # allow everything else
-    - when: always
 
 default:
   before_script:
