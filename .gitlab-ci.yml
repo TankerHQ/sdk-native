@@ -1,7 +1,5 @@
 include:
-  project: TankerHQ/gitlab-ci-files
-  file: /native.yml
-  ref: 2021-12-16-236
+  local: /.gitlab/ci/native.yml
 
 .after-script/branch_name:
   after_script:

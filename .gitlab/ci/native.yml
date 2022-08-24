@@ -1,0 +1,98 @@
+include:
+  project: TankerHQ/gitlab-ci-files
+  file: /common.yml
+  ref: 2021-12-16-236
+
+workflow:
+  rules:
+    # web pipelines for releases only
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+((a|b)\d+)?\z/)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(\.(alpha|beta)\.\d+)?\z/)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUST_RELEASE_VERSION != null && $SDK_RUST_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
+      when: never
+    # allow everything else
+    - when: always
+
+default:
+  before_script:
+    - poetry run python -m pip install --upgrade pip
+    - poetry install
+  image: registry.gitlab.com/tankerhq/docker/native:latest
+
+#########
+# Rules #
+#########
+
+.rules/bridge-release/python:
+  rules:
+    - !reference [.rules/only/web/auto, rules]
+    - !reference [.rules/valid-python-release-version, rules]
+    - when: on_success
+
+.rules/bridge-release/ruby:
+  rules:
+    - !reference [.rules/only/web/auto, rules]
+    - !reference [.rules/valid-ruby-release-version, rules]
+    - when: on_success
+
+.rules/bridge-release/rust:
+  rules:
+    - !reference [.rules/only/web/auto, rules]
+    - !reference [.rules/valid-rust-release-version, rules]
+    - when: on_success
+
+##########
+# Stages #
+##########
+
+stages:
+  - build
+  - bridge-check
+  - check
+  - deploy
+  - bridge-deploy
+
+.build:
+  stage: build
+
+.bridge-check:
+  stage: bridge-check
+
+.check:
+  stage: check
+
+.deploy:
+  stage: deploy
+
+.bridge-deploy:
+  stage: bridge-deploy
+
+#################
+# Extend blocks #
+#################
+
+.build-artifacts:
+  artifacts:
+    paths:
+      - package/
+      - branch_name.txt
+
+#############################
+# Default settings override #
+#############################
+
+.before-script/bump-files-on-release/bash:
+  before_script:
+    - poetry run python -m pip install --upgrade pip
+    - poetry install
+    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+
+.before-script/bump-files-on-release/powershell:
+  before_script:
+    - poetry run python -m pip install --upgrade pip
+    - poetry install
+    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION }
