@@ -574,11 +574,12 @@ bridge/rust/deploy:
     - .variables/bridge-common
   needs:
     - deploy
-    - bridge/rust/ios
     - bridge/rust/android
+    - bridge/rust/ios
+    - bridge/rust/linux
     - bridge/rust/macos/arm
     - bridge/rust/macos/x86_64
-    - bridge/rust/linux
+    - bridge/rust/windows
     - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
@@ -588,4 +589,3 @@ bridge/rust/deploy:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
-
