@@ -11,6 +11,9 @@ workflow:
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       variables:
         CONAN_REMOTE: "artifactory"
+    - if: $CI_COMMIT_REF_NAME =~ /\Arelease\/.+\z/
+      variables:
+        CONAN_REMOTE: "artifactory"
     - if: '$CI_MERGE_REQUEST_TITLE =~ /.*\[preview].*/'
       variables:
         CONAN_REMOTE: "artifactory-preview"
