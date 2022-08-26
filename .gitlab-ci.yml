@@ -484,12 +484,19 @@ deploy:
   extends:
     - .deploy
     - .rules/deploy/native
-  release:
-    description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
-    tag_name: v$SDK_NATIVE_RELEASE_VERSION
   script:
     - poetry run python run-ci.py --isolate-conan-user-home deploy --remote $CONAN_REMOTE
   tags: !reference [.tags/linux, tags]
+
+deploy/tag:
+  extends:
+    - .deploy
+    - .rules/deploy/native/tag
+  needs:
+    - deploy
+  release:
+    description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
+    tag_name: v$SDK_NATIVE_RELEASE_VERSION
 
 pages:
   extends:
