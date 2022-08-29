@@ -289,6 +289,12 @@ def main() -> None:
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
+        native_release_version = os.environ.get("SDK_NATIVE_RELEASE_VERSION", None)
+        if native_release_version is None:
+            # We can't skip the job in .gitlab-ci because of 'needs' on it, so we do this check here
+            ui.info("$SDK_NATIVE_RELEASE_VERSION is not set, nothing to deploy")
+            sys.exit(0)
+
         with tankerci.conan.ConanContextManager(
             [args.remote],
             conan_home=user_home,
