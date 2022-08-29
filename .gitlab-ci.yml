@@ -494,6 +494,12 @@ deploy/tag:
     - .rules/deploy/native/tag
   needs:
     - deploy
+  script:
+    # This load bearing no-op works around a relatively recent Gitlab bug (only 2+ years old)
+    # If there is no script, it will complain that the "release" tag is invalid,
+    # or if the release is removed, that "it should contain either a trigger or a needs".
+    # This error really means it wants an empty script
+    - ;
   release:
     description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
     tag_name: v$SDK_NATIVE_RELEASE_VERSION
