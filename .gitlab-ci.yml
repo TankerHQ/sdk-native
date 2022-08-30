@@ -531,6 +531,7 @@ bridge/bump-native-compat-tests:
       when: manual
   needs:
     - build/bridge-dotenv
+    - deploy
   variables:
     SDK_NATIVE_RELEASE_VERSION: $SDK_NATIVE_RELEASE_VERSION
     UPSTREAM_JOB_NAME: deploy
