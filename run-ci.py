@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import cli_ui as ui  # noqa
+import semver  # type: ignore
 import tankerci
 import tankerci.benchmark
 import tankerci.cpp
@@ -74,8 +75,13 @@ def deploy(remote: str) -> None:
         )
     latest_reference = f"tanker/{version}@"
     alias = "tanker/latest-stable@"
+
+    alias_info = tankerci.conan.inspect(recipe, want_alias_attribute=True)
+    alias_version = alias_info["version"].removeprefix("tanker/")
+    is_newer_version = semver.gt(version, alias_version, loose=False)
+
     tankerci.conan.upload(latest_reference, remote=remote)
-    if "alpha" not in version and "beta" not in version:
+    if "alpha" not in version and "beta" not in version and is_newer_version:
         tankerci.conan.alias(alias, latest_reference)
         tankerci.conan.upload(alias, remote=remote)
 
@@ -289,6 +295,12 @@ def main() -> None:
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
+        native_release_version = os.environ.get("SDK_NATIVE_RELEASE_VERSION", None)
+        if native_release_version is None:
+            # We can't skip the job in .gitlab-ci because of 'needs' on it, so we do this check here
+            ui.info("$SDK_NATIVE_RELEASE_VERSION is not set, nothing to deploy")
+            sys.exit(0)
+
         with tankerci.conan.ConanContextManager(
             [args.remote],
             conan_home=user_home,

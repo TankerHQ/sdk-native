@@ -1,12 +1,28 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /common.yml
-  ref: 2021-12-16-236
+  ref: 2022-08-29-256
 
 workflow:
   rules:
+    - !reference [.rules/assert-version-tags, rules]
+    # allow everything else
+    - when: always
+
+.rules/assert-version-tags:
+  rules:
     # web pipelines for releases only
-    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION == null && $SDK_NATIVE_LATEST_CONAN_REFERENCE == null)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_LATEST_CONAN_REFERENCE != null)
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "web"
+          && $SDK_NATIVE_RELEASE_VERSION == null
+          && $SDK_PYTHON_RELEASE_VERSION == null
+          && $SDK_RUBY_RELEASE_VERSION == null
+          && $SDK_RUST_RELEASE_VERSION == null'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+((a|b)\d+)?\z/)
       when: never
@@ -14,8 +30,6 @@ workflow:
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUST_RELEASE_VERSION != null && $SDK_RUST_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
-    # allow everything else
-    - when: always
 
 default:
   before_script:
