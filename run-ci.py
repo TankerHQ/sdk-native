@@ -85,7 +85,7 @@ def deploy(remote: str) -> None:
     latest_reference = f"tanker/{version}@"
     alias = "tanker/latest-stable@"
 
-    alias_info = tankerci.conan.inspect(recipe, want_alias_attribute=True)
+    alias_info = tankerci.conan.inspect(alias, want_alias_attribute=True)
     alias_version = remove_prefix(alias_info["alias"], "tanker/")
     is_newer_version = semver.gt(version, alias_version, loose=False)
 
