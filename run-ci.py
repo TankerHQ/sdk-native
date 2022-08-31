@@ -86,8 +86,15 @@ def deploy(remote: str) -> None:
     alias = "tanker/latest-stable@"
 
     alias_info = tankerci.conan.inspect(alias, want_alias_attribute=True)
-    alias_version = remove_prefix(alias_info["alias"], "tanker/")
-    is_newer_version = semver.gt(version, alias_version, loose=False)
+    alias_version_str = remove_prefix(alias_info["alias"], "tanker/")
+    alias_version = semver.parse(alias_version_str, loose=False)
+    if alias_version is None:
+        ui.warning(
+            f"Conan alias {alias} points to non-semver version '{alias_version_str}', overwriting"
+        )
+        is_newer_version = True
+    else:
+        is_newer_version = semver.gt(version, alias_version, loose=False)
 
     tankerci.conan.upload(latest_reference, remote=remote)
     if "alpha" not in version and "beta" not in version and is_newer_version:
