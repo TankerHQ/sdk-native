@@ -499,7 +499,7 @@ deploy/tag:
     # If there is no script, it will complain that the "release" tag is invalid,
     # or if the release is removed, that "it should contain either a trigger or a needs".
     # This error really means it wants an empty script
-    - ;
+    - echo ok
   release:
     description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
     tag_name: v$SDK_NATIVE_RELEASE_VERSION
