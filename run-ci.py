@@ -48,6 +48,15 @@ def benchmark_artifact(
         )
 
 
+# Only available in Python >= 3.9
+def remove_prefix(s: str, prefix: str) -> str:
+    if s.startswith(prefix):
+        off = len(prefix)  # Do not inline, this makes black disagree with flake8 :(
+        return s[off:]
+    else:
+        return s[:]
+
+
 def deploy(remote: str) -> None:
     # first, clear cache to avoid uploading trash
     tankerci.conan.run("remove", "*", "--force")
@@ -77,7 +86,7 @@ def deploy(remote: str) -> None:
     alias = "tanker/latest-stable@"
 
     alias_info = tankerci.conan.inspect(recipe, want_alias_attribute=True)
-    alias_version = alias_info["alias"].removeprefix("tanker/")
+    alias_version = remove_prefix(alias_info["alias"], "tanker/")
     is_newer_version = semver.gt(version, alias_version, loose=False)
 
     tankerci.conan.upload(latest_reference, remote=remote)
