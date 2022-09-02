@@ -9,7 +9,6 @@
 #include <Tanker/Users/Updater.hpp>
 #include <Tanker/Utils.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
-#include <Tanker/Verif/DeviceRevocation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -82,19 +81,6 @@ auto UserAccessor::pullImpl(std::vector<Id> requestedIds,
 
 namespace
 {
-Users::User* findUserOfDevice(DevicesMap const& devicesMap,
-                              UsersMap& usersMap,
-                              Trustchain::DeviceId const& deviceId)
-{
-  auto const deviceIt = devicesMap.find(deviceId);
-  if (deviceIt == devicesMap.end())
-    return nullptr;
-  auto const userIt = usersMap.find(deviceIt->second.userId());
-  if (userIt == usersMap.end())
-    return nullptr;
-  return &userIt->second;
-}
-
 auto processUserEntries(Trustchain::Context const& context,
                         gsl::span<Trustchain::UserAction const> actions)
 {
@@ -120,19 +106,6 @@ auto processUserEntries(Trustchain::Context const& context,
               devicesMap.emplace(lastDevice.id(), lastDevice);
           isInserted == false)
         throw Errors::AssertionError("DeviceCreation received more than once");
-    }
-    else if (auto const deviceRevocation =
-                 boost::variant2::get_if<DeviceRevocation>(&action))
-    {
-      auto const user =
-          findUserOfDevice(devicesMap, usersMap, deviceRevocation->deviceId());
-      auto const action = Verif::verifyDeviceRevocation(
-          *deviceRevocation, user ? std::make_optional(*user) : std::nullopt);
-      if (!user)
-        throw Errors::AssertionError(
-            "user not found, verification should have failed");
-
-      *user = Updater::applyDeviceRevocationToUser(action, *user);
     }
     else
     {

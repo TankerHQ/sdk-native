@@ -26,7 +26,6 @@ enum tanker_status
 enum tanker_event
 {
   TANKER_EVENT_SESSION_CLOSED,
-  TANKER_EVENT_DEVICE_REVOKED,
 
   TANKER_EVENT_LAST,
 };
@@ -65,29 +64,9 @@ typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
-typedef struct tanker_device_list_elem tanker_device_list_elem_t;
-typedef struct tanker_device_list tanker_device_list_t;
 typedef struct tanker_verification_method_list
     tanker_verification_method_list_t;
 typedef struct tanker_attach_result tanker_attach_result_t;
-
-/*!
- * \brief The list of a user's devices
- */
-struct tanker_device_list
-{
-  tanker_device_list_elem_t* devices;
-  uint32_t count;
-};
-
-/*!
- * \brief Describes one device belonging to the user
- */
-struct tanker_device_list_elem
-{
-  char const* device_id;
-  bool is_revoked;
-};
 
 /*!
  * \brief The list of a user verification methods
@@ -452,23 +431,6 @@ CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker,
 CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
- * Get the current device id.
- * \param tanker A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return a future of char* that must be freed with tanker_free_buffer.
- */
-CTANKER_EXPORT tanker_future_t* tanker_device_id(tanker_t* tanker);
-
-/*!
- * Get the list of the user's devices.
- * \param tanker A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return a future of tanker_device_list_t* that must be freed with
- * tanker_free_device_list.
- */
-CTANKER_EXPORT tanker_future_t* tanker_get_device_list(tanker_t* tanker);
-
-/*!
  * Generate an verificationKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_READY
@@ -629,8 +591,6 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(
     tanker_t* session, tanker_verification_t const* verification);
 
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
-
-CTANKER_EXPORT void tanker_free_device_list(tanker_device_list_t* list);
 
 CTANKER_EXPORT void tanker_free_verification_method_list(
     tanker_verification_method_list_t* list);

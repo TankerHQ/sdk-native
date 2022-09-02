@@ -125,9 +125,6 @@ public:
   tc::cotask<void> verifyProvisionalIdentity(
       Verification::Verification const& verification);
 
-  Trustchain::DeviceId const& deviceId() const;
-  tc::cotask<std::vector<Users::Device>> getDeviceList() const;
-
   tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
   makeEncryptionStream(Streams::InputSource,
                        std::vector<SPublicIdentity> const& suserIds,
@@ -155,8 +152,6 @@ public:
   void setSessionClosedHandler(SessionClosedHandler);
 
   void setHttpSessionToken(std::string_view);
-
-  tc::cotask<void> confirmRevocation();
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);

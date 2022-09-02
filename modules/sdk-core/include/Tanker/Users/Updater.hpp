@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SealedEncryptionKeyPair.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/UserAction.hpp>
@@ -35,10 +34,6 @@ Crypto::PublicSignatureKey extractTrustchainSignature(
 std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
 
-std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
-    Trustchain::Actions::DeviceRevocation const& deviceRevocation,
-    Trustchain::DeviceId const& selfDeviceId);
-
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(Trustchain::DeviceId const& deviceId,
                       DeviceKeys const& deviceKeys,
@@ -52,10 +47,6 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
 Users::User applyDeviceCreationToUser(
     Trustchain::Actions::DeviceCreation const& action,
     std::optional<Users::User> previousUser);
-
-Users::User applyDeviceRevocationToUser(
-    Trustchain::Actions::DeviceRevocation const& action,
-    Users::User previousUser);
 
 std::tuple<Trustchain::Context,
            Users::User,

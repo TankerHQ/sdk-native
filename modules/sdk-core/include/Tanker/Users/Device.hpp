@@ -18,14 +18,11 @@ public:
          Trustchain::UserId const& userId,
          Crypto::PublicSignatureKey const& publicSignatureKey,
          Crypto::PublicEncryptionKey const& publicEncryptionKey,
-         bool isGhostDevice,
-         bool isRevoked = false);
+         bool isGhostDevice);
 
   Trustchain::DeviceId const& id() const;
   Trustchain::UserId const& userId() const;
   bool const& isGhostDevice() const;
-  bool const& isRevoked() const;
-  void setRevoked();
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
 
@@ -35,7 +32,6 @@ private:
   Crypto::PublicSignatureKey _publicSignatureKey;
   Crypto::PublicEncryptionKey _publicEncryptionKey;
   bool _isGhostDevice;
-  bool _isRevoked;
 };
 
 bool operator==(Device const& l, Device const& r);

@@ -49,7 +49,6 @@ static const char USAGE[] =
       tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
-      tcli getdeviceid <trustchainurl> <trustchainid> <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--dont-share-with-self] [--share-with-identity=<identity>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
@@ -73,8 +72,6 @@ using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
                                            Actions::DeviceCreation1,
                                            Actions::DeviceCreation2,
                                            Actions::DeviceCreation3,
-                                           Actions::DeviceRevocation1,
-                                           Actions::DeviceRevocation2,
                                            Actions::UserGroupCreation1,
                                            Actions::UserGroupCreation2,
                                            Actions::UserGroupCreation3,
@@ -109,10 +106,6 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<DeviceCreation2>(block);
   case Nature::DeviceCreation3:
     return Serialization::deserialize<DeviceCreation3>(block);
-  case Nature::DeviceRevocation1:
-    return Serialization::deserialize<DeviceRevocation1>(block);
-  case Nature::DeviceRevocation2:
-    return Serialization::deserialize<DeviceRevocation2>(block);
   case Nature::UserGroupCreation1:
     return Serialization::deserialize<UserGroupCreation1>(block);
   case Nature::UserGroupCreation2:
@@ -384,12 +377,6 @@ int main(int argc, char* argv[])
       auto const identity = args.at("<identity>").asString();
       auto const publicIdentity = Tanker::Identity::getPublicIdentity(identity);
       fmt::print("{}\n", publicIdentity);
-    }
-    else if (args.at("getdeviceid").asBool())
-    {
-      auto const core = signIn(args);
-
-      fmt::print("device id: {}", core->deviceId().get());
     }
     else if (args.at("encrypt").asBool())
     {

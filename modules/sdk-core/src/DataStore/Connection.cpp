@@ -76,8 +76,6 @@ ConnPtr createConnection(std::string const& dbPath,
 
     {
       SCOPE_TIMER("finalize open", DB);
-      // for revocation (when wiping db)
-      db->execute("PRAGMA secure_delete = ON");
       // Check the open succeeded
       db->execute("SELECT count(*) FROM sqlite_master");
       if (exclusive)

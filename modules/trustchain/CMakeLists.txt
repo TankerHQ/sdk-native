@@ -7,9 +7,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v2.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v3.hpp
-  include/Tanker/Trustchain/Actions/DeviceRevocation.hpp
-  include/Tanker/Trustchain/Actions/DeviceRevocation/v1.hpp
-  include/Tanker/Trustchain/Actions/DeviceRevocation/v2.hpp
   include/Tanker/Trustchain/Actions/Nature.hpp
   include/Tanker/Trustchain/Actions/KeyPublish.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp
@@ -55,9 +52,6 @@ add_library(tankertrustchain STATIC
   src/Actions/DeviceCreation/v1.cpp
   src/Actions/DeviceCreation/v2.cpp
   src/Actions/DeviceCreation/v3.cpp
-  src/Actions/DeviceRevocation.cpp
-  src/Actions/DeviceRevocation/v1.cpp
-  src/Actions/DeviceRevocation/v2.cpp
   src/Actions/Nature.cpp
   src/Actions/KeyPublish.cpp
   src/Actions/KeyPublish/ToProvisionalUser.cpp
@@ -92,8 +86,8 @@ add_library(tankertrustchain STATIC
 
 target_include_directories(tankertrustchain
   PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
 install(DIRECTORY include DESTINATION .)

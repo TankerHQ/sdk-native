@@ -21,10 +21,6 @@ public:
           Trustchain::UserId const& userId,
           Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey),
       override);
-  MAKE_MOCK1(getRevokedDeviceHistory,
-             tc::cotask<Users::IRequester::GetResult>(
-                 Trustchain::DeviceId const& deviceId),
-             override);
   MAKE_MOCK2(getUsers,
              tc::cotask<Users::IRequester::GetResult>(
                  gsl::span<Trustchain::UserId const> userIds, IsLight isLight),

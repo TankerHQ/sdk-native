@@ -8,14 +8,12 @@ tanker_create_provisional_identity
 tanker_decrypt
 tanker_decrypted_size
 tanker_destroy
-tanker_device_id
 tanker_encrypt
 tanker_encrypted_size
 tanker_event_connect
 tanker_event_disconnect
 tanker_free_attach_result
 tanker_free_buffer
-tanker_free_device_list
 tanker_free_verification_method_list
 tanker_future_destroy
 tanker_future_get_error
@@ -25,7 +23,6 @@ tanker_future_is_ready
 tanker_future_then
 tanker_future_wait
 tanker_generate_verification_key
-tanker_get_device_list
 tanker_get_public_identity
 tanker_get_resource_id
 tanker_get_verification_methods

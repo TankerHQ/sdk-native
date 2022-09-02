@@ -19,7 +19,6 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Oidc/Nonce.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
@@ -305,9 +304,6 @@ decltype(std::declval<F>()()) Core::resetOnFailure(
   }
   catch (Errors::Exception const& ex)
   {
-    // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
-      throw;
     for (auto const e : additionalErrorsToIgnore)
       if (ex.errorCode() == e)
         throw;
@@ -651,7 +647,7 @@ tc::cotask<std::string> Core::getSessionToken(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto sessionCertificate = Users::createSessionCertificate(
       _session->trustchainId(),
-      deviceId(),
+      localUser.deviceId(),
       verification,
       localUser.deviceKeys().signatureKeyPair.privateKey);
   auto const serializedSessCert = Serialization::serialize(sessionCertificate);
@@ -749,23 +745,6 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
   decryptedData.resize(clearSize);
 
   TC_RETURN(std::move(decryptedData));
-}
-
-Trustchain::DeviceId const& Core::deviceId() const
-{
-  assertStatus(Status::Ready, "deviceId");
-  return _session->accessors().localUserAccessor.get().deviceId();
-}
-
-tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
-{
-  assertStatus(Status::Ready, "getDeviceList");
-  auto const results =
-      TC_AWAIT(_session->accessors().userAccessor.pull({_session->userId()}));
-  if (results.found.size() != 1)
-    throw Errors::AssertionError("Did not find our userId");
-
-  TC_RETURN(results.found.at(0).devices());
 }
 
 tc::cotask<void> Core::share(
@@ -1229,10 +1208,5 @@ std::optional<std::string> Core::makeWithTokenRandomNonce(
   std::array<uint8_t, 8> randombuf;
   Tanker::Crypto::randomFill(gsl::make_span(randombuf));
   return mgs::base16::encode(randombuf.begin(), randombuf.end());
-}
-
-tc::cotask<void> Core::confirmRevocation()
-{
-  TC_AWAIT(_session->accessors().localUserAccessor.confirmRevocation());
 }
 }

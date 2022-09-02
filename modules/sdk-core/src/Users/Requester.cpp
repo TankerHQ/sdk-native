@@ -71,21 +71,6 @@ tc::cotask<Requester::GetResult> Requester::getUsersImpl(
           response.at("histories").get<std::vector<std::string>>())}));
 }
 
-tc::cotask<Requester::GetResult> Requester::getRevokedDeviceHistory(
-    Trustchain::DeviceId const& deviceId)
-{
-  auto url = _httpClient->makeUrl(
-      fmt::format("devices/{:#S}/revoked-device-history", deviceId));
-  auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
-  auto rootBlock =
-      Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
-          mgs::base64::decode(response.at("root").get<std::string>()));
-  TC_RETURN(
-      (GetResult{std::move(rootBlock),
-                 fromBlocksToUserActions(
-                     response.at("history").get<std::vector<std::string>>())}));
-}
-
 tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds, IsLight isLight)
 {

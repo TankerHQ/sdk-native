@@ -5,7 +5,6 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Verification/Verification.hpp>
 

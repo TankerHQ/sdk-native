@@ -57,10 +57,6 @@ UserAction deserializeUserAction(gsl::span<std::uint8_t const> block)
         .asDeviceCreation1();
   case Nature::DeviceCreation3:
     return Serialization::deserialize<DeviceCreation3>(block);
-  case Nature::DeviceRevocation1:
-    return Serialization::deserialize<DeviceRevocation1>(block);
-  case Nature::DeviceRevocation2:
-    return Serialization::deserialize<DeviceRevocation2>(block);
   default:
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals

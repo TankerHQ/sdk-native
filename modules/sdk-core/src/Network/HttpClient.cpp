@@ -33,7 +33,6 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"provisional_identity_not_found", AppdErrc::ProvisionalIdentityNotFound},
     {"provisional_identity_already_attached",
      AppdErrc::ProvisionalIdentityAlreadyAttached},
-    {"device_revoked", AppdErrc::DeviceRevoked},
     {"too_many_attempts", AppdErrc::TooManyAttempts},
     {"verification_needed", AppdErrc::VerificationNeeded},
     {"invalid_passphrase", AppdErrc::InvalidPassphrase},
@@ -199,7 +198,6 @@ tc::cotask<void> HttpClient::authenticate()
          {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
     auto response = TC_AWAIT(fetch(std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
-    _isRevoked = response.at("is_revoked").get<bool>();
 
     setAccessToken(accessToken);
   };

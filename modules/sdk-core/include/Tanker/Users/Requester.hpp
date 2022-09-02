@@ -23,8 +23,6 @@ class Requester : public IRequester
 public:
   Requester(Network::HttpClient* httpClient);
 
-  tc::cotask<GetResult> getRevokedDeviceHistory(
-      Trustchain::DeviceId const& deviceId) override;
   tc::cotask<GetResult> getUsers(gsl::span<Trustchain::UserId const> userIds,
                                  IsLight isLight) override;
   tc::cotask<GetResult> getUsers(

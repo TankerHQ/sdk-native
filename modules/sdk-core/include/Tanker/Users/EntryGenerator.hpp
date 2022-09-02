@@ -7,7 +7,6 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
@@ -46,23 +45,6 @@ Trustchain::Actions::DeviceCreation3 createNewGhostDeviceAction(
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys);
-
-Trustchain::Actions::DeviceRevocation2 createRevokeDeviceAction(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
-    Crypto::PrivateSignatureKey const& signatureKey,
-    Trustchain::DeviceId const& toBeRevoked,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
-    Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
-        userKeys);
-
-Trustchain::Actions::DeviceRevocation1 createRevokeDeviceV1Action(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
-    Crypto::PrivateSignatureKey const& signatureKey,
-    Trustchain::DeviceId const& toBeRevoked);
 
 Trustchain::Actions::SessionCertificate createSessionCertificate(
     Trustchain::TrustchainId const& trustchainId,

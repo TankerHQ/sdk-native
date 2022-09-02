@@ -395,9 +395,6 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
     case TANKER_EVENT_SESSION_CLOSED:
       return tanker->connectSessionClosed(
           [=, cb = std::move(cb)] { cb(nullptr, data); });
-    case TANKER_EVENT_DEVICE_REVOKED:
-      return tanker->connectDeviceRevoked(
-          [=, cb = std::move(cb)] { cb(nullptr, data); });
     default:
       throw formatEx(Errc::InvalidArgument,
                      FMT_STRING("unknown event: {:d}"),
@@ -415,9 +412,6 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
     {
     case TANKER_EVENT_SESSION_CLOSED:
       tanker->disconnectSessionClosed();
-      break;
-    case TANKER_EVENT_DEVICE_REVOKED:
-      tanker->disconnectDeviceRevoked();
       break;
     default:
       throw formatEx(Errc::InvalidArgument,
@@ -522,36 +516,6 @@ enum tanker_status tanker_status(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return static_cast<enum tanker_status>(tanker->status());
-}
-
-tanker_future_t* tanker_device_id(tanker_t* ctanker)
-{
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->deviceId().and_then(
-      tc::get_synchronous_executor(), [](auto const& deviceId) {
-        return static_cast<void*>(duplicateString(deviceId.string()));
-      }));
-}
-
-tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->getDeviceList().and_then(
-      tc::get_synchronous_executor(),
-      [](std::vector<Users::Device> const& deviceList) {
-        auto* cDeviceList = new tanker_device_list_t;
-        cDeviceList->count = deviceList.size();
-        cDeviceList->devices = new tanker_device_list_elem_t[deviceList.size()];
-        tanker_device_list_elem_t* cDevice = cDeviceList->devices;
-        for (auto const& device : deviceList)
-        {
-          cDevice->device_id =
-              duplicateString(mgs::base64::encode(device.id()));
-          cDevice->is_revoked = device.isRevoked();
-          cDevice++;
-        }
-        return reinterpret_cast<void*>(cDeviceList);
-      }));
 }
 
 tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
@@ -765,14 +729,6 @@ tanker_future_t* tanker_verify_provisional_identity(
 void tanker_free_buffer(void const* buffer)
 {
   free(const_cast<void*>(buffer));
-}
-
-void tanker_free_device_list(tanker_device_list_t* list)
-{
-  for (size_t i = 0; i < list->count; ++i)
-    free(const_cast<char*>(list->devices[i].device_id));
-  delete[] list->devices;
-  delete list;
 }
 
 void tanker_free_verification_method_list(

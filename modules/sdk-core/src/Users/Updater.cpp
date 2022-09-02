@@ -7,13 +7,10 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Revocation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
-#include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
@@ -97,44 +94,12 @@ Users::User applyDeviceCreationToUser(
   return *previousUser;
 }
 
-Users::User applyDeviceRevocationToUser(
-    Trustchain::Actions::DeviceRevocation const& dr, Users::User previousUser)
-{
-  if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
-    previousUser.setUserKey(v2->publicEncryptionKey());
-  previousUser.getDevice(dr.deviceId()).setRevoked();
-  return previousUser;
-}
-
 std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     DeviceCreation const& deviceCreation)
 {
   if (auto dc3 = deviceCreation.get_if<DeviceCreation::v3>())
     return Crypto::SealedEncryptionKeyPair{
         {}, dc3->sealedPrivateUserEncryptionKey()};
-  return std::nullopt;
-}
-
-std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
-    DeviceRevocation const& deviceRevocation,
-    Trustchain::DeviceId const& selfDeviceId)
-{
-  if (auto const dr2 = deviceRevocation.get_if<DeviceRevocation::v2>())
-  {
-    if (!selfDeviceId.is_null())
-    {
-      if (auto const encryptedPrivateKey =
-              Revocation::findUserKeyFromDeviceSealedKeys(
-                  selfDeviceId, dr2->sealedUserKeysForDevices()))
-        return Crypto::SealedEncryptionKeyPair{dr2->publicEncryptionKey(),
-                                               *encryptedPrivateKey};
-      if (selfDeviceId == dr2->deviceId())
-        throw formatEx(Errors::Errc::DeviceRevoked,
-                       "Our device has been revoked");
-    }
-    return Crypto::SealedEncryptionKeyPair{dr2->previousPublicEncryptionKey(),
-                                           dr2->sealedKeyForPreviousUserKey()};
-  }
   return std::nullopt;
 }
 
@@ -200,16 +165,6 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
                         deviceKeys.signatureKeyPair.publicKey,
                         device.id(),
                         deviceId));
-    }
-    else if (auto const deviceRevocation =
-                 boost::variant2::get_if<DeviceRevocation>(&action))
-    {
-      auto const action =
-          Verif::verifyDeviceRevocation(*deviceRevocation, user);
-      if (auto const extractedKeys =
-              extractEncryptedUserKey(*deviceRevocation, deviceId))
-        sealedKeys.push_back(*extractedKeys);
-      user = applyDeviceRevocationToUser(action, *user);
     }
   }
   if (!user.has_value())

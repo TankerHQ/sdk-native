@@ -113,14 +113,9 @@ struct User
 
   Trustchain::UserId const& id() const;
   std::vector<Crypto::EncryptionKeyPair> const& userKeys() const;
-  /// this does not contains revocation entries
   std::vector<Trustchain::Actions::DeviceCreation> entries() const;
   std::deque<Device> const& devices() const;
   std::deque<Device>& devices();
-  Trustchain::Actions::DeviceRevocation2 revokeDevice(Device& target);
-  Trustchain::Actions::DeviceRevocation1 revokeDeviceV1(Device& target);
-  Trustchain::Actions::DeviceRevocation2 revokeDeviceForMigration(
-      Device const& sender, Device& target);
 
   [[nodiscard]] Device makeDevice() const;
   Device& addDevice();
@@ -232,7 +227,6 @@ public:
   Trustchain::Context const& context() const;
   Trustchain::Actions::TrustchainCreation const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
-  // This does not contain revocation entries
   static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(
       std::initializer_list<Device> devices);
   std::vector<Trustchain::UserAction> makeEntryList(

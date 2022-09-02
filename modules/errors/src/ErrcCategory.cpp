@@ -34,8 +34,6 @@ std::string ErrcCategory::message(int c) const
     return "expired verification";
   case Errc::IOError:
     return "input/output error";
-  case Errc::DeviceRevoked:
-    return "device was revoked";
   case Errc::Conflict:
     return "conflict";
   case Errc::UpgradeRequired:

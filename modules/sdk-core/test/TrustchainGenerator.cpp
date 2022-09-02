@@ -5,7 +5,6 @@
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Revocation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -203,56 +202,6 @@ std::deque<Device> const& User::devices() const
 std::deque<Device>& User::devices()
 {
   return _devices;
-}
-
-Trustchain::Actions::DeviceRevocation2 User::revokeDevice(Device& target)
-{
-  auto const newUserKey = Crypto::makeEncryptionKeyPair();
-  target.setRevoked();
-  auto action = Revocation::makeRevokeDeviceAction(
-      target.id(),
-      _tid,
-      *this,
-      devices() | ranges::to<std::vector<Users::Device>>,
-      newUserKey);
-  addUserKey(newUserKey);
-  return action;
-}
-
-Trustchain::Actions::DeviceRevocation1 User::revokeDeviceV1(Device& target)
-{
-  target.setRevoked();
-  auto const& source = devices().front();
-  return Users::createRevokeDeviceV1Action(
-      _tid,
-      source.id(),
-      source.keys().signatureKeyPair.privateKey,
-      target.id());
-}
-
-Trustchain::Actions::DeviceRevocation2 User::revokeDeviceForMigration(
-    Device const& sender, Device& target)
-{
-  auto const user = Users::User{*this};
-  assert(user.findDevice(sender.id()));
-  assert(user.findDevice(target.id()));
-  assert(userKeys().empty());
-
-  auto const newUserKey = Crypto::makeEncryptionKeyPair();
-  auto const userKeys = Revocation::encryptPrivateKeyForDevices(
-      user.devices(), sender.id(), newUserKey.privateKey);
-  auto const action =
-      Users::createRevokeDeviceAction(_tid,
-                                      sender.id(),
-                                      sender.keys().signatureKeyPair.privateKey,
-                                      target.id(),
-                                      newUserKey.publicKey,
-                                      {},
-                                      {},
-                                      userKeys);
-  addUserKey(newUserKey);
-  target.setRevoked();
-  return action;
 }
 
 // ============ Groups

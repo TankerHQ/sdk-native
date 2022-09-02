@@ -85,21 +85,6 @@ tc::cotask<void> LocalUserAccessor::update()
   TC_AWAIT(_store->putUserKeys(_localUser.userKeys()));
 }
 
-tc::cotask<void> LocalUserAccessor::confirmRevocation()
-{
-  auto const& deviceId = _localUser.deviceId();
-  auto const& deviceKeys = _localUser.deviceKeys();
-  auto const [trustchainCreation, actions] =
-      TC_AWAIT(_requester->getRevokedDeviceHistory(_localUser.deviceId()));
-  // This will throw if we are effectively revoked
-  auto const [context, user, userKeys] = Updater::processUserEntries(
-      deviceId, deviceKeys, _context.id(), trustchainCreation, actions);
-  auto const selfDevice = user.findDevice(deviceId);
-  _localUser = LocalUser(user.id(), selfDevice->id(), deviceKeys, userKeys);
-  _context = context;
-  TC_AWAIT(_store->putUserKeys(_localUser.userKeys()));
-}
-
 Trustchain::Context const& LocalUserAccessor::getContext() const
 {
   return _context;

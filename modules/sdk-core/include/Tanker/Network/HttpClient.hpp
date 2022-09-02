@@ -84,7 +84,6 @@ private:
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;
-  bool _isRevoked{};
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 

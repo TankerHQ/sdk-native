@@ -127,11 +127,6 @@ public:
 
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();
-  void connectDeviceRevoked(std::function<void()> cb);
-  void disconnectDeviceRevoked();
-
-  tc::future<SDeviceId> deviceId() const;
-  tc::future<std::vector<Users::Device>> getDeviceList();
 
   static void setLogHandler(Log::LogHandler handler);
 
@@ -172,10 +167,6 @@ private:
   // operation at the same time on different threads.
   std::atomic<bool> _stopping{false};
 
-  // this signal is special compared to the other two because we need to do
-  // special work before forwarding it, so we redefine it
-  std::function<void()> _asyncDeviceRevoked;
-
   tc::semaphore _quickStopSemaphore{1};
 
   mutable tc::lazy::task_canceler _taskCanceler;
@@ -185,7 +176,6 @@ private:
   // coroutine and it... kind of returns. In other words, it seems like
   // [[noreturn]] also means noco_await, according to clang, which makes the
   // keyword useless on coroutines.
-  tc::cotask<void> handleDeviceRevocation();
   tc::cotask<void> handleDeviceUnrecoverable();
   void nukeAndStop();
 
