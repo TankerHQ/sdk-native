@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /common.yml
-  ref: 2022-08-29-256
+  ref: 2022-09-05-258
 
 workflow:
   rules:
@@ -12,9 +12,9 @@ workflow:
 .rules/assert-version-tags:
   rules:
     # web pipelines for releases only
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION == null && $SDK_NATIVE_LATEST_CONAN_REFERENCE == null)
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION == null && $SDK_NATIVE_CONAN_REFERENCE == null)
       when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_LATEST_CONAN_REFERENCE != null)
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_CONAN_REFERENCE != null)
       when: never
     - if: '$CI_PIPELINE_SOURCE == "web"
           && $SDK_NATIVE_RELEASE_VERSION == null
