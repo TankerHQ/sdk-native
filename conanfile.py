@@ -107,10 +107,8 @@ class TankerConan(ConanFile):
         self.requires("date/3.0.0-r1", private=private)
         # catch2 is needed to export datastore tests
         self.requires("catch2/2.13.6-r1", private=private)
-        if is_apple_os(self.settings.os):
+        if is_apple_os(self):
             self.requires("libcxx/11.1.0-r1", private=private)
-        if self.settings.os == "Android":
-            self.requires("android_ndk_installer/r22b", private=private)
 
 
     def build_requirements(self):
