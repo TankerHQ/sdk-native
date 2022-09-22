@@ -298,7 +298,9 @@ def main() -> None:
         user_home = Path.cwd() / ".cache" / "conan" / args.remote
 
     if args.command == "build":
-        with tankerci.conan.ConanContextManager([args.remote], conan_home=user_home):
+        with tankerci.conan.ConanContextManager(
+            [args.remote, "conancenter"], conan_home=user_home
+        ):
             profiles = [Profile(p) for p in args.profiles]
             build(profiles, args.coverage, args.test)
     elif args.command == "benchmark-artifact":
@@ -318,7 +320,7 @@ def main() -> None:
             sys.exit(0)
 
         with tankerci.conan.ConanContextManager(
-            [args.remote],
+            [args.remote, "conancenter"],
             conan_home=user_home,
             clean_on_exit=True,
         ):
