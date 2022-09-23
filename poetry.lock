@@ -81,7 +81,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "conan"
-version = "1.49.0"
+version = "1.52.0"
 description = "Conan C/C++ package manager"
 category = "main"
 optional = false
@@ -480,7 +480,7 @@ widechars = ["wcwidth"]
 
 [[package]]
 name = "tankerci"
-version = "2022.8.4429"
+version = "2022.9.4469"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -488,7 +488,7 @@ python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 cli-ui = ">=0.17.0,<0.18.0"
-conan = "1.49.0"
+conan = "1.52.0"
 psutil = ">=5.9.1,<6.0.0"
 python-dotenv = ">=0.20.0,<0.21.0"
 python-gitlab = ">=3.5.0,<4.0.0"
@@ -582,7 +582,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "fc05192e5d8470fe478bd093db21f274a33c33c33ad40714ac7f30d05a3e4749"
+content-hash = "1580fa95bc87030732b8cd71a5efa59b70051eafa71373ed404f1374109a3e0f"
 
 [metadata.files]
 black = [
@@ -635,7 +635,7 @@ colorama = [
     {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
 ]
 conan = [
-    {file = "conan-1.49.0.tar.gz", hash = "sha256:740df4a1be8bb8944752ede0581f0e6c674c78305ca664ea1443c317d390d57f"},
+    {file = "conan-1.52.0.tar.gz", hash = "sha256:184761f16d00fde17615e60125d2f14fca692ffba7666cc7d6d834fc3858cf82"},
 ]
 contextlib2 = [
     {file = "contextlib2-21.6.0-py2.py3-none-any.whl", hash = "sha256:3fbdb64466afd23abaf6c977627b75b6139a5a3e8ce38405c5b413aed7a0471f"},
@@ -919,8 +919,8 @@ tabulate = [
     {file = "tabulate-0.8.10.tar.gz", hash = "sha256:6c57f3f3dd7ac2782770155f3adb2db0b1a269637e42f27599925e64b114f519"},
 ]
 tankerci = [
-    {file = "tankerci-2022.8.4429-py3-none-any.whl", hash = "sha256:47eabfc45e3c0d261999c083690632b3965c46a4a53dd0d5c6cc3fd0c4e664b1"},
-    {file = "tankerci-2022.8.4429.tar.gz", hash = "sha256:c528761c93feaf134afda7ff66e34318e751bfa57d61ca7926e6e40b2f10b0e3"},
+    {file = "tankerci-2022.9.4469-py3-none-any.whl", hash = "sha256:6f2b56098716d15ff2eb45c3628ca9120b221dc9989d40fc09f86963681fee06"},
+    {file = "tankerci-2022.9.4469.tar.gz", hash = "sha256:46d1fae31712ea7dafe2ba9f1f94c88889c36bb9c564614317f7d2c8fc115c66"},
 ]
 tbump = [
     {file = "tbump-6.9.0-py3-none-any.whl", hash = "sha256:683eab2e5a4d4861b6928c422d9e51e1d3aeccbbd69d0281fab2c374345e1d9f"},
