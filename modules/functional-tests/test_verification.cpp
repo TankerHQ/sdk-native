@@ -596,37 +596,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
     REQUIRE(methods.size() == 1);
     CHECK(methods[0].get<PhoneNumber>() == newPhoneNumber);
   }
-
-  SECTION(
-      "setVerificationMethod with preverified email throws if preverified "
-      "verification flag is "
-      "disabled")
-  {
-    auto verificationCode = TC_AWAIT(getVerificationCode(email));
-    TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::ByEmail{email, verificationCode}}));
-
-    auto const preverifiedEmail = PreverifiedEmail{"superkirby@tanker.io"};
-    TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->setVerificationMethod(
-            Verification::Verification{preverifiedEmail})),
-        AppdErrc::FeatureNotEnabled);
-  }
-
-  SECTION(
-      "setVerificationMethod with preverified phone number throws if "
-      "preverified verification flag is disabled")
-  {
-    auto verificationCode = TC_AWAIT(getVerificationCode(email));
-    TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::ByEmail{email, verificationCode}}));
-
-    auto const preverifiedPhoneNumber = PreverifiedPhoneNumber{"+33639982244"};
-    TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->setVerificationMethod(
-            Verification::Verification{preverifiedPhoneNumber})),
-        AppdErrc::FeatureNotEnabled);
-  }
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
