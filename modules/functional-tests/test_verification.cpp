@@ -600,7 +600,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
 
 TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
 {
-  TC_AWAIT(enablePreverifiedMethods());
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore();
@@ -881,7 +880,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with E2E passphrase")
 TEST_CASE_METHOD(TrustchainFixture,
                  "Verification with preverified phone number")
 {
-  TC_AWAIT(enablePreverifiedMethods());
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore();

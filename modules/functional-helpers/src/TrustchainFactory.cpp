@@ -77,14 +77,6 @@ tc::cotask<void> TrustchainFactory::enablePSCOidc(
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::enablePreverifiedMethods(
-    Tanker::Trustchain::TrustchainId const& id)
-{
-  Admin::AppUpdateOptions options;
-  options.preverifiedVerification = true;
-  TC_AWAIT(_admin->update(id, options));
-}
-
 tc::cotask<void> TrustchainFactory::setUserEnrollmentEnabled(
     Tanker::Trustchain::TrustchainId const& id, bool state)
 {
