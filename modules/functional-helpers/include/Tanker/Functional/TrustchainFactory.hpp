@@ -37,8 +37,6 @@ public:
   tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
   tc::cotask<void> enablePSCOidc(Tanker::Trustchain::TrustchainId const& id,
                                  PSCProvider const& provider);
-  tc::cotask<void> enablePreverifiedMethods(
-      Tanker::Trustchain::TrustchainId const& id);
   tc::cotask<void> setUserEnrollmentEnabled(
       Tanker::Trustchain::TrustchainId const& id, bool state = true);
 
