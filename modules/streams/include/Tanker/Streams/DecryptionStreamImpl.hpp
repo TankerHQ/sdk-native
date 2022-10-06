@@ -54,7 +54,7 @@ tc::cotask<void> DecryptionStream<Derived>::readHeader()
 }
 
 template <typename Derived>
-Trustchain::ResourceId const& DecryptionStream<Derived>::resourceId() const
+Crypto::SimpleResourceId const& DecryptionStream<Derived>::resourceId() const
 {
   return _header.resourceId();
 }

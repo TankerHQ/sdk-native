@@ -3,8 +3,8 @@
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 namespace Tanker
 {
@@ -14,7 +14,7 @@ namespace Actions
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_ATTRIBUTES \
   (recipientPublicEncryptionKey, Crypto::PublicEncryptionKey),   \
-      (resourceId, ResourceId),                                  \
+      (resourceId, Crypto::SimpleResourceId),                            \
       (sealedSymmetricKey, Crypto::SealedSymmetricKey)
 
 class KeyPublishToUser
@@ -28,7 +28,7 @@ public:
   KeyPublishToUser(
       TrustchainId const& trustchainId,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-      ResourceId const& resourceId,
+      Crypto::SimpleResourceId const& resourceId,
       Crypto::SealedSymmetricKey const& sealedSymmetricKey,
       Crypto::Hash const& author,
       Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);

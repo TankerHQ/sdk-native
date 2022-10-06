@@ -1,20 +1,20 @@
 #include <Tanker/Encryptor/v5.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker
 {
 namespace
 {
 constexpr auto versionSize = 1;
-constexpr auto overheadSize = versionSize + ResourceId::arraySize +
+constexpr auto overheadSize = versionSize + SimpleResourceId::arraySize +
                               Crypto::AeadIv::arraySize +
                               Crypto::Mac::arraySize;
 
@@ -48,16 +48,16 @@ std::uint64_t EncryptorV5::decryptedSize(
 tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
-    ResourceId const& resourceId,
+    SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
   encryptedData[0] = version();
   std::copy(
       resourceId.begin(), resourceId.end(), encryptedData.data() + versionSize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
-                                        Crypto::AeadIv::arraySize);
+  auto const iv = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize, Crypto::AeadIv::arraySize);
   auto const cipherText = encryptedData.subspan(
-      versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize);
+      versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
   Crypto::randomFill(iv);
   Crypto::encryptAead(key, iv, cipherText, clearData, resourceId);
   TC_RETURN((EncryptionMetadata{resourceId, key}));
@@ -71,20 +71,21 @@ tc::cotask<std::uint64_t> EncryptorV5::decrypt(
   checkEncryptedFormat(encryptedData);
 
   auto const resourceId =
-      encryptedData.subspan(versionSize, ResourceId::arraySize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
-                                        Crypto::AeadIv::arraySize);
-  auto const data = encryptedData.subspan(versionSize + ResourceId::arraySize +
-                                          Crypto::AeadIv::arraySize);
+      encryptedData.subspan(versionSize, SimpleResourceId::arraySize);
+  auto const iv = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize, Crypto::AeadIv::arraySize);
+  auto const data = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
   Crypto::decryptAead(key, iv, decryptedData, data, resourceId);
   TC_RETURN(decryptedSize(encryptedData));
 }
 
-ResourceId EncryptorV5::extractResourceId(
+SimpleResourceId EncryptorV5::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
-  return ResourceId{encryptedData.subspan(versionSize, ResourceId::arraySize)};
+  return SimpleResourceId{
+      encryptedData.subspan(versionSize, SimpleResourceId::arraySize)};
 }
 }

@@ -3,12 +3,12 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Users/User.hpp>
 
@@ -111,7 +111,7 @@ Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
 
 Trustchain::Actions::KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,

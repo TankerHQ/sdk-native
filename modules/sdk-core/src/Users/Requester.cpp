@@ -93,7 +93,8 @@ tc::cotask<Requester::GetResult> Requester::getUsers(
 }
 
 tc::cotask<std::vector<Trustchain::KeyPublishAction>>
-Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
+Requester::getKeyPublishes(
+    gsl::span<Crypto::SimpleResourceId const> resourceIds)
 {
   auto const query =
       nlohmann::json{{"resource_ids[]",

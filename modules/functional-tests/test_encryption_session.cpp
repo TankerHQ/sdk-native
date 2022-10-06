@@ -16,6 +16,7 @@
 using namespace Tanker;
 using namespace Tanker::Errors;
 using Tanker::Functional::TrustchainFixture;
+using Tanker::Crypto::ResourceId;
 using namespace std::string_literals;
 
 namespace
@@ -35,7 +36,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
-  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encSess.resourceId()});
 }
 
 TEST_CASE_METHOD(TrustchainFixture,
@@ -50,7 +51,7 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
-  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encSess.resourceId()});
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for Bob")
@@ -104,7 +105,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can session-encrypt a stream")
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession}, clearText, encryptedData)));
   CHECK(resourceId == encSess.resourceId());
-  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encSess.resourceId()});
 }
 
 inline auto const sessionEncryptionOverhead = 57;
@@ -241,7 +242,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
-  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encryptorResourceId});
   CHECK(decryptedData == clearData);
 }
 
@@ -258,7 +259,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
-  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encryptorResourceId});
   CHECK(decryptedData == clearData);
 }
 
@@ -275,6 +276,6 @@ TEST_CASE_METHOD(TrustchainFixture,
   CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
-  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(Core::getResourceId(encryptedData) == ResourceId{encryptorResourceId});
   CHECK(decryptedData == clearData);
 }

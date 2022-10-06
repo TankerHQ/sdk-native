@@ -1,6 +1,7 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -8,11 +9,10 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 TLOG_CATEGORY(ResourceKeys::Store);
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker::ResourceKeys
 {
@@ -20,7 +20,7 @@ namespace
 {
 std::string const KeyPrefix = "resourcekey-";
 
-std::vector<uint8_t> serializeStoreKey(ResourceId const& resourceId)
+std::vector<uint8_t> serializeStoreKey(SimpleResourceId const& resourceId)
 {
   std::vector<uint8_t> keyBuffer(KeyPrefix.size() + resourceId.size());
   auto it = keyBuffer.data();
@@ -36,7 +36,7 @@ Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
 {
 }
 
-tc::cotask<void> Store::putKey(ResourceId const& resourceId,
+tc::cotask<void> Store::putKey(SimpleResourceId const& resourceId,
                                Crypto::SymmetricKey const& key)
 {
   TINFO("Adding key for {}", resourceId);
@@ -54,7 +54,7 @@ tc::cotask<void> Store::putKey(ResourceId const& resourceId,
 }
 
 tc::cotask<Crypto::SymmetricKey> Store::getKey(
-    ResourceId const& resourceId) const
+    SimpleResourceId const& resourceId) const
 {
   auto const key = TC_AWAIT(findKey(resourceId));
   if (!key)
@@ -67,7 +67,7 @@ tc::cotask<Crypto::SymmetricKey> Store::getKey(
 }
 
 tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
-    ResourceId const& resourceId) const
+    SimpleResourceId const& resourceId) const
 {
   FUNC_TIMER(DB);
 

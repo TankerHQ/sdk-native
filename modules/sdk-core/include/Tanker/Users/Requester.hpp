@@ -29,7 +29,7 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds,
       IsLight isLight) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
-      gsl::span<Trustchain::ResourceId const> resourceIds) override;
+      gsl::span<Crypto::SimpleResourceId const> resourceIds) override;
   tc::cotask<void> postResourceKeys(
       Share::ShareActions const& resourceKeys) override;
   tc::cotask<GetEncryptionKeyResult> getEncryptionKey(

@@ -64,6 +64,7 @@ target_link_libraries(
   tankercrypto
   tankerserialization
   tankererrors
+  tankertypes
 
   libsodium::libsodium
   mgs::mgs

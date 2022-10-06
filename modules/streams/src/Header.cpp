@@ -12,7 +12,7 @@ namespace Streams
 {
 Header::Header(std::uint32_t version,
                std::uint32_t encryptedChunkSize,
-               Trustchain::ResourceId const& resourceId,
+               Crypto::SimpleResourceId const& resourceId,
                Crypto::AeadIv const& seed)
   : _version(version),
     _encryptedChunkSize(encryptedChunkSize),
@@ -31,7 +31,7 @@ std::uint32_t Header::encryptedChunkSize() const
   return _encryptedChunkSize;
 }
 
-Trustchain::ResourceId const& Header::resourceId() const
+Crypto::SimpleResourceId const& Header::resourceId() const
 {
   return _resourceId;
 }

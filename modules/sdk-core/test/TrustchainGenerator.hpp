@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
@@ -13,7 +14,6 @@
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
@@ -180,7 +180,7 @@ public:
   }
 
   Resource();
-  Resource(Trustchain::ResourceId const& id, Crypto::SymmetricKey const& key);
+  Resource(Crypto::SimpleResourceId const& id, Crypto::SymmetricKey const& key);
   [[nodiscard]] bool operator==(Resource const& rhs) const noexcept;
 
   Resource(Resource const&) = delete;
@@ -189,7 +189,7 @@ public:
   Resource& operator=(Resource&&) = delete;
 
 private:
-  Trustchain::ResourceId _rid;
+  Crypto::SimpleResourceId _rid;
   Crypto::SymmetricKey _key;
 };
 

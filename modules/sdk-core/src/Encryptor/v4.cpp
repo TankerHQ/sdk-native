@@ -11,7 +11,7 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 using namespace Tanker::Errors;
 using namespace Tanker::Streams;
@@ -23,7 +23,8 @@ namespace
 constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
 constexpr auto versionSize = 1;
 constexpr auto headerSize = versionSize + sizeOfChunkSize +
-                            ResourceId::arraySize + Crypto::AeadIv::arraySize;
+                            SimpleResourceId::arraySize +
+                            Crypto::AeadIv::arraySize;
 constexpr auto chunkOverhead = headerSize + Crypto::Mac::arraySize;
 
 // version 4 format layout:
@@ -68,7 +69,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
 {
   TC_RETURN(TC_AWAIT(encrypt(encryptedData,
                              clearData,
-                             Crypto::getRandom<Trustchain::ResourceId>(),
+                             Crypto::getRandom<Crypto::SimpleResourceId>(),
                              Crypto::makeSymmetricKey(),
                              encryptedChunkSize)));
 }
@@ -76,7 +77,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
 tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& key,
     std::uint32_t encryptedChunkSize)
 {
@@ -113,7 +114,7 @@ tc::cotask<std::uint64_t> EncryptorV4::decrypt(
   TC_RETURN(initialSize);
 }
 
-ResourceId EncryptorV4::extractResourceId(
+SimpleResourceId EncryptorV4::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};

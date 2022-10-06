@@ -1,13 +1,13 @@
 #include <Tanker/Encryptor/v2.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 using namespace Tanker::Errors;
 
 namespace Tanker
@@ -54,7 +54,7 @@ EncryptionMetadata EncryptorV2::encryptSync(
   Crypto::randomFill(iv);
   auto const resourceId =
       Crypto::encryptAead(key, iv, cipherText, clearData, {});
-  return EncryptionMetadata{ResourceId(resourceId), key};
+  return EncryptionMetadata{SimpleResourceId(resourceId), key};
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV2::encrypt(
@@ -78,12 +78,12 @@ tc::cotask<std::uint64_t> EncryptorV2::decrypt(
   TC_RETURN(decryptedSize(encryptedData));
 }
 
-ResourceId EncryptorV2::extractResourceId(
+SimpleResourceId EncryptorV2::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const cypherText = encryptedData.subspan(versionSize);
-  return ResourceId{Crypto::extractMac(cypherText)};
+  return SimpleResourceId{Crypto::extractMac(cypherText)};
 }
 }

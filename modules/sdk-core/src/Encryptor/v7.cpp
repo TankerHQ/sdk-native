@@ -2,27 +2,28 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <range/v3/algorithm/copy.hpp>
 #include <stdexcept>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker
 {
 namespace
 {
 constexpr auto versionSize = 1;
-constexpr auto overheadSize = versionSize + ResourceId::arraySize +
+constexpr auto overheadSize = versionSize + SimpleResourceId::arraySize +
                               Crypto::AeadIv::arraySize +
                               Crypto::Mac::arraySize;
 
 // version 7 format layout:
-// [version, 1B] [resourceid, 16B] [iv, 24B] [[ciphertext, variable] [MAC, 16B]]
+// [version, 1B] [SimpleResourceId, 16B] [iv, 24B] [[ciphertext, variable] [MAC,
+// 16B]]
 void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
   if (encryptedData.size() < overheadSize)
@@ -38,7 +39,7 @@ void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 std::uint64_t EncryptorV7::encryptedSize(
     std::uint64_t clearSize, std::optional<std::uint32_t> paddingStep)
 {
-  return versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize +
+  return versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize +
          Crypto::encryptedSize(
              Padding::paddedFromClearSize(clearSize, paddingStep));
 }
@@ -54,22 +55,22 @@ std::uint64_t EncryptorV7::decryptedSize(
 tc::cotask<EncryptionMetadata> EncryptorV7::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
-    ResourceId const& resourceId,
+    SimpleResourceId const& SimpleResourceId,
     Crypto::SymmetricKey const& key,
     std::optional<std::uint32_t> paddingStep)
 {
   encryptedData[0] = version();
-  ranges::copy(resourceId, encryptedData.data() + versionSize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
-                                        Crypto::AeadIv::arraySize);
+  ranges::copy(SimpleResourceId, encryptedData.data() + versionSize);
+  auto const iv = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize, Crypto::AeadIv::arraySize);
   Crypto::randomFill(iv);
   auto const associatedData =
-      encryptedData.subspan(0, versionSize + ResourceId::arraySize);
+      encryptedData.subspan(0, versionSize + SimpleResourceId::arraySize);
   auto const cipherText = encryptedData.subspan(
-      versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize);
+      versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
   auto const paddedData = Padding::padClearData(clearData, paddingStep);
   Crypto::encryptAead(key, iv, cipherText, paddedData, associatedData);
-  TC_RETURN((EncryptionMetadata{resourceId, key}));
+  TC_RETURN((EncryptionMetadata{SimpleResourceId, key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV7::decrypt(
@@ -80,22 +81,23 @@ tc::cotask<std::uint64_t> EncryptorV7::decrypt(
   checkEncryptedFormat(encryptedData);
 
   auto const associatedData =
-      encryptedData.subspan(0, versionSize + ResourceId::arraySize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
-                                        Crypto::AeadIv::arraySize);
-  auto const data = encryptedData.subspan(versionSize + ResourceId::arraySize +
-                                          Crypto::AeadIv::arraySize);
+      encryptedData.subspan(0, versionSize + SimpleResourceId::arraySize);
+  auto const iv = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize, Crypto::AeadIv::arraySize);
+  auto const data = encryptedData.subspan(
+      versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
 
   Crypto::decryptAead(key, iv, decryptedData, data, associatedData);
 
   TC_RETURN(Padding::unpaddedSize(decryptedData));
 }
 
-ResourceId EncryptorV7::extractResourceId(
+SimpleResourceId EncryptorV7::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
-  return ResourceId{encryptedData.subspan(versionSize, ResourceId::arraySize)};
+  return SimpleResourceId{
+      encryptedData.subspan(versionSize, SimpleResourceId::arraySize)};
 }
 }

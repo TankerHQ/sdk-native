@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Streams/BufferedStream.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -26,14 +26,14 @@ class DecryptionStream : protected BufferedStream<Derived>
 
 public:
   using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
-      Trustchain::ResourceId const&)>;
+      Crypto::SimpleResourceId const&)>;
 
   static tc::cotask<Derived> create(InputSource cb, ResourceKeyFinder finder);
 
   using BufferedStream<Derived>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
-  Trustchain::ResourceId const& resourceId() const;
+  Crypto::SimpleResourceId const& resourceId() const;
 
 protected:
   Crypto::SymmetricKey _key;

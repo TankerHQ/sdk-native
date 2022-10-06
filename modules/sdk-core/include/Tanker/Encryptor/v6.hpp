@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/EncryptionMetadata.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -31,7 +31,7 @@ public:
       gsl::span<uint8_t> decryptedData,
       Crypto::SymmetricKey const& key,
       gsl::span<std::uint8_t const> encryptedData);
-  static Trustchain::ResourceId extractResourceId(
+  static Crypto::SimpleResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);
 };
 }

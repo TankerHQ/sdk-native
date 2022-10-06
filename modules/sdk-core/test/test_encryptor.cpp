@@ -24,6 +24,8 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
+using Crypto::ResourceId;
+using Crypto::SimpleResourceId;
 
 namespace
 {
@@ -34,7 +36,7 @@ struct TestVector
   Crypto::SymmetricKey key;
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData;
-  Trustchain::ResourceId resourceId;
+  Crypto::SimpleResourceId resourceId;
 
   TestVector(std::vector<uint8_t> const& key,
              std::vector<uint8_t> const& clearData,
@@ -253,7 +255,7 @@ struct TestContext<EncryptorV5>
   {
     return EncryptorV5::encrypt(encryptedData,
                                 clearData,
-                                Crypto::getRandom<Trustchain::ResourceId>(),
+                                Crypto::getRandom<Crypto::SimpleResourceId>(),
                                 Crypto::makeSymmetricKey());
   }
 
@@ -361,7 +363,7 @@ struct TestContext<EncryptorV7>
   {
     return EncryptorV7::encrypt(encryptedData,
                                 clearData,
-                                Crypto::getRandom<Trustchain::ResourceId>(),
+                                Crypto::getRandom<Crypto::SimpleResourceId>(),
                                 Crypto::makeSymmetricKey(),
                                 paddingStep);
   }
@@ -415,7 +417,7 @@ struct TestContext<EncryptorV7>
 
   std::optional<uint32_t> paddingStep;
 
-  static auto constexpr overhead = 1 + Trustchain::ResourceId::arraySize +
+  static auto constexpr overhead = 1 + SimpleResourceId::arraySize +
                                    Crypto::AeadIv::arraySize +
                                    Crypto::Mac::arraySize + 1;
 };
@@ -429,7 +431,7 @@ struct TestContext<EncryptorV8>
   {
     return EncryptorV8::encrypt(encryptedData,
                                 clearData,
-                                Crypto::getRandom<Trustchain::ResourceId>(),
+                                Crypto::getRandom<Crypto::SimpleResourceId>(),
                                 Crypto::makeSymmetricKey(),
                                 paddingStep);
   }
@@ -854,7 +856,7 @@ TEST_CASE("EncryptorV2 tests")
   SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = 1;
-    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
+    constexpr auto MacSize = SimpleResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     CHECK(EncryptorV2::encryptedSize(0) == versionSize + 0 + MacSize + IvSize);
     CHECK(EncryptorV2::encryptedSize(1) == versionSize + 1 + MacSize + IvSize);
@@ -871,7 +873,7 @@ TEST_CASE("EncryptorV3 tests")
   SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = 1;
-    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
+    constexpr auto MacSize = SimpleResourceId::arraySize;
     CHECK(EncryptorV3::encryptedSize(0) == versionSize + 0 + MacSize);
     CHECK(EncryptorV3::encryptedSize(1) == versionSize + 1 + MacSize);
   }
@@ -941,9 +943,9 @@ TEST_CASE("EncryptorV5 tests")
   SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = 1;
-    constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;
+    constexpr auto ResourceIdSize = SimpleResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
-    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
+    constexpr auto MacSize = SimpleResourceId::arraySize;
     CHECK(EncryptorV5::encryptedSize(0) ==
           versionSize + ResourceIdSize + IvSize + 0 + MacSize);
     CHECK(EncryptorV5::encryptedSize(1) ==

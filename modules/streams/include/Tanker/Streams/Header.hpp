@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Tanker/Crypto/AeadIv.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -20,18 +20,18 @@ public:
   static constexpr std::uint32_t versionSize = 1u;
   static constexpr std::uint32_t defaultEncryptedChunkSize = 1024 * 1024;
   static constexpr std::uint32_t serializedSize =
-      versionSize + sizeof(std::uint32_t) + Trustchain::ResourceId::arraySize +
-      Crypto::AeadIv::arraySize;
+      versionSize + sizeof(std::uint32_t) +
+      Crypto::SimpleResourceId::arraySize + Crypto::AeadIv::arraySize;
 
   Header() = default;
   Header(std::uint32_t version,
          std::uint32_t encryptedChunkSize,
-         Trustchain::ResourceId const& resourceId,
+         Crypto::SimpleResourceId const& resourceId,
          Crypto::AeadIv const& seed);
 
   std::uint32_t version() const;
   std::uint32_t encryptedChunkSize() const;
-  Trustchain::ResourceId const& resourceId() const;
+  Crypto::SimpleResourceId const& resourceId() const;
   Crypto::AeadIv const& seed() const;
 
 private:
@@ -39,7 +39,7 @@ private:
 
   std::uint32_t _version;
   std::uint32_t _encryptedChunkSize;
-  Trustchain::ResourceId _resourceId;
+  Crypto::SimpleResourceId _resourceId;
   Crypto::AeadIv _seed;
 };
 

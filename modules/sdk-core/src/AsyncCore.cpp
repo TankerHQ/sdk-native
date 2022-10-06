@@ -370,7 +370,7 @@ expected<SResourceId> AsyncCore::getResourceId(
   });
 }
 
-tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
 AsyncCore::makeEncryptionStream(Streams::InputSource cb,
                                 std::vector<SPublicIdentity> const& suserIds,
                                 std::vector<SGroupId> const& sgroupIds,
@@ -379,20 +379,18 @@ AsyncCore::makeEncryptionStream(Streams::InputSource cb,
 {
   return runResumable(
       [=, cb = std::move(cb)]()
-          -> tc::cotask<
-              std::tuple<Streams::InputSource, Trustchain::ResourceId>> {
+          -> tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> {
         TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
             std::move(cb), suserIds, sgroupIds, shareWithSelf, paddingStep)));
       });
 }
 
-tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
 AsyncCore::makeDecryptionStream(Streams::InputSource cb)
 {
   return runResumable(
       [this, cb = std::move(cb)]()
-          -> tc::cotask<
-              std::tuple<Streams::InputSource, Trustchain::ResourceId>> {
+          -> tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> {
         TC_RETURN(TC_AWAIT(this->_core.makeDecryptionStream(std::move(cb))));
       });
 }

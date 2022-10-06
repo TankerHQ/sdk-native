@@ -13,11 +13,6 @@
 
 namespace Tanker
 {
-namespace Trustchain
-{
-class ResourceId;
-}
-
 namespace Crypto
 {
 class SymmetricKey;
@@ -36,14 +31,14 @@ public:
 
   Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
-  tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
+  tc::cotask<void> putKey(Crypto::SimpleResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
 
   tc::cotask<Crypto::SymmetricKey> getKey(
-      Trustchain::ResourceId const& resourceId) const;
+      Crypto::SimpleResourceId const& resourceId) const;
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
-      Trustchain::ResourceId const& resourceId) const;
+      Crypto::SimpleResourceId const& resourceId) const;
 
 private:
   Crypto::SymmetricKey _userSecret;

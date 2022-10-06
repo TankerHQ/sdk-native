@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/EncryptionMetadata.hpp>
 #include <Tanker/Streams/Header.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -37,7 +37,7 @@ public:
   static tc::cotask<EncryptionMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
-      Trustchain::ResourceId const& resourceId,
+      Crypto::SimpleResourceId const& resourceId,
       Crypto::SymmetricKey const& key,
       std::optional<std::uint32_t> paddingStep = std::nullopt,
       std::uint32_t encryptedChunkSize =
@@ -46,7 +46,7 @@ public:
       gsl::span<std::uint8_t> decryptedData,
       Crypto::SymmetricKey const& key,
       gsl::span<std::uint8_t const> encryptedData);
-  static Trustchain::ResourceId extractResourceId(
+  static Crypto::SimpleResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);
 };
 }

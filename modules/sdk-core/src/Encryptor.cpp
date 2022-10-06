@@ -15,7 +15,7 @@
 
 #include <Tanker/Streams/Header.hpp>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::ResourceId;
 
 namespace Tanker
 {
@@ -138,7 +138,7 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
   auto const version = encryptedData[0];
 
   return performEncryptorAction(version, [&](auto encryptor) {
-    return encryptor.extractResourceId(encryptedData);
+    return ResourceId(encryptor.extractResourceId(encryptedData));
   });
 }
 }

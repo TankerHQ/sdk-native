@@ -2,9 +2,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <cstdint>
 #include <gsl/gsl-lite.hpp>
@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker
 {
@@ -65,7 +65,7 @@ tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
   auto const resourceId =
       Crypto::encryptAead(key, iv, cipherText, paddedData, additionalData);
 
-  TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
+  TC_RETURN((EncryptionMetadata{SimpleResourceId(resourceId), key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV6::decrypt(
@@ -83,12 +83,12 @@ tc::cotask<std::uint64_t> EncryptorV6::decrypt(
   TC_RETURN(Padding::unpaddedSize(decryptedData));
 }
 
-ResourceId EncryptorV6::extractResourceId(
+SimpleResourceId EncryptorV6::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const cipherText = encryptedData.subspan(versionSize);
-  return ResourceId{Crypto::extractMac(cipherText)};
+  return SimpleResourceId{Crypto::extractMac(cipherText)};
 }
 }

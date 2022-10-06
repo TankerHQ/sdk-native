@@ -15,6 +15,7 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
+using Crypto::ResourceId;
 
 namespace
 {
@@ -81,7 +82,8 @@ void commonEncSessionTests(std::shared_ptr<Session>& session,
     auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
     CHECK(encSession.resourceId() == metadata.resourceId);
-    CHECK(Encryptor::extractResourceId(encryptedData) == metadata.resourceId);
+    CHECK(Encryptor::extractResourceId(encryptedData) ==
+          ResourceId{metadata.resourceId});
   }
 
   SECTION("resourceId is the same for all session encryptions")

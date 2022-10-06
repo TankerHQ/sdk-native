@@ -1,10 +1,11 @@
 #pragma once
 
+#include <Tanker/Crypto/CompositeResourceId.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Streams/BufferedStream.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -17,7 +18,7 @@ namespace Tanker
 {
 namespace Streams
 {
-template <typename Derived>
+template <typename Derived, typename ResourceIdType = Crypto::SimpleResourceId>
 class EncryptionStream : protected BufferedStream<Derived>
 {
   friend BufferedStream<Derived>;
@@ -25,19 +26,19 @@ class EncryptionStream : protected BufferedStream<Derived>
 public:
   using BufferedStream<Derived>::operator();
 
-  Trustchain::ResourceId const& resourceId() const;
+  ResourceIdType const& resourceId() const;
   Crypto::SymmetricKey const& symmetricKey() const;
 
 protected:
   EncryptionStream(InputSource,
-                   Trustchain::ResourceId const& resourceId,
+                   ResourceIdType const& resourceId,
                    Crypto::SymmetricKey const& key,
                    std::uint32_t encryptedChunkSize);
 
   tc::cotask<void> processInput();
 
   std::int32_t _encryptedChunkSize;
-  Trustchain::ResourceId _resourceId;
+  ResourceIdType _resourceId;
   Crypto::SymmetricKey _key;
   std::int64_t _chunkIndex{};
 };

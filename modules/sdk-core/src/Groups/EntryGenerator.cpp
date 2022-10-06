@@ -259,7 +259,7 @@ Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
 
 KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,

@@ -247,7 +247,7 @@ createKeyPublishToProvisionalUserAction(
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
     Crypto::PublicSignatureKey const& appPublicSignatureKey,
     Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey)
 {
   return Trustchain::Actions::KeyPublishToProvisionalUser{
@@ -266,7 +266,7 @@ Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
     Crypto::SealedSymmetricKey const& symKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey)
 {
   return Trustchain::Actions::KeyPublishToUser{

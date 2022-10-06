@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/EncryptionMetadata.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -23,7 +23,6 @@ tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
 tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                              Crypto::SymmetricKey const& key,
                              gsl::span<uint8_t const> encryptedData);
-Trustchain::ResourceId extractResourceId(
-    gsl::span<uint8_t const> encryptedData);
+Crypto::ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData);
 }
 }

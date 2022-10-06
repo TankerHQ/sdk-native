@@ -148,7 +148,7 @@ Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKey =
@@ -167,7 +167,7 @@ Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
@@ -187,7 +187,7 @@ makeKeyPublishToProvisionalUser(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ProvisionalUsers::PublicUser const& recipientProvisionalUser,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKeyOnce = Crypto::sealEncrypt(

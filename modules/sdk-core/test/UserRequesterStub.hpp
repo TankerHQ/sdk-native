@@ -32,7 +32,7 @@ public:
              override);
   MAKE_MOCK1(getKeyPublishes,
              tc::cotask<std::vector<Trustchain::KeyPublishAction>>(
-                 gsl::span<Trustchain::ResourceId const> resourceIds),
+                 gsl::span<Crypto::SimpleResourceId const> resourceIds),
              override);
   MAKE_MOCK1(getPublicProvisionalIdentities,
              (tc::cotask<std::map<HashedEmail,

@@ -24,7 +24,7 @@ TEST_CASE("Resource Keys Store")
 
   SECTION("it should not find a non-existent key")
   {
-    auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
+    auto const unexistentMac = make<Crypto::SimpleResourceId>("unexistent");
 
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
                                   Errors::Errc::InvalidArgument);
@@ -32,7 +32,7 @@ TEST_CASE("Resource Keys Store")
 
   SECTION("it should find a key that was inserted")
   {
-    auto const resourceId = make<Trustchain::ResourceId>("mymac");
+    auto const resourceId = make<Crypto::SimpleResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
 
     AWAIT_VOID(keys.putKey(resourceId, key));
@@ -43,7 +43,7 @@ TEST_CASE("Resource Keys Store")
 
   SECTION("it should ignore a duplicate key and keep the first")
   {
-    auto const resourceId = make<Trustchain::ResourceId>("mymac");
+    auto const resourceId = make<Crypto::SimpleResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
     auto const key2 = make<Crypto::SymmetricKey>("mykey2");
 

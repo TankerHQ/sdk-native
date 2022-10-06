@@ -529,7 +529,7 @@ Resource::Resource()
   Crypto::randomFill(_key);
 }
 
-Resource::Resource(Trustchain::ResourceId const& id,
+Resource::Resource(Crypto::SimpleResourceId const& id,
                    Crypto::SymmetricKey const& key)
   : _rid(id), _key(key)
 {

@@ -28,7 +28,6 @@
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -731,7 +730,10 @@ tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
   assertStatus(Status::Ready, "decrypt");
   auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
-  auto const key = TC_AWAIT(getResourceKey(resourceId));
+  // At this point, all formats still use simple resource IDs, just extract it
+  auto const simpleResourceId = resourceId.individualResourceId();
+
+  auto const key = TC_AWAIT(getResourceKey(simpleResourceId));
 
   TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData)));
 }
@@ -758,8 +760,9 @@ tc::cotask<void> Core::share(
 
   auto const resourceIds =
       sresourceIds | ranges::views::transform([](auto&& resourceId) {
-        return decodeArgument<mgs::base64, Trustchain::ResourceId>(
-            resourceId, "resource id");
+        return decodeArgument<mgs::base64, Crypto::ResourceId>(resourceId,
+                                                               "resource id")
+            .individualResourceId();
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
 
@@ -1035,8 +1038,7 @@ void Core::nukeDatabase()
   _session->storage().db->nuke();
 }
 
-Trustchain::ResourceId Core::getResourceId(
-    gsl::span<uint8_t const> encryptedData)
+Crypto::ResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
 {
   return Encryptor::extractResourceId(encryptedData);
 }
@@ -1051,7 +1053,7 @@ void Core::setHttpSessionToken(std::string_view token)
   this->_session->httpClient().setAccessToken(token);
 }
 
-tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
 Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
@@ -1061,7 +1063,7 @@ Core::makeEncryptionStream(
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
   Streams::InputSource encryptorStream;
-  Trustchain::ResourceId resourceId;
+  Crypto::SimpleResourceId resourceId;
   Crypto::SymmetricKey symmetricKey;
 
   if (paddingStep == Padding::Off)
@@ -1112,7 +1114,7 @@ Core::makeEncryptionStream(
 }
 
 tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
-    Trustchain::ResourceId const& resourceId)
+    Crypto::SimpleResourceId const& resourceId)
 {
   auto const key =
       TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId));
@@ -1124,7 +1126,7 @@ tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
 Core::makeDecryptionStream(Streams::InputSource cb)
 {
   assertStatus(Status::Ready, "makeDecryptionStream");
@@ -1133,7 +1135,7 @@ Core::makeDecryptionStream(Streams::InputSource cb)
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, "empty stream");
 
-  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+  auto resourceKeyFinder = [this](Crypto::SimpleResourceId const& resourceId)
       -> tc::cotask<Crypto::SymmetricKey> {
     TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
   };

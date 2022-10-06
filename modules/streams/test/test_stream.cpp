@@ -1,12 +1,12 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/DecryptionStreamV8.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/EncryptionStreamV8.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -31,10 +31,10 @@ tc::cotask<std::int64_t> failRead(gsl::span<std::uint8_t>)
   throw Exception(make_error_code(Errc::IOError), "failRead");
 }
 
-auto makeKeyFinder(Trustchain::ResourceId const& resourceId,
+auto makeKeyFinder(Crypto::SimpleResourceId const& resourceId,
                    Crypto::SymmetricKey const& key)
 {
-  return [=](Trustchain::ResourceId const& id)
+  return [=](Crypto::SimpleResourceId const& id)
              -> tc::cotask<Crypto::SymmetricKey> {
     CHECK(id == resourceId);
     TC_RETURN(key);
@@ -51,7 +51,7 @@ template <typename DecStream>
 std::vector<uint8_t> decryptAllStream(
     InputSource source,
     std::function<tc::cotask<Crypto::SymmetricKey>(
-        Trustchain::ResourceId const& id)> const& keyFinder)
+        Crypto::SimpleResourceId const& id)> const& keyFinder)
 {
   auto decryptor = AWAIT(DecStream::create(source, keyFinder));
 
@@ -280,7 +280,7 @@ void commonStreamTests()
     std::vector<std::uint8_t> buffer1(2 * smallClearChunkSize, 0x11);
     std::vector<std::uint8_t> buffer2(2 * smallClearChunkSize, 0x22);
 
-    auto const resourceId = Crypto::getRandom<Trustchain::ResourceId>();
+    auto const resourceId = Crypto::getRandom<Crypto::SimpleResourceId>();
     auto const key = Crypto::makeSymmetricKey();
 
     EncStream encryptor1(
@@ -320,22 +320,22 @@ TEST_CASE("Stream V4", "[streamencryption]")
 
   SECTION("Decrypt test vector")
   {
-    Trustchain::ResourceId resourceId(std::vector<uint8_t>{0x40,
-                                                           0xec,
-                                                           0x8d,
-                                                           0x84,
-                                                           0xad,
-                                                           0xbe,
-                                                           0x2b,
-                                                           0x27,
-                                                           0x32,
-                                                           0xc9,
-                                                           0xa,
-                                                           0x1e,
-                                                           0xc6,
-                                                           0x8f,
-                                                           0x2b,
-                                                           0xdb});
+    Crypto::SimpleResourceId resourceId(std::vector<uint8_t>{0x40,
+                                                             0xec,
+                                                             0x8d,
+                                                             0x84,
+                                                             0xad,
+                                                             0xbe,
+                                                             0x2b,
+                                                             0x27,
+                                                             0x32,
+                                                             0xc9,
+                                                             0xa,
+                                                             0x1e,
+                                                             0xc6,
+                                                             0x8f,
+                                                             0x2b,
+                                                             0xdb});
     Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
         0xa,  0x7,  0x3d, 0xd0, 0x2c, 0x2d, 0x17, 0xf9, 0x49, 0xd9, 0x35,
         0x8e, 0xf7, 0xfe, 0x7b, 0xd1, 0xf6, 0xb,  0xf1, 0x5c, 0xa4, 0x32,
@@ -380,7 +380,7 @@ struct EncryptionStreamV8NoPad : EncryptionStreamV8
 
   EncryptionStreamV8NoPad(
       InputSource cb,
-      Trustchain::ResourceId const& resourceId,
+      Crypto::SimpleResourceId const& resourceId,
       Crypto::SymmetricKey const& key,
       std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize)
     : EncryptionStreamV8(cb, resourceId, key, Padding::Off, encryptedChunkSize)
@@ -509,7 +509,7 @@ TEST_CASE("Stream V8", "[streamencryption]")
     std::vector<std::uint8_t> buffer1(3 * smallClearChunkSize, 0x11);
     std::vector<std::uint8_t> buffer2(1, 0x22);
 
-    auto const resourceId = Crypto::getRandom<Trustchain::ResourceId>();
+    auto const resourceId = Crypto::getRandom<Crypto::SimpleResourceId>();
     auto const key = Crypto::makeSymmetricKey();
 
     EncryptionStreamV8 encryptor1(bufferViewToInputSource(buffer1),
@@ -549,22 +549,22 @@ TEST_CASE("Stream V8", "[streamencryption]")
 
   SECTION("Decrypt test vector")
   {
-    Trustchain::ResourceId resourceId(std::vector<uint8_t>{0x93,
-                                                           0x76,
-                                                           0x48,
-                                                           0xf2,
-                                                           0x0b,
-                                                           0xe2,
-                                                           0x93,
-                                                           0x79,
-                                                           0x4e,
-                                                           0xf6,
-                                                           0x05,
-                                                           0x9a,
-                                                           0x25,
-                                                           0xec,
-                                                           0xfe,
-                                                           0xbf});
+    Crypto::SimpleResourceId resourceId(std::vector<uint8_t>{0x93,
+                                                             0x76,
+                                                             0x48,
+                                                             0xf2,
+                                                             0x0b,
+                                                             0xe2,
+                                                             0x93,
+                                                             0x79,
+                                                             0x4e,
+                                                             0xf6,
+                                                             0x05,
+                                                             0x9a,
+                                                             0x25,
+                                                             0xec,
+                                                             0xfe,
+                                                             0xbf});
     Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
         0x1e, 0xe4, 0xfc, 0x13, 0x74, 0x10, 0x8d, 0x25, 0x08, 0xc6, 0x03,
         0xe7, 0x8d, 0xf2, 0x2a, 0x11, 0x5f, 0x10, 0xc3, 0x4c, 0x0e, 0x22,
