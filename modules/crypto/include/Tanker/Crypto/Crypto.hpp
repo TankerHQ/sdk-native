@@ -14,6 +14,7 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
 #include <gsl/gsl-lite.hpp>

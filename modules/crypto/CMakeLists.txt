@@ -36,6 +36,7 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/EncryptedSymmetricKey.hpp
     include/Tanker/Crypto/SealedSymmetricKey.hpp
     include/Tanker/Crypto/SymmetricKey.hpp
+    include/Tanker/Crypto/SubkeySeed.hpp
     include/Tanker/Crypto/AeadIv.hpp
     include/Tanker/Crypto/SimpleResourceId.hpp
     include/Tanker/Crypto/CompositeResourceId.hpp
