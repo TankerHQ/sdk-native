@@ -9,6 +9,7 @@
 #include <Tanker/Encryptor/v6.hpp>
 #include <Tanker/Encryptor/v7.hpp>
 #include <Tanker/Encryptor/v8.hpp>
+#include <Tanker/Encryptor/v9.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -24,6 +25,7 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
+using Crypto::CompositeResourceId;
 using Crypto::ResourceId;
 using Crypto::SimpleResourceId;
 
@@ -31,12 +33,15 @@ namespace
 {
 static constexpr auto oneMiB = 1024 * 1024;
 
+template <typename Encryptor>
 struct TestVector
 {
   Crypto::SymmetricKey key;
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData;
-  Crypto::SimpleResourceId resourceId;
+  std::result_of_t<decltype (&Encryptor::extractResourceId)(
+      gsl::span<std::uint8_t const>)>
+      resourceId;
 
   TestVector(std::vector<uint8_t> const& key,
              std::vector<uint8_t> const& clearData,
@@ -68,7 +73,7 @@ struct TestContext<EncryptorV2>
     return EncryptorV2::encryptedSize(clearSize);
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV2>> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
         0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd},
@@ -112,7 +117,7 @@ struct TestContext<EncryptorV3>
     return EncryptorV3::encryptedSize(clearSize);
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV3>> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
         0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd},
@@ -154,7 +159,7 @@ struct TestContext<EncryptorV4>
     return EncryptorV4::encryptedSize(clearSize);
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV4>> testVectors{
       // Empty buffer
       {{0xda, 0xa5, 0x3d, 0x7,  0xc,  0x4b, 0x63, 0x54, 0xe3, 0x6f, 0x96,
         0xc1, 0x14, 0x4c, 0x23, 0xcc, 0x16, 0x23, 0x52, 0xa1, 0xc5, 0x53,
@@ -264,7 +269,7 @@ struct TestContext<EncryptorV5>
     return EncryptorV5::encryptedSize(clearSize);
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV5>> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
         0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd},
@@ -322,7 +327,7 @@ struct TestContext<EncryptorV6>
     return res;
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV6>> testVectors{
       {{0x56, 0x95, 0xa2, 0x36, 0x2b, 0x8b, 0x11, 0x92, 0xf9, 0x56, 0x0b,
         0xcb, 0xf2, 0x07, 0x6a, 0x21, 0x03, 0x2c, 0x82, 0x3b, 0xbe, 0x21,
         0x60, 0x2f, 0x64, 0xf9, 0xc2, 0x9f, 0xe5, 0xe5, 0x6d, 0x7f},
@@ -385,7 +390,7 @@ struct TestContext<EncryptorV7>
     return res;
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV7>> testVectors{
       {{0x5c, 0x07, 0xdf, 0xd0, 0x6f, 0x79, 0x08, 0x50, 0xef, 0x66, 0xca,
         0x78, 0x93, 0x53, 0xc0, 0x5b, 0x4f, 0xd0, 0xa7, 0xb8, 0x9c, 0xc8,
         0x0d, 0x17, 0xb7, 0x61, 0xd0, 0x4d, 0x98, 0x31, 0x7e, 0x28},
@@ -469,7 +474,7 @@ struct TestContext<EncryptorV8>
     return res;
   }
 
-  std::vector<TestVector> testVectors{
+  std::vector<TestVector<EncryptorV8>> testVectors{
       // Padded empty buffer
       {{0x07, 0xa9, 0x0b, 0xb5, 0xa1, 0x2a, 0x7c, 0xfd, 0xba, 0x00, 0x27,
         0x65, 0x53, 0xe1, 0x94, 0xee, 0x0d, 0x5a, 0x25, 0xce, 0x73, 0x59,
@@ -638,6 +643,42 @@ struct TestContext<EncryptorV8>
       Streams::Header::serializedSize + Crypto::Mac::arraySize + 1;
 };
 
+template <>
+struct TestContext<EncryptorV9>
+{
+  tc::cotask<EncryptionMetadata> encrypt(
+      gsl::span<std::uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData) const
+  {
+    return EncryptorV9::encrypt(encryptedData,
+                                clearData,
+                                Crypto::getRandom<Crypto::SimpleResourceId>(),
+                                Crypto::makeSymmetricKey(),
+                                Crypto::getRandom<Crypto::SubkeySeed>());
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV9::encryptedSize(clearSize);
+  }
+
+  std::vector<TestVector<EncryptorV9>> testVectors{
+      {{0x18, 0x89, 0xa4, 0xb6, 0x66, 0x0c, 0x14, 0x4e, 0x3a, 0xef, 0x29,
+        0x46, 0xcb, 0x6e, 0x10, 0xf3, 0x26, 0xf5, 0xf9, 0x48, 0x4c, 0x99,
+        0x95, 0x49, 0x96, 0x7f, 0x48, 0xb0, 0xcc, 0x68, 0xe5, 0xa3},
+       make_buffer("this is very secret"),
+       {0x09, 0x66, 0xf3, 0x4d, 0x6b, 0x50, 0x98, 0x52, 0x38, 0x9d, 0x3e, 0x55,
+        0x53, 0xf2, 0xbe, 0x22, 0x6c, 0x95, 0x06, 0x59, 0x02, 0x9c, 0x53, 0x4f,
+        0xec, 0x23, 0x40, 0x60, 0x77, 0x20, 0xee, 0x07, 0x5c, 0x6f, 0x51, 0xcf,
+        0x88, 0xe5, 0x00, 0xaa, 0x3a, 0x90, 0x08, 0x8e, 0x4b, 0x22, 0x93, 0xbc,
+        0x24, 0x02, 0x62, 0x89, 0x79, 0x51, 0x95, 0x8e, 0x2b, 0x03, 0xcd, 0xcf,
+        0xc6, 0x23, 0x90, 0xb4, 0xe3, 0x94, 0xe5, 0x98},
+       {0x00, 0x66, 0xf3, 0x4d, 0x6b, 0x50, 0x98, 0x52, 0x38, 0x9d, 0x3e,
+        0x55, 0x53, 0xf2, 0xbe, 0x22, 0x6c, 0x95, 0x06, 0x59, 0x02, 0x9c,
+        0x53, 0x4f, 0xec, 0x23, 0x40, 0x60, 0x77, 0x20, 0xee, 0x07, 0x5c}},
+  };
+};
+
 template <typename T>
 std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
                                gsl::span<uint8_t const> encryptedData)
@@ -787,7 +828,17 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
-    CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
+    using ResIdType = std::result_of_t<decltype (&T::extractResourceId)(
+        gsl::span<std::uint8_t const>)>;
+    if constexpr (std::is_same_v<ResIdType, SimpleResourceId>)
+      CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
+    else if constexpr (std::is_same_v<ResIdType, CompositeResourceId>)
+      // The encrypt metadata's resourceId is the one we want to save in store,
+      // for composite resourceIds that's always the sessionId
+      CHECK(T::extractResourceId(encryptedData).sessionId() ==
+            metadata.resourceId);
+    else
+      static_assert(!sizeof(ResIdType), "Unexpected resource ID type");
   }
 }
 
@@ -984,4 +1035,59 @@ TEST_CASE("EncryptorV8 tests")
 
   commonEncryptorTests(ctx);
   paddedEncryptorTests(ctx);
+}
+
+TEST_CASE("EncryptorV9 tests")
+{
+  TestContext<EncryptorV9> ctx;
+
+  commonEncryptorTests(ctx);
+  unpaddedEncryptorTests(ctx);
+
+  SECTION("composite resource ID has expected type")
+  {
+    auto const& testVector = ctx.testVectors[0];
+    CompositeResourceId resourceId =
+        EncryptorV9::extractResourceId(testVector.encryptedData);
+    CHECK(resourceId.type() == CompositeResourceId::transparentSessionType());
+  }
+
+  for (auto const& [i, testVector] :
+       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
+  {
+    DYNAMIC_SECTION(
+        fmt::format("decrypt test vector #{} with the individual resource key "
+                    "instead of the session",
+                    i))
+    {
+      auto const& encrypted = testVector.encryptedData;
+      auto const resourceId = EncryptorV9::extractResourceId(encrypted);
+
+      // Derive individual resource key manually
+      auto constexpr bufLen =
+          Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
+      std::array<std::uint8_t, bufLen> hashBuf;
+      std::copy(testVector.key.begin(), testVector.key.end(), hashBuf.data());
+      std::copy(encrypted.begin() + 1 + SimpleResourceId::arraySize,
+                encrypted.begin() + 1 + SimpleResourceId::arraySize +
+                    Crypto::SubkeySeed::arraySize,
+                hashBuf.data() + Crypto::SymmetricKey::arraySize);
+      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(
+          gsl::make_span(hashBuf));
+      auto keyFinder = [=](SimpleResourceId const& id)
+          -> Encryptor::ResourceKeyFinder::result_type {
+        if (id == resourceId.individualResourceId())
+          TC_RETURN(key);
+        else
+          TC_RETURN(std::nullopt); // Pretend we don't have the session key
+      };
+
+      std::vector<uint8_t> decrypted(EncryptorV9::decryptedSize(encrypted));
+      auto const decryptedSize =
+          AWAIT(EncryptorV9::decrypt(decrypted, keyFinder, encrypted));
+      decrypted.resize(decryptedSize);
+
+      CHECK(decrypted == testVector.clearData);
+    }
+  }
 }
