@@ -3,6 +3,7 @@
 #include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
@@ -189,7 +190,8 @@ tc::cotask<std::vector<uint8_t>> decryptVerificationKeyWithUserCreds(
           [&](EncryptedVerificationKeyForUserSecret const& evk)
               -> tc::cotask<std::vector<uint8_t>> {
             std::vector<uint8_t> vk(EncryptorV2::decryptedSize(evk));
-            TC_AWAIT(EncryptorV2::decrypt(vk, session.userSecret(), evk));
+            TC_AWAIT(EncryptorV2::decrypt(
+                vk, Encryptor::fixedKeyFinder(session.userSecret()), evk));
             TC_RETURN(vk);
           },
       },
@@ -728,14 +730,11 @@ tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
                                    gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
-  auto const resourceId = Encryptor::extractResourceId(encryptedData);
-
-  // At this point, all formats still use simple resource IDs, just extract it
-  auto const simpleResourceId = resourceId.individualResourceId();
-
-  auto const key = TC_AWAIT(getResourceKey(simpleResourceId));
-
-  TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData)));
+  auto finder = [this](Crypto::SimpleResourceId const& resourceId)
+      -> Encryptor::ResourceKeyFinder::result_type {
+    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+  };
+  TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, finder, encryptedData)));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
@@ -949,8 +948,10 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
                                           withTokenNonce))));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
-  TC_AWAIT(EncryptorV2::decrypt(
-      verificationKey, _session->userSecret(), encryptedKey));
+  TC_AWAIT(
+      EncryptorV2::decrypt(verificationKey,
+                           Encryptor::fixedKeyFinder(_session->userSecret()),
+                           encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
@@ -971,8 +972,9 @@ tc::cotask<VerificationKey> Core::fetchE2eVerificationKey(
                                           withTokenNonce))));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
-  TC_AWAIT(
-      EncryptorV2::decrypt(verificationKey, e2eEncryptionKey, encryptedKey));
+  TC_AWAIT(EncryptorV2::decrypt(verificationKey,
+                                Encryptor::fixedKeyFinder(e2eEncryptionKey),
+                                encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
@@ -1136,20 +1138,20 @@ Core::makeDecryptionStream(Streams::InputSource cb)
     throw formatEx(Errc::InvalidArgument, "empty stream");
 
   auto resourceKeyFinder = [this](Crypto::SimpleResourceId const& resourceId)
-      -> tc::cotask<Crypto::SymmetricKey> {
+      -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
     TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
   };
   switch (version[0])
   {
   case 4: {
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(
-        std::move(peekableSource), std::move(resourceKeyFinder)));
+        std::move(peekableSource), resourceKeyFinder));
     auto const resourceId = streamDecryptor.resourceId();
     TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
   }
   case 8: {
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(
-        std::move(peekableSource), std::move(resourceKeyFinder)));
+        std::move(peekableSource), resourceKeyFinder));
     TC_RETURN(std::make_tuple(std::move(streamDecryptor),
                               streamDecryptor.resourceId()));
   }

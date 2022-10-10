@@ -35,7 +35,7 @@ auto makeKeyFinder(Crypto::SimpleResourceId const& resourceId,
                    Crypto::SymmetricKey const& key)
 {
   return [=](Crypto::SimpleResourceId const& id)
-             -> tc::cotask<Crypto::SymmetricKey> {
+             -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
     CHECK(id == resourceId);
     TC_RETURN(key);
   };
@@ -49,9 +49,7 @@ auto makeKeyFinder(T const& encryptor)
 
 template <typename DecStream>
 std::vector<uint8_t> decryptAllStream(
-    InputSource source,
-    std::function<tc::cotask<Crypto::SymmetricKey>(
-        Crypto::SimpleResourceId const& id)> const& keyFinder)
+    InputSource source, typename DecStream::ResourceKeyFinder const& keyFinder)
 {
   auto decryptor = AWAIT(DecStream::create(source, keyFinder));
 
@@ -88,7 +86,8 @@ void commonStreamTests()
   {
     EncStream encryptor(failRead);
 
-    auto const mockKeyFinder = [](auto) -> tc::cotask<Crypto::SymmetricKey> {
+    auto const mockKeyFinder =
+        [](auto) -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
       TC_RETURN(Crypto::SymmetricKey());
     };
 

@@ -20,13 +20,18 @@ DecryptionStream<Derived>::DecryptionStream(InputSource cb)
 }
 
 template <typename Derived>
-tc::cotask<Derived> DecryptionStream<Derived>::create(InputSource cb,
-                                                      ResourceKeyFinder finder)
+tc::cotask<Derived> DecryptionStream<Derived>::create(
+    InputSource cb, ResourceKeyFinder const& finder)
 {
   Derived decryptor(std::move(cb));
 
   TC_AWAIT(decryptor.readHeader());
-  decryptor._key = TC_AWAIT(finder(decryptor._header.resourceId()));
+  std::optional key = TC_AWAIT(finder(decryptor._header.resourceId()));
+  if (!key)
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "key not found for resource: {:s}",
+                   decryptor._header.resourceId());
+  decryptor._key = *key;
   TC_AWAIT(decryptor.decryptChunk());
   TC_RETURN(std::move(decryptor));
 }

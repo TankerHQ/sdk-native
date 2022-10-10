@@ -25,10 +25,12 @@ class DecryptionStream : protected BufferedStream<Derived>
   friend BufferedStream<Derived>;
 
 public:
-  using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
-      Crypto::SimpleResourceId const&)>;
+  using ResourceKeyFinder =
+      std::function<tc::cotask<std::optional<Crypto::SymmetricKey>>(
+          Crypto::SimpleResourceId const&)>;
 
-  static tc::cotask<Derived> create(InputSource cb, ResourceKeyFinder finder);
+  static tc::cotask<Derived> create(InputSource cb,
+                                    ResourceKeyFinder const& finder);
 
   using BufferedStream<Derived>::operator();
 

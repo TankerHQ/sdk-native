@@ -93,14 +93,13 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
 
 tc::cotask<std::uint64_t> EncryptorV4::decrypt(
     gsl::span<std::uint8_t> decryptedData,
-    Crypto::SymmetricKey const& key,
+    Encryptor::ResourceKeyFinder const& keyFinder,
     gsl::span<std::uint8_t const> encryptedData)
 {
   auto const initialSize = decryptedData.size();
 
   auto decryptor = TC_AWAIT(DecryptionStreamV4::create(
-      bufferViewToInputSource(encryptedData),
-      [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
+      bufferViewToInputSource(encryptedData), keyFinder));
 
   while (auto const nbRead = TC_AWAIT(decryptor(decryptedData)))
     decryptedData = decryptedData.subspan(nbRead);

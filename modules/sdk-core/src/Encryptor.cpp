@@ -113,7 +113,7 @@ tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
 }
 
 tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
-                             Crypto::SymmetricKey const& key,
+                             ResourceKeyFinder const& keyFinder,
                              gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.size() < 1)
@@ -124,9 +124,17 @@ tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
 
   TC_RETURN(TC_AWAIT(performEncryptorAction(
       version, [&](auto encryptor) -> tc::cotask<uint64_t> {
-        TC_RETURN(
-            TC_AWAIT(encryptor.decrypt(decryptedData, key, encryptedData)));
+        TC_RETURN(TC_AWAIT(
+            encryptor.decrypt(decryptedData, keyFinder, encryptedData)));
       })));
+}
+
+tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                             Crypto::SymmetricKey const& key,
+                             gsl::span<uint8_t const> encryptedData)
+{
+  TC_RETURN(
+      TC_AWAIT(decrypt(decryptedData, fixedKeyFinder(key), encryptedData)));
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)

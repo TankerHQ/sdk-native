@@ -75,11 +75,13 @@ tc::cotask<EncryptionMetadata> EncryptorV7::encrypt(
 
 tc::cotask<std::uint64_t> EncryptorV7::decrypt(
     gsl::span<uint8_t> decryptedData,
-    Crypto::SymmetricKey const& key,
+    Encryptor::ResourceKeyFinder const& keyFinder,
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
+  auto const resourceId = extractResourceId(encryptedData);
+  std::optional key = TC_AWAIT(keyFinder(resourceId));
   auto const associatedData =
       encryptedData.subspan(0, versionSize + SimpleResourceId::arraySize);
   auto const iv = encryptedData.subspan(
@@ -87,7 +89,8 @@ tc::cotask<std::uint64_t> EncryptorV7::decrypt(
   auto const data = encryptedData.subspan(
       versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
 
-  Crypto::decryptAead(key, iv, decryptedData, data, associatedData);
+  Crypto::tryDecryptAead(
+      key, resourceId, iv, decryptedData, data, associatedData);
 
   TC_RETURN(Padding::unpaddedSize(decryptedData));
 }

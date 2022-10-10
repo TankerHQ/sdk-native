@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/EncryptionMetadata.hpp>
+#include <Tanker/Encryptor.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -32,7 +33,7 @@ public:
       gsl::span<std::uint8_t const> clearData);
   static tc::cotask<std::uint64_t> decrypt(
       gsl::span<std::uint8_t> decryptedData,
-      Crypto::SymmetricKey const& key,
+      Encryptor::ResourceKeyFinder const& keyFinder,
       gsl::span<std::uint8_t const> encryptedData);
   static Crypto::SimpleResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);

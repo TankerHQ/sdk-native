@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
@@ -289,6 +290,52 @@ std::vector<uint8_t> decryptAead(SymmetricKey const& key,
   std::vector<uint8_t> res(decryptedSize(aeadBuffer));
   decryptAead(key, aeadBuffer.iv, res, aeadBuffer.encryptedData, ad);
   return res;
+}
+
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    ResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData)
+{
+  if (!key)
+  {
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "key not found for resource: {:s}",
+                   resourceId);
+  }
+  return decryptAead(*key, iv, clearData, encryptedData, associatedData);
+}
+
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    SimpleResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData)
+{
+  return tryDecryptAead(*key,
+                        ResourceId{resourceId},
+                        iv,
+                        clearData,
+                        encryptedData,
+                        associatedData);
+}
+
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    CompositeResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData)
+{
+  return tryDecryptAead(*key,
+                        ResourceId{resourceId},
+                        iv,
+                        clearData,
+                        encryptedData,
+                        associatedData);
 }
 
 AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number)

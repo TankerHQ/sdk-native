@@ -643,8 +643,8 @@ std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
                                gsl::span<uint8_t const> encryptedData)
 {
   std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-  auto const decryptedSize =
-      AWAIT(T::decrypt(decryptedData, key, encryptedData));
+  auto const decryptedSize = AWAIT(
+      T::decrypt(decryptedData, Encryptor::fixedKeyFinder(key), encryptedData));
   decryptedData.resize(decryptedSize);
   return decryptedData;
 }
@@ -906,10 +906,11 @@ TEST_CASE("EncryptorV3 tests")
       std::vector<uint8_t> decryptedData(
           EncryptorV4::decryptedSize(encryptedData));
 
-      TANKER_CHECK_THROWS_WITH_CODE(
-          AWAIT_VOID(
-              EncryptorV4::decrypt(decryptedData, metadata.key, truncatedData)),
-          Errc::DecryptionFailed);
+      TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(EncryptorV4::decrypt(
+                                        decryptedData,
+                                        Encryptor::fixedKeyFinder(metadata.key),
+                                        truncatedData)),
+                                    Errc::DecryptionFailed);
     }
   }
 }
