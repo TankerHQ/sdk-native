@@ -110,6 +110,7 @@ add_library(tankercore STATIC
   include/Tanker/Encryptor/v7.hpp
   include/Tanker/Encryptor/v8.hpp
   include/Tanker/Encryptor/v9.hpp
+  include/Tanker/Encryptor/v10.hpp
   include/Tanker/EncryptionSession.hpp
 
   src/AsyncCore.cpp
@@ -172,6 +173,7 @@ add_library(tankercore STATIC
   src/Encryptor/v7.cpp
   src/Encryptor/v8.cpp
   src/Encryptor/v9.cpp
+  src/Encryptor/v10.cpp
   src/EncryptionSession.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
