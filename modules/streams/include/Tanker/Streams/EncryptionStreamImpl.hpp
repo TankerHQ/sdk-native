@@ -20,7 +20,7 @@ EncryptionStream<Derived, ResourceIdType>::EncryptionStream(
     _resourceId{resourceId},
     _key{key}
 {
-  if (encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
+  if (encryptedChunkSize < Crypto::Mac::arraySize)
     throw AssertionError("invalid encrypted chunk size");
 }
 

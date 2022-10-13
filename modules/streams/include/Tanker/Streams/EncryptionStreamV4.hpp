@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 
 #include <tconcurrent/coroutine.hpp>

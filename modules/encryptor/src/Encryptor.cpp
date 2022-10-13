@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Encryptor/v10.hpp>
+#include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v4.hpp>
@@ -52,6 +53,8 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
     return std::forward<Callable>(cb)(EncryptorV9{});
   case EncryptorV10::version():
     return std::forward<Callable>(cb)(EncryptorV10{});
+  case EncryptorV11::version():
+    return std::forward<Callable>(cb)(EncryptorV11{});
   default:
     throw Errors::Exception(make_error_code(Errc::InvalidArgument),
                             "invalid encrypted data");

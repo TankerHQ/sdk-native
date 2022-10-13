@@ -14,6 +14,7 @@ add_library(tankerencryptor STATIC
   include/Tanker/Encryptor/v8.hpp
   include/Tanker/Encryptor/v9.hpp
   include/Tanker/Encryptor/v10.hpp
+  include/Tanker/Encryptor/v11.hpp
 
   src/Encryptor.cpp
   src/Encryptor/v2.cpp
@@ -25,6 +26,7 @@ add_library(tankerencryptor STATIC
   src/Encryptor/v8.cpp
   src/Encryptor/v9.cpp
   src/Encryptor/v10.cpp
+  src/Encryptor/v11.cpp
 )
 
 target_include_directories(tankerencryptor

@@ -19,7 +19,7 @@ namespace Tanker
 {
 namespace Streams
 {
-template <typename Derived>
+template <typename Derived, typename HeaderType>
 class DecryptionStream : protected BufferedStream<Derived>
 {
   friend BufferedStream<Derived>;
@@ -35,22 +35,22 @@ public:
   using BufferedStream<Derived>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
-  Crypto::SimpleResourceId const& resourceId() const;
+  decltype(std::declval<HeaderType>().resourceId()) resourceId() const;
 
 protected:
   Crypto::SymmetricKey _key;
-  Header _header;
+  HeaderType _header;
   std::int64_t _chunkIndex{};
 
   explicit DecryptionStream(InputSource,
-                            Header header,
+                            HeaderType header,
                             Crypto::SymmetricKey key);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();
 
-  void checkHeaderIntegrity(Header const& oldHeader,
-                            Header const& currentHeader);
+  void checkHeaderIntegrity(HeaderType const& oldHeader,
+                            HeaderType const& currentHeader);
 };
 }
 }

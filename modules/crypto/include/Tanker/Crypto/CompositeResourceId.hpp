@@ -24,6 +24,22 @@ class CompositeResourceId
   using base_t::base_t;
 
 public:
+  static CompositeResourceId newTransparentSessionId(
+      SimpleResourceId const& sessionId,
+      SimpleResourceId const& individualResourceId)
+  {
+    CompositeResourceId id;
+    id[0] = transparentSessionType();
+    std::copy(sessionId.begin(),
+              sessionId.end(),
+              id.begin() + details::compositeTypeSize);
+    std::copy(
+        individualResourceId.begin(),
+        individualResourceId.end(),
+        id.begin() + details::compositeTypeSize + SimpleResourceId::arraySize);
+    return id;
+  }
+
   // For now, this is the only composite ID type
   static constexpr uint8_t transparentSessionType()
   {

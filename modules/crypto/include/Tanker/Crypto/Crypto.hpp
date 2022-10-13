@@ -14,7 +14,6 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -195,7 +194,18 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                     gsl::span<uint8_t const> encryptedData,
                     gsl::span<uint8_t const> associatedData);
 
-AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number);
+template <typename SeedType>
+AeadIv deriveIv(SeedType const& ivSeed, uint64_t const number)
+{
+  auto pointer = reinterpret_cast<uint8_t const*>(&number);
+  auto const numberSize = sizeof(number);
+
+  std::vector<uint8_t> toHash;
+  toHash.reserve(numberSize + SeedType::arraySize);
+  toHash.insert(toHash.end(), ivSeed.begin(), ivSeed.end());
+  toHash.insert(toHash.end(), pointer, pointer + numberSize);
+  return generichash<AeadIv>(gsl::make_span(toHash.data(), toHash.size()));
+}
 
 template <typename OutputContainer = std::vector<uint8_t>>
 OutputContainer asymEncrypt(gsl::span<uint8_t const> clearData,

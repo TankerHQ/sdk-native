@@ -4,7 +4,6 @@
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Streams/BufferedStream.hpp>
-#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 
 #include <gsl/gsl-lite.hpp>

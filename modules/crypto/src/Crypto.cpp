@@ -338,18 +338,6 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                         associatedData);
 }
 
-AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number)
-{
-  auto pointer = reinterpret_cast<uint8_t const*>(&number);
-  auto const numberSize = sizeof(number);
-
-  std::vector<uint8_t> toHash;
-  toHash.reserve(numberSize + AeadIv::arraySize);
-  toHash.insert(toHash.end(), ivSeed.begin(), ivSeed.end());
-  toHash.insert(toHash.end(), pointer, pointer + numberSize);
-  return generichash<AeadIv>(gsl::make_span(toHash.data(), toHash.size()));
-}
-
 Hash prehashPassword(std::string password)
 {
   if (password.empty())
