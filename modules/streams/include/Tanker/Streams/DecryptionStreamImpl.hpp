@@ -5,17 +5,35 @@
 
 using namespace Tanker::Errors;
 
-namespace Tanker
-{
-namespace Streams
+namespace Tanker::Streams
 {
 namespace
 {
+template <typename HeaderType>
+void deserializeHeaderTo(gsl::span<std::uint8_t const> buffer,
+                         HeaderType& output)
+try
+{
+  if (buffer.size() != HeaderType::serializedSize)
+  {
+    throw Exception(make_error_code(Errc::DecryptionFailed),
+                    "truncated buffer: could not read encrypted input header");
+  }
+  Serialization::deserialize_to(buffer, output);
+}
+catch (Exception const& e)
+{
+  if (e.errorCode() == Errc::InvalidArgument)
+    throw Exception(make_error_code(Errc::DecryptionFailed), e.what());
+  throw;
+}
 }
 
 template <typename Derived>
-DecryptionStream<Derived>::DecryptionStream(InputSource cb)
-  : BufferedStream<Derived>(std::move(cb))
+DecryptionStream<Derived>::DecryptionStream(InputSource cb,
+                                            Header header,
+                                            Crypto::SymmetricKey key)
+  : BufferedStream<Derived>(std::move(cb)), _key(key), _header(header)
 {
 }
 
@@ -23,15 +41,20 @@ template <typename Derived>
 tc::cotask<Derived> DecryptionStream<Derived>::create(
     InputSource cb, ResourceKeyFinder const& finder)
 {
-  Derived decryptor(std::move(cb));
+  std::array<uint8_t, Header::serializedSize> headerBuf;
+  Header header;
+  if (TC_AWAIT(readStream(headerBuf, cb)) < Header::serializedSize)
+    throw Exception(make_error_code(Errc::DecryptionFailed),
+                    "truncated buffer: could not read encrypted input header");
+  deserializeHeaderTo(headerBuf, header);
 
-  TC_AWAIT(decryptor.readHeader());
-  std::optional key = TC_AWAIT(finder(decryptor._header.resourceId()));
+  std::optional key = TC_AWAIT(Derived::tryGetKey(finder, header));
   if (!key)
     throw formatEx(Errors::Errc::InvalidArgument,
                    "key not found for resource: {:s}",
-                   decryptor._header.resourceId());
-  decryptor._key = *key;
+                   header.resourceId());
+
+  Derived decryptor(std::move(cb), header, *key);
   TC_AWAIT(decryptor.decryptChunk());
   TC_RETURN(std::move(decryptor));
 }
@@ -40,22 +63,7 @@ template <typename Derived>
 tc::cotask<void> DecryptionStream<Derived>::readHeader()
 {
   auto const buffer = TC_AWAIT(this->readInputSource(Header::serializedSize));
-  try
-  {
-    if (buffer.size() != Header::serializedSize)
-    {
-      throw Exception(
-          make_error_code(Errc::DecryptionFailed),
-          "truncated buffer: could not read encrypted input header");
-    }
-    Serialization::deserialize_to(buffer, _header);
-  }
-  catch (Exception const& e)
-  {
-    if (e.errorCode() == Errc::InvalidArgument)
-      throw Exception(make_error_code(Errc::DecryptionFailed), e.what());
-    throw;
-  }
+  deserializeHeaderTo(buffer, _header);
 }
 
 template <typename Derived>
@@ -102,6 +110,5 @@ void DecryptionStream<Derived>::checkHeaderIntegrity(
         oldHeader.encryptedChunkSize(),
         currentHeader.encryptedChunkSize());
   }
-}
 }
 }

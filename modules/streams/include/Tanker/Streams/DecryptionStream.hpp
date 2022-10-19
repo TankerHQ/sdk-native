@@ -42,7 +42,9 @@ protected:
   Header _header;
   std::int64_t _chunkIndex{};
 
-  explicit DecryptionStream(InputSource);
+  explicit DecryptionStream(InputSource,
+                            Header header,
+                            Crypto::SymmetricKey key);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();
