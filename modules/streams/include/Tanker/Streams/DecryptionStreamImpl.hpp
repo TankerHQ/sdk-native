@@ -73,9 +73,6 @@ Crypto::SymmetricKey const& DecryptionStream<Derived>::symmetricKey() const
 template <typename Derived>
 tc::cotask<void> DecryptionStream<Derived>::processInput()
 {
-  auto const oldHeader = _header;
-  TC_AWAIT(readHeader());
-  checkHeaderIntegrity(oldHeader, _header);
   TC_AWAIT(static_cast<Derived*>(this)->decryptChunk());
 }
 

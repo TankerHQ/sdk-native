@@ -9,6 +9,14 @@ DecryptionStreamV4::DecryptionStreamV4(InputSource cb)
 
 tc::cotask<void> DecryptionStreamV4::decryptChunk()
 {
+  // There's an additional copy the header for each chunk in this format
+  if (_chunkIndex > 0)
+  {
+    auto const oldHeader = _header;
+    TC_AWAIT(readHeader());
+    checkHeaderIntegrity(oldHeader, _header);
+  }
+
   auto const sizeToRead = _header.encryptedChunkSize() - Header::serializedSize;
   auto const encryptedInput = TC_AWAIT(readInputSource(sizeToRead));
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
