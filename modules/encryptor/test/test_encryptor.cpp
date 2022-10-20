@@ -61,8 +61,11 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
     std::vector<uint8_t> buf(ctx.encryptedSize(0));
     buf[0] = T::version();
     // This helps stream tests, and is irrelevant for other encryptors
-    Serialization::serialize<uint32_t>(
-        buf.data() + 1, Streams::Header::defaultEncryptedChunkSize);
+    // (It writes a fake header with the chunk size field filled)
+    for (auto i = 1; i + sizeof(uint32_t) < buf.size(); i += sizeof(uint32_t))
+      Serialization::serialize<uint32_t>(
+          buf.data() + i, Streams::Header::defaultEncryptedChunkSize);
+
     CHECK(T::decryptedSize(buf) == 0);
     buf.resize(ctx.encryptedSize(42));
     CHECK(T::decryptedSize(buf) == 42);
@@ -452,4 +455,51 @@ TEST_CASE("EncryptorV10 tests")
   commonEncryptorTests(ctx);
   paddedEncryptorTests(ctx);
   transparentEncryptorTests(ctx);
+}
+
+TEST_CASE("EncryptorV11 tests")
+{
+  TestContext<EncryptorV11> ctx;
+
+  commonEncryptorTests(ctx);
+  paddedEncryptorTests(ctx);
+  transparentEncryptorTests(ctx);
+
+  SECTION("encryptedSize should return the right size with paddingStep 1")
+  {
+    // NOTE: Empty data with padding step 1 is still rounded up to 1
+    CHECK(EncryptorV11::encryptedSize(0, 1) ==
+          Streams::TransparentSessionHeader::serializedSize +
+              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
+
+    CHECK(EncryptorV11::encryptedSize(1, 1) ==
+          Streams::TransparentSessionHeader::serializedSize +
+              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
+    auto const bigSize =
+        2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 5;
+    CHECK(EncryptorV11::encryptedSize(bigSize, 1) ==
+          Streams::TransparentSessionHeader::serializedSize + bigSize +
+              3 * (EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize));
+  }
+
+  SECTION("encryptedSize should return the right size with large padding")
+  {
+    auto const bigSize =
+        2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 128;
+    auto const paddingStep =
+        Streams::TransparentSessionHeader::defaultEncryptedChunkSize - 128;
+
+    CHECK(EncryptorV11::encryptedSize(0, paddingStep) ==
+          Streams::TransparentSessionHeader::serializedSize +
+              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
+              Padding::paddedFromClearSize(0, paddingStep) - 1);
+    CHECK(EncryptorV11::encryptedSize(1, paddingStep) ==
+          Streams::TransparentSessionHeader::serializedSize +
+              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
+              Padding::paddedFromClearSize(1, paddingStep) - 1);
+    CHECK(EncryptorV11::encryptedSize(bigSize, paddingStep) ==
+          Streams::TransparentSessionHeader::serializedSize +
+              Padding::paddedFromClearSize(bigSize, paddingStep) - 1 +
+              3 * (EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize));
+  }
 }
