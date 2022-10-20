@@ -81,6 +81,57 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
 }
 
 template <typename T>
+void transparentEncryptorTests(TestContext<T> ctx)
+{
+  SECTION("composite resource ID has expected type")
+  {
+    auto const& testVector = ctx.testVectors[0];
+    CompositeResourceId resourceId =
+        T::extractResourceId(testVector.encryptedData);
+    CHECK(resourceId.type() == CompositeResourceId::transparentSessionType());
+  }
+
+  for (auto const& [i, testVector] :
+       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
+  {
+    DYNAMIC_SECTION(
+        fmt::format("decrypt test vector #{} with the individual resource key "
+                    "instead of the session",
+                    i))
+    {
+      auto const& encrypted = testVector.encryptedData;
+      auto const resourceId = T::extractResourceId(encrypted);
+
+      // Derive individual resource key manually
+      auto constexpr bufLen =
+          Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
+      std::array<std::uint8_t, bufLen> hashBuf;
+      std::copy(testVector.key.begin(), testVector.key.end(), hashBuf.data());
+      std::copy(encrypted.begin() + 1 + SimpleResourceId::arraySize,
+                encrypted.begin() + 1 + SimpleResourceId::arraySize +
+                    Crypto::SubkeySeed::arraySize,
+                hashBuf.data() + Crypto::SymmetricKey::arraySize);
+      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(
+          gsl::make_span(hashBuf));
+      auto keyFinder = [=](SimpleResourceId const& id)
+          -> Encryptor::ResourceKeyFinder::result_type {
+        if (id == resourceId.individualResourceId())
+          TC_RETURN(key);
+        else
+          TC_RETURN(std::nullopt); // Pretend we don't have the session key
+      };
+
+      std::vector<uint8_t> decrypted(T::decryptedSize(encrypted));
+      auto const decryptedSize =
+          AWAIT(T::decrypt(decrypted, keyFinder, encrypted));
+      decrypted.resize(decryptedSize);
+
+      CHECK(decrypted == testVector.clearData);
+    }
+  }
+}
+
+template <typename T>
 void commonEncryptorTests(TestContext<T> ctx)
 {
   SECTION("decryptedSize should throw if the buffer is truncated")
@@ -391,53 +442,7 @@ TEST_CASE("EncryptorV9 tests")
 
   commonEncryptorTests(ctx);
   unpaddedEncryptorTests(ctx);
-
-  SECTION("composite resource ID has expected type")
-  {
-    auto const& testVector = ctx.testVectors[0];
-    CompositeResourceId resourceId =
-        EncryptorV9::extractResourceId(testVector.encryptedData);
-    CHECK(resourceId.type() == CompositeResourceId::transparentSessionType());
-  }
-
-  for (auto const& [i, testVector] :
-       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
-  {
-    DYNAMIC_SECTION(
-        fmt::format("decrypt test vector #{} with the individual resource key "
-                    "instead of the session",
-                    i))
-    {
-      auto const& encrypted = testVector.encryptedData;
-      auto const resourceId = EncryptorV9::extractResourceId(encrypted);
-
-      // Derive individual resource key manually
-      auto constexpr bufLen =
-          Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
-      std::array<std::uint8_t, bufLen> hashBuf;
-      std::copy(testVector.key.begin(), testVector.key.end(), hashBuf.data());
-      std::copy(encrypted.begin() + 1 + SimpleResourceId::arraySize,
-                encrypted.begin() + 1 + SimpleResourceId::arraySize +
-                    Crypto::SubkeySeed::arraySize,
-                hashBuf.data() + Crypto::SymmetricKey::arraySize);
-      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(
-          gsl::make_span(hashBuf));
-      auto keyFinder = [=](SimpleResourceId const& id)
-          -> Encryptor::ResourceKeyFinder::result_type {
-        if (id == resourceId.individualResourceId())
-          TC_RETURN(key);
-        else
-          TC_RETURN(std::nullopt); // Pretend we don't have the session key
-      };
-
-      std::vector<uint8_t> decrypted(EncryptorV9::decryptedSize(encrypted));
-      auto const decryptedSize =
-          AWAIT(EncryptorV9::decrypt(decrypted, keyFinder, encrypted));
-      decrypted.resize(decryptedSize);
-
-      CHECK(decrypted == testVector.clearData);
-    }
-  }
+  transparentEncryptorTests(ctx);
 }
 
 TEST_CASE("EncryptorV10 tests")
@@ -446,51 +451,5 @@ TEST_CASE("EncryptorV10 tests")
 
   commonEncryptorTests(ctx);
   paddedEncryptorTests(ctx);
-
-  SECTION("composite resource ID has expected type")
-  {
-    auto const& testVector = ctx.testVectors[0];
-    CompositeResourceId resourceId =
-        EncryptorV10::extractResourceId(testVector.encryptedData);
-    CHECK(resourceId.type() == CompositeResourceId::transparentSessionType());
-  }
-
-  for (auto const& [i, testVector] :
-       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
-  {
-    DYNAMIC_SECTION(
-        fmt::format("decrypt test vector #{} with the individual resource key "
-                    "instead of the session",
-                    i))
-    {
-      auto const& encrypted = testVector.encryptedData;
-      auto const resourceId = EncryptorV10::extractResourceId(encrypted);
-
-      // Derive individual resource key manually
-      auto constexpr bufLen =
-          Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
-      std::array<std::uint8_t, bufLen> hashBuf;
-      std::copy(testVector.key.begin(), testVector.key.end(), hashBuf.data());
-      std::copy(encrypted.begin() + 1 + SimpleResourceId::arraySize,
-                encrypted.begin() + 1 + SimpleResourceId::arraySize +
-                    Crypto::SubkeySeed::arraySize,
-                hashBuf.data() + Crypto::SymmetricKey::arraySize);
-      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(
-          gsl::make_span(hashBuf));
-      auto keyFinder = [=](SimpleResourceId const& id)
-          -> Encryptor::ResourceKeyFinder::result_type {
-        if (id == resourceId.individualResourceId())
-          TC_RETURN(key);
-        else
-          TC_RETURN(std::nullopt); // Pretend we don't have the session key
-      };
-
-      std::vector<uint8_t> decrypted(EncryptorV10::decryptedSize(encrypted));
-      auto const decryptedSize =
-          AWAIT(EncryptorV10::decrypt(decrypted, keyFinder, encrypted));
-      decrypted.resize(decryptedSize);
-
-      CHECK(decrypted == testVector.clearData);
-    }
-  }
+  transparentEncryptorTests(ctx);
 }
