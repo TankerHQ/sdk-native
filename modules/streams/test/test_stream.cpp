@@ -176,7 +176,7 @@ void commonStreamTests()
 
   SECTION("Corrupted buffer")
   {
-    std::vector<std::uint8_t> buffer(16);
+    std::vector<std::uint8_t> buffer(32);
     Crypto::randomFill(buffer);
 
     EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
@@ -195,7 +195,7 @@ void commonStreamTests()
   {
     constexpr auto smallChunkSize = 0x46;
 
-    std::vector<std::uint8_t> buffer(16);
+    std::vector<std::uint8_t> buffer(32);
     Crypto::randomFill(buffer);
 
     EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
@@ -213,9 +213,10 @@ void commonStreamTests()
   SECTION("Wrong chunk order")
   {
     constexpr auto smallChunkSize = 0x46;
+    constexpr auto plainChunkSize = smallChunkSize - EncStream::overhead;
 
     // Takes exactly 2 chunks + 1 empty chunk
-    std::vector<std::uint8_t> buffer(18);
+    std::vector<std::uint8_t> buffer(plainChunkSize * 2);
     Crypto::randomFill(buffer);
 
     EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
@@ -231,12 +232,17 @@ void commonStreamTests()
                                     makeKeyFinder(encryptor)),
         Errors::Errc::DecryptionFailed);
   }
+}
 
+// Tests that specifically touch the v4/v8 serialized header
+template <typename EncStream, typename DecStream>
+void v4v8CommonStreamTests()
+{
   SECTION("Invalid encryptedChunkSize")
   {
     constexpr auto smallChunkSize = 0x46;
 
-    std::vector<std::uint8_t> buffer(16);
+    std::vector<std::uint8_t> buffer(32);
     Crypto::randomFill(buffer);
 
     EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
@@ -316,6 +322,7 @@ void commonStreamTests()
 TEST_CASE("Stream V4", "[streamencryption]")
 {
   commonStreamTests<EncryptionStreamV4, DecryptionStreamV4>();
+  v4v8CommonStreamTests<EncryptionStreamV4, DecryptionStreamV4>();
 
   SECTION("Decrypt test vector")
   {
@@ -391,6 +398,7 @@ struct EncryptionStreamV8NoPad : EncryptionStreamV8
 TEST_CASE("Stream V8", "[streamencryption]")
 {
   commonStreamTests<EncryptionStreamV8NoPad, DecryptionStreamV8>();
+  v4v8CommonStreamTests<EncryptionStreamV8NoPad, DecryptionStreamV8>();
 
   auto const smallClearChunkSize =
       smallChunkSize - EncryptionStreamV8::overhead;
