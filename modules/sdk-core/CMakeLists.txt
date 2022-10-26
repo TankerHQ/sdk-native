@@ -81,6 +81,7 @@ add_library(tankercore STATIC
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
+  include/Tanker/TransparentSession/Store.hpp
   include/Tanker/Users/User.hpp
   include/Tanker/Users/Updater.hpp
   include/Tanker/Users/IRequester.hpp
@@ -139,6 +140,7 @@ add_library(tankercore STATIC
   src/Groups/Requester.cpp
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
+  src/TransparentSession/Store.cpp
   src/Users/User.cpp
   src/Users/Updater.cpp
   src/Users/LocalUser.cpp
