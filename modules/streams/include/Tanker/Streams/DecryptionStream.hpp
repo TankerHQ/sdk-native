@@ -47,7 +47,7 @@ protected:
                             Crypto::SymmetricKey key);
 
   tc::cotask<void> processInput();
-  tc::cotask<void> readHeader();
+  tc::cotask<HeaderType> readHeader();
 
   void checkHeaderIntegrity(HeaderType const& oldHeader,
                             HeaderType const& currentHeader);

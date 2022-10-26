@@ -17,9 +17,9 @@ tc::cotask<void> DecryptionStreamV8::decryptChunk()
   // There's an additional copy the header for each chunk in this format
   if (_chunkIndex > 0)
   {
-    auto const oldHeader = _header;
-    TC_AWAIT(readHeader());
-    checkHeaderIntegrity(oldHeader, _header);
+    auto const newHeader = TC_AWAIT(readHeader());
+    checkHeaderIntegrity(_header, newHeader);
+    _header = newHeader;
   }
 
   auto const sizeToRead = _header.encryptedChunkSize() - Header::serializedSize;

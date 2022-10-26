@@ -59,11 +59,13 @@ tc::cotask<Derived> DecryptionStream<Derived, HeaderType>::create(
 }
 
 template <typename Derived, typename HeaderType>
-tc::cotask<void> DecryptionStream<Derived, HeaderType>::readHeader()
+tc::cotask<HeaderType> DecryptionStream<Derived, HeaderType>::readHeader()
 {
+  HeaderType header;
   auto const buffer =
       TC_AWAIT(this->readInputSource(HeaderType::serializedSize));
-  deserializeHeaderTo(buffer, _header);
+  deserializeHeaderTo(buffer, header);
+  TC_RETURN(header);
 }
 
 template <typename Derived, typename HeaderType>
