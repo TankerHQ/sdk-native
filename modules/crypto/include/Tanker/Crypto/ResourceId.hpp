@@ -17,6 +17,7 @@ class ResourceId
 public:
   using base_t =
       boost::variant2::variant<SimpleResourceId, CompositeResourceId>;
+  using const_iter_t = std::uint8_t const*;
 
   ResourceId() = default;
   template <typename InputIterator, typename Sentinel>
@@ -44,20 +45,20 @@ public:
         *this);
   }
 
-  auto begin() const
+  const_iter_t begin() const
   {
-    return boost::variant2::visit([](auto const& e) { return e.begin(); },
+    return boost::variant2::visit([&](auto const& e) { return &*e.begin(); },
                                   *this);
   }
 
-  auto end() const
+  const_iter_t end() const
   {
-    return boost::variant2::visit([](auto const& e) { return e.end(); }, *this);
+    return begin() + size();
   }
 
   std::size_t size() const
   {
-    return boost::variant2::visit([](auto const& e) { return e.size(); },
+    return boost::variant2::visit([&](auto const& e) { return e.size(); },
                                   *this);
   }
 };
