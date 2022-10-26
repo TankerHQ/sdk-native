@@ -35,8 +35,6 @@ target_include_directories(tankerencryptor
   $<INSTALL_INTERFACE:include>
 )
 
-install(DIRECTORY include DESTINATION .)
-
 target_link_libraries(tankerencryptor
   tankererrors
   tankerserialization
