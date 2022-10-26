@@ -230,8 +230,8 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
-    using ResIdType = std::result_of_t<decltype (&T::extractResourceId)(
-        gsl::span<std::uint8_t const>)>;
+    using ResIdType = std::invoke_result_t<decltype(&T::extractResourceId),
+                                           gsl::span<std::uint8_t const>>;
     if constexpr (std::is_same_v<ResIdType, SimpleResourceId>)
       CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
     else if constexpr (std::is_same_v<ResIdType, CompositeResourceId>)

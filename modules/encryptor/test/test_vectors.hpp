@@ -27,8 +27,8 @@ struct TestVector
   Crypto::SymmetricKey key;
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData;
-  std::result_of_t<decltype (&Encryptor::extractResourceId)(
-      gsl::span<std::uint8_t const>)>
+  std::invoke_result_t<decltype(&Encryptor::extractResourceId),
+                       gsl::span<std::uint8_t const>>
       resourceId;
 
   TestVector(std::vector<uint8_t> const& key,
