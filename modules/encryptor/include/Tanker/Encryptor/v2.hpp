@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/SimpleResourceId.hpp>
-#include <Tanker/EncryptionMetadata.hpp>
+#include <Tanker/EncryptCacheMetadata.hpp>
 #include <Tanker/Encryptor.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -25,10 +25,10 @@ public:
       gsl::span<std::uint8_t const> encryptedData);
   // encrypt returns a cotask to implement the Encryptor concept, but it doesn't
   // need to be async, so encryptSync is the synchronous variant
-  static EncryptionMetadata encryptSync(gsl::span<uint8_t> encryptedData,
+  static EncryptCacheMetadata encryptSync(gsl::span<uint8_t> encryptedData,
                                         gsl::span<std::uint8_t const> clearData,
                                         Crypto::SymmetricKey const& key);
-  static tc::cotask<EncryptionMetadata> encrypt(
+  static tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData);
   static tc::cotask<std::uint64_t> decrypt(

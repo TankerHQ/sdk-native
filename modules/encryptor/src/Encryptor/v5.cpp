@@ -45,7 +45,7 @@ std::uint64_t EncryptorV5::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV5::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     SimpleResourceId const& resourceId,
@@ -60,7 +60,7 @@ tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
       versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
   Crypto::randomFill(iv);
   Crypto::encryptAead(key, iv, cipherText, clearData, resourceId);
-  TC_RETURN((EncryptionMetadata{resourceId, key}));
+  TC_RETURN((EncryptCacheMetadata{resourceId, key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV5::decrypt(

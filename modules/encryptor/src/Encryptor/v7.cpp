@@ -52,7 +52,7 @@ std::uint64_t EncryptorV7::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV7::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV7::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     SimpleResourceId const& SimpleResourceId,
@@ -70,7 +70,7 @@ tc::cotask<EncryptionMetadata> EncryptorV7::encrypt(
       versionSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize);
   auto const paddedData = Padding::padClearData(clearData, paddingStep);
   Crypto::encryptAead(key, iv, cipherText, paddedData, associatedData);
-  TC_RETURN((EncryptionMetadata{SimpleResourceId, key}));
+  TC_RETURN((EncryptCacheMetadata{SimpleResourceId, key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV7::decrypt(

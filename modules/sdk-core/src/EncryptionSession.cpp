@@ -70,7 +70,7 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
   }
 }
 
-tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
+tconcurrent::cotask<Tanker::EncryptCacheMetadata> EncryptionSession::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<const std::uint8_t> clearData)
 {

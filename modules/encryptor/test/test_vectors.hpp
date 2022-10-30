@@ -49,7 +49,7 @@ struct TestContext;
 template <>
 struct TestContext<EncryptorV2>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -93,7 +93,7 @@ struct TestContext<EncryptorV2>
 template <>
 struct TestContext<EncryptorV3>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -135,7 +135,7 @@ struct TestContext<EncryptorV3>
 template <>
 struct TestContext<EncryptorV4>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -242,7 +242,7 @@ struct TestContext<EncryptorV4>
 template <>
 struct TestContext<EncryptorV5>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -291,7 +291,7 @@ struct TestContext<EncryptorV5>
 template <>
 struct TestContext<EncryptorV6>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -350,7 +350,7 @@ struct TestContext<EncryptorV6>
 template <>
 struct TestContext<EncryptorV7>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -418,7 +418,7 @@ struct TestContext<EncryptorV7>
 template <>
 struct TestContext<EncryptorV8>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -634,7 +634,7 @@ struct TestContext<EncryptorV8>
 template <>
 struct TestContext<EncryptorV9>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -670,7 +670,7 @@ struct TestContext<EncryptorV9>
 template <>
 struct TestContext<EncryptorV10>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
@@ -725,7 +725,7 @@ struct TestContext<EncryptorV10>
 template <>
 struct TestContext<EncryptorV11>
 {
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {

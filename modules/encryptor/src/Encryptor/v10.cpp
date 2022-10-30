@@ -73,7 +73,7 @@ std::uint64_t EncryptorV10::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV10::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV10::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     SimpleResourceId const& sessionId,
@@ -98,7 +98,7 @@ tc::cotask<EncryptionMetadata> EncryptorV10::encrypt(
       versionSize + SimpleResourceId::arraySize + SubkeySeed::arraySize,
       paddedData.size() + Mac::arraySize);
   encryptAead(key, iv, cipherText, paddedData, macData);
-  TC_RETURN((EncryptionMetadata{sessionId, sessionKey}));
+  TC_RETURN((EncryptCacheMetadata{sessionId, sessionKey}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV10::decrypt(

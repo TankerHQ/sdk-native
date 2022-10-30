@@ -99,7 +99,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   });
 }
 
-tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
+tc::cotask<EncryptCacheMetadata> encrypt(gsl::span<uint8_t> encryptedData,
                                        gsl::span<uint8_t const> clearData,
                                        std::optional<uint32_t> paddingStep)
 {

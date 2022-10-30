@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SubkeySeed.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/EncryptionMetadata.hpp>
+#include <Tanker/EncryptCacheMetadata.hpp>
 #include <Tanker/Encryptor.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -26,7 +26,7 @@ public:
                                      std::optional<std::uint32_t> paddingStep);
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
-  static tc::cotask<EncryptionMetadata> encrypt(
+  static tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
       Crypto::SimpleResourceId const& sessionId,

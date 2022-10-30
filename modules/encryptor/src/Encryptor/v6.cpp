@@ -51,7 +51,7 @@ std::uint64_t EncryptorV6::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV6::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     std::optional<std::uint32_t> paddingStep)
@@ -65,7 +65,7 @@ tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
   auto const resourceId =
       Crypto::encryptAead(key, iv, cipherText, paddedData, additionalData);
 
-  TC_RETURN((EncryptionMetadata{SimpleResourceId(resourceId), key}));
+  TC_RETURN((EncryptCacheMetadata{SimpleResourceId(resourceId), key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV6::decrypt(

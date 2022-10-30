@@ -67,7 +67,7 @@ std::uint64_t EncryptorV8::decryptedSize(
          lastClearChunkSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV8::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV8::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     std::optional<std::uint32_t> paddingStep,
@@ -81,7 +81,7 @@ tc::cotask<EncryptionMetadata> EncryptorV8::encrypt(
                              encryptedChunkSize)));
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV8::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV8::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     Crypto::SimpleResourceId const& resourceId,
@@ -99,7 +99,7 @@ tc::cotask<EncryptionMetadata> EncryptorV8::encrypt(
     encryptedData = encryptedData.subspan(nbRead);
 
   TC_RETURN(
-      (EncryptionMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
+      (EncryptCacheMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV8::decrypt(

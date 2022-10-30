@@ -4,7 +4,7 @@ project(tankerencryptor)
 
 add_library(tankerencryptor STATIC
   include/Tanker/Encryptor.hpp
-  include/Tanker/EncryptionMetadata.hpp
+  include/Tanker/EncryptCacheMetadata.hpp
   include/Tanker/Encryptor/v2.hpp
   include/Tanker/Encryptor/v3.hpp
   include/Tanker/Encryptor/v4.hpp

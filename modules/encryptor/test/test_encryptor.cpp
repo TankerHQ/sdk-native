@@ -223,7 +223,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     }
   }
 
-  SECTION("extractResourceId should give the same result as encrypt")
+  SECTION("encrypt should return the correct resource ID to write in cache")
   {
     auto const clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(ctx.encryptedSize(clearData.size()));

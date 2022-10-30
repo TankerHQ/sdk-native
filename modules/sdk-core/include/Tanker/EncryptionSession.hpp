@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/EncryptionMetadata.hpp>
+#include <Tanker/EncryptCacheMetadata.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 
@@ -23,7 +23,7 @@ public:
   Crypto::SymmetricKey const& sessionKey() const;
   std::shared_ptr<tc::task_canceler> canceler() const;
   std::uint64_t encryptedSize(std::uint64_t clearSize) const;
-  tc::cotask<EncryptionMetadata> encrypt(
+  tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData);
   std::tuple<Streams::InputSource, Crypto::SimpleResourceId>

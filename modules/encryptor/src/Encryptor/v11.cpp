@@ -91,7 +91,7 @@ SymmetricKey EncryptorV11::deriveSubkey(SymmetricKey const& sessionKey,
   return generichash<SymmetricKey>(gsl::make_span(hashBuf));
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV11::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV11::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     Crypto::SimpleResourceId const& sessionId,
@@ -108,7 +108,7 @@ tc::cotask<EncryptionMetadata> EncryptorV11::encrypt(
                              encryptedChunkSize)));
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV11::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV11::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     Crypto::SimpleResourceId const& sessionId,
@@ -127,7 +127,7 @@ tc::cotask<EncryptionMetadata> EncryptorV11::encrypt(
   while (auto const nbRead = TC_AWAIT(encryptor(encryptedData)))
     encryptedData = encryptedData.subspan(nbRead);
 
-  TC_RETURN((EncryptionMetadata{encryptor.resourceId().sessionId(),
+  TC_RETURN((EncryptCacheMetadata{encryptor.resourceId().sessionId(),
                                 encryptor.symmetricKey()}));
 }
 

@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SubkeySeed.hpp>
-#include <Tanker/EncryptionMetadata.hpp>
+#include <Tanker/EncryptCacheMetadata.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Streams/TransparentSessionHeader.hpp>
 
@@ -51,7 +51,7 @@ public:
       Crypto::SymmetricKey const& sessionKey,
       Crypto::SubkeySeed const& subkeySeed);
 
-  static tc::cotask<EncryptionMetadata> encrypt(
+  static tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
       Crypto::SimpleResourceId const& sessionId,
@@ -59,7 +59,7 @@ public:
       std::optional<std::uint32_t> paddingStep,
       std::uint32_t encryptedChunkSize =
           Streams::TransparentSessionHeader::defaultEncryptedChunkSize);
-  static tc::cotask<EncryptionMetadata> encrypt(
+  static tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
       Crypto::SimpleResourceId const& sessionId,
