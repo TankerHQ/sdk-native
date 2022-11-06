@@ -41,8 +41,15 @@ namespace Tanker
 template <typename T>
 using expected = tc::future<T>;
 
+namespace Functional
+{
+struct TrustchainFixtureSimple;
+}
+
 class AsyncCore
 {
+  friend struct Functional::TrustchainFixtureSimple;
+
 public:
   AsyncCore(AsyncCore const&) = delete;
   AsyncCore(AsyncCore&&) = delete;

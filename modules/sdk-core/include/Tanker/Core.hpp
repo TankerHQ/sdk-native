@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -31,9 +31,15 @@
 namespace Tanker
 {
 class Session;
+namespace Functional
+{
+struct TrustchainFixtureSimple;
+}
 
 class Core
 {
+  friend struct Functional::TrustchainFixtureSimple;
+
 public:
   enum class ShareWithSelf : bool
   {
