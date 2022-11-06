@@ -32,10 +32,17 @@ Accessor::Accessor(Users::IRequester* requester,
 tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
     Crypto::SimpleResourceId const& resourceId)
 {
-  auto const result = TC_AWAIT(findKeys({resourceId}));
-  if (result.empty())
-    TC_RETURN(std::nullopt);
-  TC_RETURN(result[0].key);
+  try
+  {
+    auto const result = TC_AWAIT(findKeys({resourceId}));
+    TC_RETURN(result[0].key);
+  }
+  catch (Errors::Exception const& e)
+  {
+    if (e.errorCode() == Errors::Errc::InvalidArgument)
+      TC_RETURN(std::nullopt);
+    throw;
+  }
 }
 
 tc::cotask<KeysResult> Accessor::findOrFetchKeys(

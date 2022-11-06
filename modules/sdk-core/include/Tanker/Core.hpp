@@ -179,6 +179,8 @@ private:
   tc::cotask<VerificationKey> getVerificationKey(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
+  tc::cotask<std::optional<Crypto::SymmetricKey>> tryGetResourceKey(
+      Crypto::SimpleResourceId const&);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Crypto::SimpleResourceId const&);
 

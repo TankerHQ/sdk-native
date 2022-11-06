@@ -75,7 +75,7 @@ tc::cotask<void> checkDecryptFails(T const& userSessions,
       TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
           TC_AWAIT(userSession.session->decrypt(buffer.encryptedData)),
           Tanker::Errors::Errc::InvalidArgument,
-          "can't find keys for resource");
+          "key not found for resource");
     }
 }
 }

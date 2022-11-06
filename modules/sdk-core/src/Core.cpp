@@ -732,7 +732,7 @@ tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
   assertStatus(Status::Ready, "decrypt");
   auto finder = [this](Crypto::SimpleResourceId const& resourceId)
       -> Encryptor::ResourceKeyFinder::result_type {
-    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, finder, encryptedData)));
 }
@@ -1115,11 +1115,17 @@ Core::makeEncryptionStream(
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
 
+tc::cotask<std::optional<Crypto::SymmetricKey>> Core::tryGetResourceKey(
+    Crypto::SimpleResourceId const& resourceId)
+{
+  TC_RETURN(
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId)));
+}
+
 tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
     Crypto::SimpleResourceId const& resourceId)
 {
-  auto const key =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId));
+  auto const key = TC_AWAIT(tryGetResourceKey(resourceId));
   if (!key)
   {
     throw formatEx(
@@ -1139,7 +1145,7 @@ Core::makeDecryptionStream(Streams::InputSource cb)
 
   auto resourceKeyFinder = [this](Crypto::SimpleResourceId const& resourceId)
       -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
-    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   switch (version[0])
   {
