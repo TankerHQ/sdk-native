@@ -1,7 +1,10 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Encryptor/v10.hpp>
+#include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v8.hpp>
+#include <Tanker/Encryptor/v9.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -655,6 +658,48 @@ TEST_CASE_METHOD(TrustchainFixture,
       TC_AWAIT(aliceSession->encrypt(
           clearData, {}, {SGroupId{alice.spublicIdentity().string()}})),
       Errc::InvalidArgument);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
+{
+  auto const clearData = make_buffer("crystal clear");
+  std::vector<uint8_t> encryptedData;
+  auto const session = TC_AWAIT(aliceSession->makeEncryptionSession());
+  auto const sessionId = session.resourceId();
+  auto const sessionKey = session.sessionKey();
+  auto const subkeySeed = Crypto::getRandom<Crypto::SubkeySeed>();
+
+  SECTION("It can share with the v9 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV9::encryptedSize(clearData.size()));
+    TC_AWAIT(EncryptorV9::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed));
+  }
+
+  SECTION("It can share with the v10 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV10::encryptedSize(clearData.size(), {}));
+    TC_AWAIT(EncryptorV10::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed, {}));
+  }
+
+  SECTION("It can share with the v11 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV11::encryptedSize(clearData.size(), {}));
+    TC_AWAIT(EncryptorV11::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed, {}));
+  }
+
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->decrypt(encryptedData)),
+                                Errc::InvalidArgument);
+
+  auto const sSessionId = SResourceId{mgs::base64::encode(sessionId)};
+  TC_AWAIT(aliceSession->share({sSessionId}, {bob.spublicIdentity()}, {}));
+  auto const decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
+  REQUIRE(decrypted == clearData);
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
