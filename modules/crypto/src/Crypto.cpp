@@ -315,7 +315,7 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                     gsl::span<uint8_t const> encryptedData,
                     gsl::span<uint8_t const> associatedData)
 {
-  return tryDecryptAead(*key,
+  return tryDecryptAead(key,
                         ResourceId{resourceId},
                         iv,
                         clearData,
@@ -330,7 +330,7 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                     gsl::span<uint8_t const> encryptedData,
                     gsl::span<uint8_t const> associatedData)
 {
-  return tryDecryptAead(*key,
+  return tryDecryptAead(key,
                         ResourceId{resourceId},
                         iv,
                         clearData,
