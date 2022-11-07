@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -760,14 +761,62 @@ tc::cotask<void> Core::share(
   auto const resourceIds =
       sresourceIds | ranges::views::transform([](auto&& resourceId) {
         return decodeArgument<mgs::base64, Crypto::ResourceId>(resourceId,
-                                                               "resource id")
-            .individualResourceId();
+                                                               "resource id");
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
 
+  // Retrieve keys for simple resource IDs and session keys for composites
+  std::vector<Crypto::SimpleResourceId> simpleResourceIds;
+  std::vector<Crypto::SimpleResourceId> sessionIds;
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::SimpleResourceId>(&ridVariant))
+      simpleResourceIds.push_back(*rid);
+    else if (auto const rid =
+                 boost::variant2::get_if<Crypto::CompositeResourceId>(
+                     &ridVariant))
+      sessionIds.push_back(rid->sessionId());
+  }
   auto const localUser = _session->accessors().localUserAccessor.get();
-  auto const resourceKeys =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(resourceIds));
+  auto resourceKeys = TC_AWAIT(
+      _session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
+
+  auto sessionKeys =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(sessionIds));
+  boost::container::flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>
+      sessionKeysMap;
+  std::transform(sessionKeys.begin(),
+                 sessionKeys.end(),
+                 std::inserter(sessionKeysMap, sessionKeysMap.end()),
+                 [](const auto& keyResult) {
+                   return std::make_pair(keyResult.id, keyResult.key);
+                 });
+
+  // Derive keys for composite resource IDs
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+    {
+      if (rid->type() == Crypto::CompositeResourceId::transparentSessionType())
+      {
+        auto const sessionId = rid->sessionId();
+        auto const resourceId = rid->individualResourceId();
+        auto const subkeySeed = Crypto::SubkeySeed{resourceId};
+        auto const sessionKey = sessionKeysMap[sessionId];
+        auto const key = EncryptorV11::deriveSubkey(sessionKey, subkeySeed);
+        resourceKeys.push_back(ResourceKeys::KeyResult{key, resourceId});
+      }
+      else
+      {
+        throw formatEx(Errc::InvalidArgument,
+                       "invalid or unsupported composite resource ID type: {}",
+                       rid->type());
+      }
+    }
+  }
+
   TC_AWAIT(Share::share(_session->accessors().userAccessor,
                         _session->accessors().groupAccessor,
                         _session->trustchainId(),

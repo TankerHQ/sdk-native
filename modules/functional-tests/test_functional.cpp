@@ -705,11 +705,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(charlieSession->decrypt(encryptedData)), Errc::InvalidArgument);
 
-  auto const resourceId =
-      Core::getResourceId(encryptedData).individualResourceId();
-  auto const individualKey = EncryptorV11::deriveSubkey(sessionKey, subkeySeed);
-  TC_AWAIT(injectStoreResourceKey(*aliceSession, resourceId, individualKey));
-
+  auto const resourceId = Core::getResourceId(encryptedData);
   auto const sResourceId = SResourceId{mgs::base64::encode(resourceId)};
   TC_AWAIT(aliceSession->share({sResourceId}, {charlie.spublicIdentity()}, {}));
   auto const decryptedIndividual =
