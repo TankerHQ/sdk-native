@@ -660,6 +660,23 @@ TEST_CASE_METHOD(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
+TEST_CASE_METHOD(TrustchainFixture,
+                 "It fails to share invalid composite resource IDs")
+{
+  auto const sessId = Crypto::getRandom<Crypto::SimpleResourceId>();
+  auto const sessKey = Crypto::getRandom<Crypto::SymmetricKey>();
+  auto const resId = Crypto::getRandom<Crypto::SimpleResourceId>();
+  auto id = Crypto::CompositeResourceId::newTransparentSessionId(sessId, resId);
+  id[0] = 0xF0; // Mess up the composite type
+
+  TC_AWAIT(injectStoreResourceKey(*aliceSession, sessId, sessKey));
+  auto const sResourceId = SResourceId{mgs::base64::encode(id)};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({sResourceId}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "unsupported composite resource ID type");
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
 {
   auto const clearData = make_buffer("crystal clear");
