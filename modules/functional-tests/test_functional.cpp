@@ -697,8 +697,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->decrypt(encryptedData)),
                                 Errc::InvalidArgument);
 
-  auto const sSessionId = SResourceId{mgs::base64::encode(sessionId)};
-  TC_AWAIT(aliceSession->share({sSessionId}, {bob.spublicIdentity()}, {}));
+  TC_AWAIT(injectStoreResourceKey(*bobSession, sessionId, sessionKey));
   auto const decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
   REQUIRE(decrypted == clearData);
 
