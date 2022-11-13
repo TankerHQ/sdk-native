@@ -3,6 +3,7 @@
 #include <Tanker/Encryptor/v10.hpp>
 #include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v4.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Encryptor/v9.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
@@ -675,6 +676,27 @@ TEST_CASE_METHOD(TrustchainFixture,
       TC_AWAIT(aliceSession->share({sResourceId}, {bob.spublicIdentity()}, {})),
       Errc::InvalidArgument,
       "unsupported composite resource ID type");
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "It fails to share without the key")
+{
+  // Simple resource IDs
+  auto simple = SResourceId{
+      mgs::base64::encode(Crypto::getRandom<Crypto::SimpleResourceId>())};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({simple}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "can't find keys");
+
+  // Composite resource ID
+  auto composite = SResourceId{
+      mgs::base64::encode(Crypto::CompositeResourceId::newTransparentSessionId(
+          Crypto::getRandom<Crypto::SimpleResourceId>(),
+          Crypto::getRandom<Crypto::SimpleResourceId>()))};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({composite}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "can't find keys");
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
