@@ -765,7 +765,7 @@ tc::cotask<void> Core::share(
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
 
-  // Retrieve keys for simple resource IDs and session keys for composites
+  // Retrieve keys for simple resource IDs and known session keys for composites
   std::vector<Crypto::SimpleResourceId> simpleResourceIds;
   std::vector<Crypto::SimpleResourceId> sessionIds;
   for (auto const& ridVariant : resourceIds)
@@ -782,30 +782,40 @@ tc::cotask<void> Core::share(
   auto resourceKeys = TC_AWAIT(
       _session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
 
-  auto sessionKeys =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(sessionIds));
-  boost::container::flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>
-      sessionKeysMap;
-  std::transform(sessionKeys.begin(),
-                 sessionKeys.end(),
-                 std::inserter(sessionKeysMap, sessionKeysMap.end()),
-                 [](const auto& keyResult) {
-                   return std::make_pair(keyResult.id, keyResult.key);
-                 });
+  // If we fail to find the session key for some composites resource IDs, we may
+  // still have access to the individual resource key
+  auto sessionKeysMap = TC_AWAIT(
+      _session->accessors().resourceKeyAccessor.tryFindKeys(sessionIds));
+  std::vector<Crypto::SimpleResourceId> resourcesWithoutSession;
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+      if (sessionKeysMap.find(rid->sessionId()) == sessionKeysMap.end())
+        resourcesWithoutSession.push_back(rid->individualResourceId());
+  }
+  auto individualResourceKeys =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(
+          resourcesWithoutSession));
+  resourceKeys.insert(resourceKeys.end(),
+                      individualResourceKeys.begin(),
+                      individualResourceKeys.end());
 
-  // Derive keys for composite resource IDs
+  // Derive keys for composite resource IDs for which we know the session key
   for (auto const& ridVariant : resourceIds)
   {
     if (auto const rid =
             boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
     {
+      auto const sessionKey = sessionKeysMap.find(rid->sessionId());
+      if (sessionKey == sessionKeysMap.end())
+        continue;
+
       if (rid->type() == Crypto::CompositeResourceId::transparentSessionType())
       {
-        auto const sessionId = rid->sessionId();
         auto const resourceId = rid->individualResourceId();
-        auto const subkeySeed = Crypto::SubkeySeed{resourceId};
-        auto const sessionKey = sessionKeysMap[sessionId];
-        auto const key = EncryptorV11::deriveSubkey(sessionKey, subkeySeed);
+        auto const seed = Crypto::SubkeySeed{resourceId};
+        auto const key = EncryptorV11::deriveSubkey(sessionKey->second, seed);
         resourceKeys.push_back(ResourceKeys::KeyResult{key, resourceId});
       }
       else

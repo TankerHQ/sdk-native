@@ -728,6 +728,11 @@ TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
   auto const decryptedIndividual =
       TC_AWAIT(charlieSession->decrypt(encryptedData));
   REQUIRE(decryptedIndividual == clearData);
+
+  // Charlie can reshare the individual resource without knowing the session
+  auto const groupId =
+      TC_AWAIT(charlieSession->createGroup({charlie.spublicIdentity()}));
+  TC_AWAIT(charlieSession->share({sResourceId}, {}, {groupId}));
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")

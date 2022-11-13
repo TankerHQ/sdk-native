@@ -14,6 +14,8 @@
 
 TLOG_CATEGORY(ResourceKeys::Accessor);
 
+using boost::container::flat_map;
+
 namespace Tanker::ResourceKeys
 {
 Accessor::Accessor(Users::IRequester* requester,
@@ -107,5 +109,23 @@ tc::cotask<KeysResult> Accessor::findKeys(
     throwForMissingKeys(resourceIds, keys);
 
   TC_RETURN(std::move(keys));
+}
+
+tc::cotask<flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>>
+Accessor::tryFindKeys(std::vector<Crypto::SimpleResourceId> const& resourceIds)
+{
+  auto keysVec = TC_AWAIT(_cache.run(
+      [&](std::vector<Crypto::SimpleResourceId> const& keys)
+          -> tc::cotask<KeysResult> {
+        TC_RETURN(TC_AWAIT(findOrFetchKeys(keys)));
+      },
+      resourceIds));
+
+  auto keys =
+      keysVec | ranges::views::transform([](const auto& keyResult) {
+        return std::make_pair(keyResult.id, keyResult.key);
+      }) |
+      ranges::to<flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>>();
+  TC_RETURN(keys);
 }
 }
