@@ -71,4 +71,29 @@ TEST_CASE("TransparentSessionStore")
     CHECK(result.sessionId == secondSessionId);
     CHECK(result.sessionKey == secondSessionKey);
   }
+
+  SECTION("Generates the same recipient hashes regardless of user order")
+  {
+    auto user1 = SPublicIdentity("u1"), user2 = SPublicIdentity("u2");
+    auto hash1 = Store::hashRecipients({user1, user2}, {});
+    auto hash2 = Store::hashRecipients({user2, user1}, {});
+    CHECK(hash1 == hash2);
+  }
+
+  SECTION("Generates the same recipient hashes regardless of group order")
+  {
+    auto group1 = SGroupId("g1"), group2 = SGroupId("g2");
+    auto hash1 = Store::hashRecipients({}, {group1, group2});
+    auto hash2 = Store::hashRecipients({}, {group2, group1});
+    CHECK(hash1 == hash2);
+  }
+
+  SECTION("Generates different hashes when given a user ID vs a group ID")
+  {
+    auto user = SPublicIdentity("Same string!");
+    auto group = SGroupId("Same string!");
+    auto hash1 = Store::hashRecipients({user}, {});
+    auto hash2 = Store::hashRecipients({}, {group});
+    CHECK(hash1 != hash2);
+  }
 }
