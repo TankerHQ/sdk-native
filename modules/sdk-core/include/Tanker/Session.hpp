@@ -13,6 +13,7 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/SdkInfo.hpp>
+#include <Tanker/TransparentSession/Accessor.hpp>
 #include <Tanker/TransparentSession/Store.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -64,6 +65,7 @@ public:
     ProvisionalUsers::Manager provisionalUsersManager;
     Groups::Accessor groupAccessor;
     ResourceKeys::Accessor resourceKeyAccessor;
+    TransparentSession::Accessor transparentSessionAccessor;
   };
 
   Session(std::unique_ptr<Network::HttpClient> client,
