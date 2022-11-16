@@ -308,7 +308,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   Crypto::randomFill(clearData);
   auto encryptedData = TC_AWAIT(aliceSession->encrypt(
       clearData, {}, {}, Core::ShareWithSelf::Yes, std::nullopt));
-  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  CHECK(Encryptor::decryptedSize(encryptedData) == fiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(decryptedData == clearData);
@@ -321,7 +321,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   Crypto::randomFill(clearData);
   auto encryptedData = TC_AWAIT(aliceSession->encrypt(
       clearData, {}, {}, Core::ShareWithSelf::Yes, Padding::Off));
-  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  CHECK(Encryptor::decryptedSize(encryptedData) == almostFiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(decryptedData == clearData);
@@ -335,7 +335,7 @@ TEST_CASE_METHOD(
   Crypto::randomFill(clearData);
   auto encryptedData = TC_AWAIT(
       aliceSession->encrypt(clearData, {}, {}, Core::ShareWithSelf::Yes, 500));
-  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  CHECK(Encryptor::decryptedSize(encryptedData) % 500 == 0);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(decryptedData == clearData);
@@ -1030,7 +1030,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
   }
 }
 
-inline auto constexpr simpleEncryptionOverhead = 17;
+inline auto constexpr simpleEncryptionOverhead = 49;
 inline auto constexpr paddedSimpleEncryptionOverhead =
     simpleEncryptionOverhead + 1;
 
@@ -1079,7 +1079,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   }
 
   SECTION(
-      "encrypt/decrypt with a huge padding step should select the v8 format")
+      "encrypt/decrypt with a huge padding step should select the v11 format")
   {
     std::string const clearData("my clear data is clear!");
     auto const step = 2 * 1024 * 1024;
@@ -1087,7 +1087,7 @@ TEST_CASE_METHOD(TrustchainFixture,
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                         encrypt(*aliceSession, clearData, {}, {}, step)));
 
-    CHECK(encryptedData[0] == 0x08);
+    CHECK(encryptedData[0] == 11);
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }
