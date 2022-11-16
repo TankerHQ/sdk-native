@@ -120,6 +120,16 @@ T generichash(gsl::span<uint8_t const> data)
   return hash;
 }
 
+template <typename T = BasicHash<void>>
+T generichash(std::string_view data)
+{
+  T hash;
+  auto span =
+      gsl::span(reinterpret_cast<uint8_t const*>(data.data()), data.size());
+  detail::generichash_impl(hash, span);
+  return hash;
+}
+
 std::vector<uint8_t> generichash16(gsl::span<uint8_t const> data);
 void randomFill(gsl::span<uint8_t> data);
 

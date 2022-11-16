@@ -8,6 +8,11 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <gsl/gsl-lite.hpp>
+#include <range/v3/action/sort.hpp>
+#include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/view.hpp>
+
+using namespace std::literals;
 
 namespace Tanker::TransparentSession
 {
@@ -73,17 +78,37 @@ TransparentSessionData deserializeTransparentSession(
 }
 }
 
-Store::Store(
-    Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
   : _userSecret(userSecret), _db(db)
 {
 }
 
-tc::cotask<void> Store::put(
-    Crypto::Hash const& recipientsHash,
-    Crypto::SimpleResourceId const& sessionId,
-    Crypto::SymmetricKey const& sessionKey,
-    std::uint64_t creationTimestamp)
+Crypto::Hash Store::hashRecipients(std::vector<SPublicIdentity> const& users,
+                                   std::vector<SGroupId> const& groups)
+{
+  using namespace ranges;
+
+  auto asStringView = [](auto&& sw) { return std::string_view(sw.string()); };
+  auto usersView = views::concat(users | views::transform(asStringView),
+                                 views::single(""sv));
+  auto sortedUsers =
+      usersView | to<std::vector<std::string_view>> | actions::sort;
+  auto groupsView = views::concat(groups | views::transform(asStringView),
+                                  views::single(""sv));
+  auto sortedGroups =
+      groupsView | to<std::vector<std::string_view>> | actions::sort;
+
+  auto pieces = views::concat(sortedUsers | views::intersperse("|"sv),
+                              views::single("#"sv),
+                              sortedGroups | views::intersperse("|"sv));
+  return Crypto::generichash(accumulate(
+      pieces, ""s, [](auto& r, auto const& elem) { return r += elem; }));
+}
+
+tc::cotask<void> Store::put(Crypto::Hash const& recipientsHash,
+                            Crypto::SimpleResourceId const& sessionId,
+                            Crypto::SymmetricKey const& sessionKey,
+                            std::uint64_t creationTimestamp)
 {
   FUNC_TIMER(DB);
   auto const keyBuffer = serializeStoreKey(recipientsHash);
