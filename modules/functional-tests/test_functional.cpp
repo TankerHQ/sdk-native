@@ -396,7 +396,7 @@ TEST_CASE_METHOD(TrustchainFixture,
           Core::ShareWithSelf::Yes,
           std::nullopt));
   auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
-  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  CHECK(Encryptor::decryptedSize(encryptedData) == fiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
@@ -415,7 +415,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can stream-encrypt with no padding")
           Core::ShareWithSelf::Yes,
           Padding::Off));
   auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
-  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  CHECK(Encryptor::decryptedSize(encryptedData) == almostFiveMiB);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
@@ -435,7 +435,7 @@ TEST_CASE_METHOD(TrustchainFixture,
           Core::ShareWithSelf::Yes,
           500));
   auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
-  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  CHECK(Encryptor::decryptedSize(encryptedData) % 500 == 0);
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
