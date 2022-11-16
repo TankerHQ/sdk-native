@@ -677,35 +677,43 @@ tc::cotask<void> Core::encrypt(
     std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
-  auto const metadata =
-      TC_AWAIT(Encryptor::encrypt(encryptedData, clearData, paddingStep));
+
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
-  {
-    spublicIdentitiesWithUs.push_back(
-        SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-            _session->trustchainId(), _session->userId()})});
-
-    TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
-                                                         metadata.key));
-  }
+    spublicIdentitiesWithUs.emplace_back(
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
+                                                    _session->userId()}));
   else if (spublicIdentities.empty() && sgroupIds.empty())
-  {
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
         FMT_STRING("cannot encrypt without sharing with anybody"));
-  }
 
-  auto const& localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Share::share(_session->accessors().userAccessor,
-                        _session->accessors().groupAccessor,
-                        _session->trustchainId(),
-                        localUser.deviceId(),
-                        localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->requesters(),
-                        {{metadata.key, metadata.resourceId}},
-                        spublicIdentitiesWithUs,
-                        sgroupIds));
+  auto const session =
+      TC_AWAIT(_session->accessors()
+                   .transparentSessionAccessor.getOrCreateTransparentSession(
+                       spublicIdentitiesWithUs, sgroupIds));
+  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData,
+                                                    clearData,
+                                                    paddingStep,
+                                                    session.sessionId,
+                                                    session.sessionKey));
+
+  if (session.isNew)
+  {
+    if (shareWithSelf == ShareWithSelf::Yes)
+      TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
+                                                           metadata.key));
+    auto const& localUser = _session->accessors().localUserAccessor.get();
+    TC_AWAIT(Share::share(_session->accessors().userAccessor,
+                          _session->accessors().groupAccessor,
+                          _session->trustchainId(),
+                          localUser.deviceId(),
+                          localUser.deviceKeys().signatureKeyPair.privateKey,
+                          _session->requesters(),
+                          {{metadata.key, metadata.resourceId}},
+                          spublicIdentitiesWithUs,
+                          sgroupIds));
+  }
 }
 
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
