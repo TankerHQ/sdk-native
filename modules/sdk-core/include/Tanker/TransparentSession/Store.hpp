@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/DataStore/Backend.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -35,6 +36,10 @@ public:
   Store& operator=(Store&&) = delete;
 
   Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
+
+  // NOTE: If sharing with self, add self to the users public identities
+  static Crypto::Hash hashRecipients(std::vector<SPublicIdentity> users,
+                                     std::vector<SGroupId> groups);
 
   tc::cotask<void> put(Crypto::Hash const& recipientsHash,
                        Crypto::SimpleResourceId const& sessionId,
