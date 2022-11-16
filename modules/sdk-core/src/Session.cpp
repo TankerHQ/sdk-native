@@ -70,7 +70,8 @@ Session::Accessors::Accessors(Storage& storage,
                         &localUserAccessor,
                         &groupAccessor,
                         &provisionalUsersAccessor,
-                        &storage.resourceKeyStore)
+                        &storage.resourceKeyStore),
+    transparentSessionAccessor(&storage.transparentSessionStore)
 {
 }
 
