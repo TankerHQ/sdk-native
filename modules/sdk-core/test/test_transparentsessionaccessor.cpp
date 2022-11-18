@@ -21,6 +21,7 @@ TEST_CASE("TransparentSessionAccessor")
   SECTION("it creates different sessions for different recipient lists")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"1"}}));
+    AWAIT_VOID(accessor.saveTransparentSession(sess1));
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"2"}}));
     CHECK(sess1.isNew);
     CHECK(sess2.isNew);
@@ -30,6 +31,7 @@ TEST_CASE("TransparentSessionAccessor")
   SECTION("it reuses an existing session that has not expired")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
+    AWAIT_VOID(accessor.saveTransparentSession(sess1));
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
     CHECK(sess1.isNew);
     CHECK(!sess2.isNew);
@@ -49,10 +51,7 @@ TEST_CASE("TransparentSessionAccessor")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
     CHECK(sess1.isNew);
-
-    auto hash = Store::hashRecipients({}, {{"X"}});
-    CHECK(AWAIT(store.get(hash)).has_value());
-    AWAIT_VOID(store.put(hash, sess1.sessionId, sess1.sessionKey, 0));
+    AWAIT_VOID(store.put(sess1.recipientsHash, sess1.sessionId, sess1.sessionKey, 0));
 
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
     CHECK(sess2.isNew);
