@@ -1000,7 +1000,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
   std::vector<uint8_t> encryptedData;
   {
     auto core = TC_AWAIT(device1.open());
-    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(core->encrypt(clearData)));
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        core->encrypt(clearData, {bob.spublicIdentity()})));
   }
   auto core = Functional::makeAsyncCore("https://no-api.tanker.io",
                                         device1.getSdkInfo(),
