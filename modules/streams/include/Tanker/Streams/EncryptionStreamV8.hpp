@@ -1,9 +1,10 @@
 #pragma once
 
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -25,7 +26,7 @@ public:
       std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
   EncryptionStreamV8(
       InputSource,
-      Trustchain::ResourceId const& resourceId,
+      Crypto::SimpleResourceId const& resourceId,
       Crypto::SymmetricKey const& key,
       std::optional<std::uint32_t> padding = std::nullopt,
       std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);

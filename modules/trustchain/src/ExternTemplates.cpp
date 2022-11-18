@@ -1,7 +1,7 @@
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -15,6 +15,6 @@ template class BasicHash<struct Trustchain::detail::TrustchainIdImpl>;
 template class BasicHash<struct Trustchain::detail::HashedPassphraseImpl>;
 template class BasicCryptographicType<Trustchain::GroupId,
                                       PublicSignatureKey::arraySize>;
-template class BasicCryptographicType<Trustchain::ResourceId, Mac::arraySize>;
+template class BasicCryptographicType<Crypto::ResourceId, Mac::arraySize>;
 }
 }

@@ -136,7 +136,7 @@ public:
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
 
-  tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
   makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
@@ -144,7 +144,7 @@ public:
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
       std::optional<uint32_t> paddingStep = std::nullopt);
 
-  tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
       makeDecryptionStream(Streams::InputSource);
 
   tc::future<EncryptionSession> makeEncryptionSession(

@@ -26,7 +26,7 @@ tc::cotask<Ret> decryptMethod(T const& encrypted,
 
   TC_AWAIT(EncryptorV2::decrypt(
       gsl::make_span(decrypted).template as_span<uint8_t>(),
-      userSecret,
+      Encryptor::fixedKeyFinder(userSecret),
       encrypted));
   TC_RETURN(decrypted);
 }

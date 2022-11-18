@@ -9,10 +9,10 @@ namespace Tanker
 {
 namespace Streams
 {
-template <typename Derived>
-EncryptionStream<Derived>::EncryptionStream(
+template <typename Derived, typename ResourceIdType>
+EncryptionStream<Derived, ResourceIdType>::EncryptionStream(
     InputSource cb,
-    Trustchain::ResourceId const& resourceId,
+    ResourceIdType const& resourceId,
     Crypto::SymmetricKey const& key,
     std::uint32_t encryptedChunkSize)
   : BufferedStream<Derived>(std::move(cb)),
@@ -20,24 +20,26 @@ EncryptionStream<Derived>::EncryptionStream(
     _resourceId{resourceId},
     _key{key}
 {
-  if (encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
+  if (encryptedChunkSize < Crypto::Mac::arraySize)
     throw AssertionError("invalid encrypted chunk size");
 }
 
-template <typename Derived>
-Trustchain::ResourceId const& EncryptionStream<Derived>::resourceId() const
+template <typename Derived, typename ResourceIdType>
+ResourceIdType const& EncryptionStream<Derived, ResourceIdType>::resourceId()
+    const
 {
   return _resourceId;
 }
 
-template <typename Derived>
-Crypto::SymmetricKey const& EncryptionStream<Derived>::symmetricKey() const
+template <typename Derived, typename ResourceIdType>
+Crypto::SymmetricKey const&
+EncryptionStream<Derived, ResourceIdType>::symmetricKey() const
 {
   return _key;
 }
 
-template <typename Derived>
-tc::cotask<void> EncryptionStream<Derived>::processInput()
+template <typename Derived, typename ResourceIdType>
+tc::cotask<void> EncryptionStream<Derived, ResourceIdType>::processInput()
 {
   TC_AWAIT(static_cast<Derived*>(this)->encryptChunk());
 }

@@ -36,7 +36,10 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/EncryptedSymmetricKey.hpp
     include/Tanker/Crypto/SealedSymmetricKey.hpp
     include/Tanker/Crypto/SymmetricKey.hpp
+    include/Tanker/Crypto/SubkeySeed.hpp
     include/Tanker/Crypto/AeadIv.hpp
+    include/Tanker/Crypto/SimpleResourceId.hpp
+    include/Tanker/Crypto/CompositeResourceId.hpp
     include/Tanker/Crypto/BasicCryptographicType.hpp
     include/Tanker/Crypto/detail/BasicCryptographicTypeImpl.hpp
     include/Tanker/Crypto/AsymmetricKey.hpp
@@ -62,6 +65,7 @@ target_link_libraries(
   tankercrypto
   tankerserialization
   tankererrors
+  tankertypes
 
   libsodium::libsodium
   mgs::mgs

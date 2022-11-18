@@ -8,21 +8,27 @@ add_library(tankerstreams
   include/Tanker/Streams/DecryptionStreamImpl.hpp
   include/Tanker/Streams/DecryptionStreamV4.hpp
   include/Tanker/Streams/DecryptionStreamV8.hpp
+  include/Tanker/Streams/DecryptionStreamV11.hpp
   include/Tanker/Streams/Detail/BufferedStreamImpl.hpp
   include/Tanker/Streams/EncryptionStream.hpp
   include/Tanker/Streams/EncryptionStreamImpl.hpp
   include/Tanker/Streams/EncryptionStreamV4.hpp
   include/Tanker/Streams/EncryptionStreamV8.hpp
+  include/Tanker/Streams/EncryptionStreamV11.hpp
   include/Tanker/Streams/InputSource.hpp
   include/Tanker/Streams/Header.hpp
+  include/Tanker/Streams/TransparentSessionHeader.hpp
   include/Tanker/Streams/Helpers.hpp
   include/Tanker/Streams/PeekableInputSource.hpp
 
   src/DecryptionStreamV4.cpp
   src/DecryptionStreamV8.cpp
+  src/DecryptionStreamV11.cpp
   src/EncryptionStreamV4.cpp
   src/EncryptionStreamV8.cpp
+  src/EncryptionStreamV11.cpp
   src/Header.cpp
+  src/TransparentSessionHeader.cpp
   src/Helpers.cpp
   src/PeekableInputSource.cpp
 )
@@ -37,6 +43,7 @@ target_link_libraries(tankerstreams
   tankercrypto
   tankerserialization
   tankertrustchain
+  tankerencryptor
   tankererrors
 
   tconcurrent::tconcurrent

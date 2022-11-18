@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Streams/BufferedStream.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -19,34 +19,38 @@ namespace Tanker
 {
 namespace Streams
 {
-template <typename Derived>
+template <typename Derived, typename HeaderType>
 class DecryptionStream : protected BufferedStream<Derived>
 {
   friend BufferedStream<Derived>;
 
 public:
-  using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
-      Trustchain::ResourceId const&)>;
+  using ResourceKeyFinder =
+      std::function<tc::cotask<std::optional<Crypto::SymmetricKey>>(
+          Crypto::SimpleResourceId const&)>;
 
-  static tc::cotask<Derived> create(InputSource cb, ResourceKeyFinder finder);
+  static tc::cotask<Derived> create(InputSource cb,
+                                    ResourceKeyFinder const& finder);
 
   using BufferedStream<Derived>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
-  Trustchain::ResourceId const& resourceId() const;
+  decltype(std::declval<HeaderType>().resourceId()) resourceId() const;
 
 protected:
   Crypto::SymmetricKey _key;
-  Header _header;
+  HeaderType _header;
   std::int64_t _chunkIndex{};
 
-  explicit DecryptionStream(InputSource);
+  explicit DecryptionStream(InputSource,
+                            HeaderType header,
+                            Crypto::SymmetricKey key);
 
   tc::cotask<void> processInput();
-  tc::cotask<void> readHeader();
+  tc::cotask<HeaderType> readHeader();
 
-  void checkHeaderIntegrity(Header const& oldHeader,
-                            Header const& currentHeader);
+  void checkHeaderIntegrity(HeaderType const& oldHeader,
+                            HeaderType const& currentHeader);
 };
 }
 }

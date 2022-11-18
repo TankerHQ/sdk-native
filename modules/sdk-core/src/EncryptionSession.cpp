@@ -20,7 +20,7 @@ EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession,
   : _tankerSession(tankerSession),
     _taskCanceler{std::make_shared<tc::task_canceler>()},
     _sessionKey{Crypto::makeSymmetricKey()},
-    _resourceId{Crypto::getRandom<Trustchain::ResourceId>()},
+    _resourceId{Crypto::getRandom<Crypto::SimpleResourceId>()},
     _paddingStep(paddingStep)
 {
 }
@@ -35,7 +35,7 @@ void EncryptionSession::assertSession(char const* action) const
         action);
 }
 
-Trustchain::ResourceId const& EncryptionSession::resourceId() const
+Crypto::SimpleResourceId const& EncryptionSession::resourceId() const
 {
   assertSession("resourceId");
   return _resourceId;
@@ -70,7 +70,7 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
   }
 }
 
-tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
+tconcurrent::cotask<Tanker::EncryptCacheMetadata> EncryptionSession::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<const std::uint8_t> clearData)
 {
@@ -95,7 +95,7 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
   }
 }
 
-std::tuple<Streams::InputSource, Trustchain::ResourceId>
+std::tuple<Streams::InputSource, Crypto::SimpleResourceId>
 EncryptionSession::makeEncryptionStream(Streams::InputSource cb)
 {
   if (_paddingStep == Padding::Off)

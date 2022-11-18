@@ -1,11 +1,11 @@
 #pragma once
 
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -20,7 +20,7 @@ namespace Trustchain
 namespace Actions
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES \
-  (resourceId, ResourceId)
+  (resourceId, Crypto::SimpleResourceId)
 
 class KeyPublish
 {

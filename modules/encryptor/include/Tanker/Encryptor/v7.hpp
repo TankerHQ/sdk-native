@@ -1,37 +1,40 @@
 #pragma once
 
-#include <Tanker/EncryptionMetadata.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
-
-#include <gsl/gsl-lite.hpp>
-#include <tconcurrent/coroutine.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/EncryptCacheMetadata.hpp>
+#include <Tanker/Encryptor.hpp>
 
 #include <cstdint>
+#include <gsl/gsl-lite.hpp>
 #include <optional>
-#include <vector>
+#include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
 {
-class EncryptorV6
+class EncryptorV7
 {
 public:
   static constexpr std::uint32_t version()
   {
-    return 6u;
+    return 7u;
   }
+
   static std::uint64_t encryptedSize(std::uint64_t clearSize,
                                      std::optional<std::uint32_t> paddingStep);
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
-  static tc::cotask<EncryptionMetadata> encrypt(
+  static tc::cotask<EncryptCacheMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
+      Crypto::SimpleResourceId const& resourceId,
+      Crypto::SymmetricKey const& key,
       std::optional<std::uint32_t> paddingStep);
   static tc::cotask<std::uint64_t> decrypt(
       gsl::span<uint8_t> decryptedData,
-      Crypto::SymmetricKey const& key,
+      Encryptor::ResourceKeyFinder const& keyFinder,
       gsl::span<std::uint8_t const> encryptedData);
-  static Trustchain::ResourceId extractResourceId(
+  static Crypto::SimpleResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);
 };
 }

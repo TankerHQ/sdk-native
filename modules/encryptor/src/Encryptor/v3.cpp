@@ -1,13 +1,13 @@
 #include <Tanker/Encryptor/v3.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker
 {
@@ -43,7 +43,7 @@ std::uint64_t EncryptorV3::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV3::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV3::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData)
 {
@@ -53,28 +53,30 @@ tc::cotask<EncryptionMetadata> EncryptorV3::encrypt(
   auto const cipherText = encryptedData.subspan(versionSize);
   auto const resourceId =
       Crypto::encryptAead(key, iv, cipherText, clearData, {});
-  TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
+  TC_RETURN((EncryptCacheMetadata{SimpleResourceId(resourceId), key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV3::decrypt(
     gsl::span<std::uint8_t> decryptedData,
-    Crypto::SymmetricKey const& key,
+    Encryptor::ResourceKeyFinder const& keyFinder,
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
+  auto const resourceId = extractResourceId(encryptedData);
+  auto const key = TC_AWAIT(keyFinder(resourceId));
   auto const cipherText = encryptedData.subspan(versionSize);
   auto const iv = Crypto::AeadIv{};
-  Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
+  Crypto::tryDecryptAead(key, resourceId, iv, decryptedData, cipherText, {});
   TC_RETURN(decryptedSize(encryptedData));
 }
 
-ResourceId EncryptorV3::extractResourceId(
+SimpleResourceId EncryptorV3::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const cipherText = encryptedData.subspan(versionSize);
-  return ResourceId{Crypto::extractMac(cipherText)};
+  return SimpleResourceId{Crypto::extractMac(cipherText)};
 }
 }

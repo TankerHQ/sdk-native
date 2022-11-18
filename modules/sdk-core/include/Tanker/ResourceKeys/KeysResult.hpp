@@ -1,7 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <tuple>
 #include <vector>
@@ -11,7 +11,7 @@ namespace Tanker::ResourceKeys
 struct KeyResult
 {
   Crypto::SymmetricKey key;
-  Trustchain::ResourceId id;
+  Crypto::SimpleResourceId id;
 };
 
 bool operator==(KeyResult const& lhs, KeyResult const& rhs);

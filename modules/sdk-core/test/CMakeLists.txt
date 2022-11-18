@@ -8,7 +8,6 @@ add_executable(test_tanker
   test_provisionaluserkeysstore.cpp
   test_log.cpp
   test_oidcmanager.cpp
-  test_encryptor.cpp
   test_encryptionsession.cpp
   test_receivekey.cpp
   test_share.cpp

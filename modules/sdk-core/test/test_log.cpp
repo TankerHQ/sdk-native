@@ -1,12 +1,12 @@
 #include <catch2/catch.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -91,7 +91,7 @@ TEST_CASE("print a formated log")
   SECTION("It format a ResourceId")
   {
     auto resourceId =
-        Tanker::make<Tanker::Trustchain::ResourceId>("awesome, isn't it?");
+        Tanker::make<Tanker::Crypto::SimpleResourceId>("awesome, isn't it?");
     REQUIRE(
         fmt::format("my resourceId is {}", mgs::base64::encode(resourceId)) ==
         fmt::format("my resourceId is {}", resourceId));

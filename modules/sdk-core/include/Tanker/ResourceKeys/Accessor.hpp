@@ -31,15 +31,15 @@ public:
   Accessor& operator=(Accessor&&) = delete;
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
-      Trustchain::ResourceId const& resourceId);
+      Crypto::SimpleResourceId const& resourceId);
   tc::cotask<KeysResult> findKeys(
-      std::vector<Trustchain::ResourceId> const& resourceId);
+      std::vector<Crypto::SimpleResourceId> const& resourceId);
 
 private:
   tc::cotask<KeysResult> findOrFetchKeys(
-      gsl::span<Trustchain::ResourceId const> resourceIds);
+      gsl::span<Crypto::SimpleResourceId const> resourceIds);
   [[noreturn]] void throwForMissingKeys(
-      gsl::span<Trustchain::ResourceId const> resourceIds,
+      gsl::span<Crypto::SimpleResourceId const> resourceIds,
       KeysResult const& result);
 
   Users::IRequester* _requester;

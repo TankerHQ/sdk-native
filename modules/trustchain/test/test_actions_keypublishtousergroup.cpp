@@ -63,7 +63,7 @@ TEST_CASE("KeyPublishToUserGroup serialization test vectors")
 
     auto const recipientPublicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("recipient user");
-    auto const resourceId = make<ResourceId>("resource mac");
+    auto const resourceId = make<Crypto::SimpleResourceId>("resource mac");
     auto const key = make<Crypto::SealedSymmetricKey>("encrypted key...");
     auto const hash = mgs::base64::decode<Crypto::Hash>(
         "IdCaAoqJZw+0M1YDbfgZ1E1AcHk4sJqvKbRxiHqCIQI=");

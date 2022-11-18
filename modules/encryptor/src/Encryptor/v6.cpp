@@ -2,9 +2,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Padding.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <cstdint>
 #include <gsl/gsl-lite.hpp>
@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-using Tanker::Trustchain::ResourceId;
+using Tanker::Crypto::SimpleResourceId;
 
 namespace Tanker
 {
@@ -51,7 +51,7 @@ std::uint64_t EncryptorV6::decryptedSize(
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
+tc::cotask<EncryptCacheMetadata> EncryptorV6::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     std::optional<std::uint32_t> paddingStep)
@@ -65,30 +65,33 @@ tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
   auto const resourceId =
       Crypto::encryptAead(key, iv, cipherText, paddedData, additionalData);
 
-  TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
+  TC_RETURN((EncryptCacheMetadata{SimpleResourceId(resourceId), key}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV6::decrypt(
     gsl::span<uint8_t> decryptedData,
-    Crypto::SymmetricKey const& key,
+    Encryptor::ResourceKeyFinder const& keyFinder,
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
+  auto const resourceId = extractResourceId(encryptedData);
+  std::optional key = TC_AWAIT(keyFinder(resourceId));
   auto const cipherText = encryptedData.subspan(versionSize);
   auto const iv = Crypto::AeadIv{};
   auto const additionalData = encryptedData.subspan(0, versionSize);
-  Crypto::decryptAead(key, iv, decryptedData, cipherText, additionalData);
+  Crypto::tryDecryptAead(
+      key, resourceId, iv, decryptedData, cipherText, additionalData);
 
   TC_RETURN(Padding::unpaddedSize(decryptedData));
 }
 
-ResourceId EncryptorV6::extractResourceId(
+SimpleResourceId EncryptorV6::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const cipherText = encryptedData.subspan(versionSize);
-  return ResourceId{Crypto::extractMac(cipherText)};
+  return SimpleResourceId{Crypto::extractMac(cipherText)};
 }
 }

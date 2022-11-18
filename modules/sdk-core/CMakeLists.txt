@@ -100,15 +100,6 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp
-  include/Tanker/Encryptor.hpp
-  include/Tanker/EncryptionMetadata.hpp
-  include/Tanker/Encryptor/v2.hpp
-  include/Tanker/Encryptor/v3.hpp
-  include/Tanker/Encryptor/v4.hpp
-  include/Tanker/Encryptor/v5.hpp
-  include/Tanker/Encryptor/v6.hpp
-  include/Tanker/Encryptor/v7.hpp
-  include/Tanker/Encryptor/v8.hpp
   include/Tanker/EncryptionSession.hpp
 
   src/AsyncCore.cpp
@@ -162,14 +153,6 @@ add_library(tankercore STATIC
   src/Verif/DeviceCreation.cpp
   src/Verif/TrustchainCreation.cpp
   src/ProvisionalUsers/Verif/ProvisionalIdentityClaim.cpp
-  src/Encryptor.cpp
-  src/Encryptor/v2.cpp
-  src/Encryptor/v3.cpp
-  src/Encryptor/v4.cpp
-  src/Encryptor/v5.cpp
-  src/Encryptor/v6.cpp
-  src/Encryptor/v7.cpp
-  src/Encryptor/v8.cpp
   src/EncryptionSession.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
@@ -186,6 +169,7 @@ target_include_directories(tankercore
 install(DIRECTORY include DESTINATION .)
 
 target_link_libraries(tankercore
+  tankerencryptor
   tankererrors
   tankerserialization
   tankeridentity

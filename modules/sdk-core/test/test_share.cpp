@@ -282,7 +282,7 @@ TEST_CASE("generateShareBlocks")
   {
     ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
-         make<Trustchain::ResourceId>("resource resourceId")}};
+         make<Crypto::SimpleResourceId>("resource resourceId")}};
 
     auto const newUserKeyPair = newUser.userKeys().back();
 
@@ -304,7 +304,7 @@ TEST_CASE("generateShareBlocks")
 
     ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
-         make<Trustchain::ResourceId>("resource mac")}};
+         make<Crypto::SimpleResourceId>("resource mac")}};
 
     Share::KeyRecipients keyRecipients{{}, {provisionalUser}, {}};
     auto const blocks = Share::generateShareBlocks(
@@ -325,7 +325,7 @@ TEST_CASE("generateShareBlocks")
 
     ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
-         make<Trustchain::ResourceId>("resource resourceId")}};
+         make<Crypto::SimpleResourceId>("resource resourceId")}};
 
     Share::KeyRecipients keyRecipients{
         {}, {}, {newGroup.currentEncKp().publicKey}};

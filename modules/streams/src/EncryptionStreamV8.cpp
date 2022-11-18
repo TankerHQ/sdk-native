@@ -14,18 +14,19 @@ EncryptionStreamV8::EncryptionStreamV8(InputSource cb,
                                        std::optional<std::uint32_t> padding,
                                        std::uint32_t encryptedChunkSize)
   : EncryptionStreamV8(std::move(cb),
-                       Crypto::getRandom<Trustchain::ResourceId>(),
+                       Crypto::getRandom<Crypto::SimpleResourceId>(),
                        Crypto::makeSymmetricKey(),
                        padding,
                        encryptedChunkSize)
 {
 }
 
-EncryptionStreamV8::EncryptionStreamV8(InputSource cb,
-                                       Trustchain::ResourceId const& resourceId,
-                                       Crypto::SymmetricKey const& key,
-                                       std::optional<std::uint32_t> padding,
-                                       std::uint32_t encryptedChunkSize)
+EncryptionStreamV8::EncryptionStreamV8(
+    InputSource cb,
+    Crypto::SimpleResourceId const& resourceId,
+    Crypto::SymmetricKey const& key,
+    std::optional<std::uint32_t> padding,
+    std::uint32_t encryptedChunkSize)
   : EncryptionStream(cb, resourceId, key, encryptedChunkSize),
     _paddingStep(padding)
 {

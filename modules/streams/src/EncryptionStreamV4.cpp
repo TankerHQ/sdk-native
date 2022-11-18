@@ -10,16 +10,17 @@ namespace Tanker::Streams
 EncryptionStreamV4::EncryptionStreamV4(InputSource cb,
                                        std::uint32_t encryptedChunkSize)
   : EncryptionStreamV4(std::move(cb),
-                       Crypto::getRandom<Trustchain::ResourceId>(),
+                       Crypto::getRandom<Crypto::SimpleResourceId>(),
                        Crypto::makeSymmetricKey(),
                        encryptedChunkSize)
 {
 }
 
-EncryptionStreamV4::EncryptionStreamV4(InputSource cb,
-                                       Trustchain::ResourceId const& resourceId,
-                                       Crypto::SymmetricKey const& key,
-                                       std::uint32_t encryptedChunkSize)
+EncryptionStreamV4::EncryptionStreamV4(
+    InputSource cb,
+    Crypto::SimpleResourceId const& resourceId,
+    Crypto::SymmetricKey const& key,
+    std::uint32_t encryptedChunkSize)
   : EncryptionStream(std::move(cb), resourceId, key, encryptedChunkSize)
 {
 }

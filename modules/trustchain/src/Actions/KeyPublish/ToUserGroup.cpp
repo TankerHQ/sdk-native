@@ -14,7 +14,7 @@ namespace Actions
 KeyPublishToUserGroup::KeyPublishToUserGroup(
     TrustchainId const& trustchainId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SealedSymmetricKey const& sealedSymmetricKey,
     Crypto::Hash const& author,
     Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)

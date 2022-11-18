@@ -72,7 +72,7 @@ TEST_CASE("KeyPublishToProvisionalUser serialization test vectors")
     auto const appPublicSignatureKey =
         make<Crypto::PublicSignatureKey>("recipient user");
     Crypto::PublicSignatureKey const tankerPublicSignatureKey{};
-    auto const resourceId = make<ResourceId>("resource mac");
+    auto const resourceId = make<Crypto::SimpleResourceId>("resource mac");
     auto const key =
         make<Crypto::TwoTimesSealedSymmetricKey>("encrypted key...");
     auto const hash = mgs::base64::decode<Crypto::Hash>(

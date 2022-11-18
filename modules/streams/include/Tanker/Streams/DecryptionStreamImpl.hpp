@@ -5,78 +5,92 @@
 
 using namespace Tanker::Errors;
 
-namespace Tanker
-{
-namespace Streams
+namespace Tanker::Streams
 {
 namespace
 {
+template <typename HeaderType>
+void deserializeHeaderTo(gsl::span<std::uint8_t const> buffer,
+                         HeaderType& output)
+try
+{
+  if (buffer.size() != HeaderType::serializedSize)
+  {
+    throw Exception(make_error_code(Errc::DecryptionFailed),
+                    "truncated buffer: could not read encrypted input header");
+  }
+  Serialization::deserialize_to(buffer, output);
+}
+catch (Exception const& e)
+{
+  if (e.errorCode() == Errc::InvalidArgument)
+    throw Exception(make_error_code(Errc::DecryptionFailed), e.what());
+  throw;
+}
 }
 
-template <typename Derived>
-DecryptionStream<Derived>::DecryptionStream(InputSource cb)
-  : BufferedStream<Derived>(std::move(cb))
+template <typename Derived, typename HeaderType>
+DecryptionStream<Derived, HeaderType>::DecryptionStream(
+    InputSource cb, HeaderType header, Crypto::SymmetricKey key)
+  : BufferedStream<Derived>(std::move(cb)), _key(key), _header(header)
 {
 }
 
-template <typename Derived>
-tc::cotask<Derived> DecryptionStream<Derived>::create(InputSource cb,
-                                                      ResourceKeyFinder finder)
+template <typename Derived, typename HeaderType>
+tc::cotask<Derived> DecryptionStream<Derived, HeaderType>::create(
+    InputSource cb, ResourceKeyFinder const& finder)
 {
-  Derived decryptor(std::move(cb));
+  std::array<uint8_t, HeaderType::serializedSize> headerBuf;
+  HeaderType header;
+  if (TC_AWAIT(readStream(headerBuf, cb)) < HeaderType::serializedSize)
+    throw Exception(make_error_code(Errc::DecryptionFailed),
+                    "truncated buffer: could not read encrypted input header");
+  deserializeHeaderTo(headerBuf, header);
 
-  TC_AWAIT(decryptor.readHeader());
-  decryptor._key = TC_AWAIT(finder(decryptor._header.resourceId()));
+  std::optional key = TC_AWAIT(Derived::tryGetKey(finder, header));
+  if (!key)
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "key not found for resource: {:s}",
+                   header.resourceId());
+
+  Derived decryptor(std::move(cb), header, *key);
   TC_AWAIT(decryptor.decryptChunk());
   TC_RETURN(std::move(decryptor));
 }
 
-template <typename Derived>
-tc::cotask<void> DecryptionStream<Derived>::readHeader()
+template <typename Derived, typename HeaderType>
+tc::cotask<HeaderType> DecryptionStream<Derived, HeaderType>::readHeader()
 {
-  auto const buffer = TC_AWAIT(this->readInputSource(Header::serializedSize));
-  try
-  {
-    if (buffer.size() != Header::serializedSize)
-    {
-      throw Exception(
-          make_error_code(Errc::DecryptionFailed),
-          "truncated buffer: could not read encrypted input header");
-    }
-    Serialization::deserialize_to(buffer, _header);
-  }
-  catch (Exception const& e)
-  {
-    if (e.errorCode() == Errc::InvalidArgument)
-      throw Exception(make_error_code(Errc::DecryptionFailed), e.what());
-    throw;
-  }
+  HeaderType header;
+  auto const buffer =
+      TC_AWAIT(this->readInputSource(HeaderType::serializedSize));
+  deserializeHeaderTo(buffer, header);
+  TC_RETURN(header);
 }
 
-template <typename Derived>
-Trustchain::ResourceId const& DecryptionStream<Derived>::resourceId() const
+template <typename Derived, typename HeaderType>
+decltype(std::declval<HeaderType>().resourceId())
+DecryptionStream<Derived, HeaderType>::resourceId() const
 {
   return _header.resourceId();
 }
 
-template <typename Derived>
-Crypto::SymmetricKey const& DecryptionStream<Derived>::symmetricKey() const
+template <typename Derived, typename HeaderType>
+Crypto::SymmetricKey const&
+DecryptionStream<Derived, HeaderType>::symmetricKey() const
 {
   return _key;
 }
 
-template <typename Derived>
-tc::cotask<void> DecryptionStream<Derived>::processInput()
+template <typename Derived, typename HeaderType>
+tc::cotask<void> DecryptionStream<Derived, HeaderType>::processInput()
 {
-  auto const oldHeader = _header;
-  TC_AWAIT(readHeader());
-  checkHeaderIntegrity(oldHeader, _header);
   TC_AWAIT(static_cast<Derived*>(this)->decryptChunk());
 }
 
-template <typename Derived>
-void DecryptionStream<Derived>::checkHeaderIntegrity(
-    Header const& oldHeader, Header const& currentHeader)
+template <typename Derived, typename HeaderType>
+void DecryptionStream<Derived, HeaderType>::checkHeaderIntegrity(
+    HeaderType const& oldHeader, HeaderType const& currentHeader)
 {
   if (oldHeader.version() != currentHeader.version())
   {
@@ -100,6 +114,5 @@ void DecryptionStream<Derived>::checkHeaderIntegrity(
         oldHeader.encryptedChunkSize(),
         currentHeader.encryptedChunkSize());
   }
-}
 }
 }

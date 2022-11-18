@@ -9,6 +9,7 @@
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Crypto/Sealed.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
@@ -20,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -171,7 +173,39 @@ std::vector<uint8_t> decryptAead(SymmetricKey const& key,
                                  gsl::span<uint8_t const> data,
                                  gsl::span<uint8_t const> ad = {});
 
-AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number);
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    ResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData);
+
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    SimpleResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData);
+
+void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
+                    CompositeResourceId const& resourceId,
+                    gsl::span<uint8_t const> iv,
+                    gsl::span<uint8_t> clearData,
+                    gsl::span<uint8_t const> encryptedData,
+                    gsl::span<uint8_t const> associatedData);
+
+template <typename SeedType>
+AeadIv deriveIv(SeedType const& ivSeed, uint64_t const number)
+{
+  auto pointer = reinterpret_cast<uint8_t const*>(&number);
+  auto const numberSize = sizeof(number);
+
+  std::vector<uint8_t> toHash;
+  toHash.reserve(numberSize + SeedType::arraySize);
+  toHash.insert(toHash.end(), ivSeed.begin(), ivSeed.end());
+  toHash.insert(toHash.end(), pointer, pointer + numberSize);
+  return generichash<AeadIv>(gsl::make_span(toHash.data(), toHash.size()));
+}
 
 template <typename OutputContainer = std::vector<uint8_t>>
 OutputContainer asymEncrypt(gsl::span<uint8_t const> clearData,

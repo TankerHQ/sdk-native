@@ -2,12 +2,12 @@
 
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeys/KeysResult.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
@@ -54,7 +54,7 @@ Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
@@ -62,7 +62,7 @@ Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 Trustchain::Actions::KeyPublishToProvisionalUser
@@ -71,7 +71,7 @@ makeKeyPublishToProvisionalUser(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ProvisionalUsers::PublicUser const& recipientProvisionalUser,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 tc::cotask<KeyRecipients> generateRecipientList(

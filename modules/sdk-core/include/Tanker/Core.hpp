@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/DataStore/Backend.hpp>
@@ -125,14 +126,14 @@ public:
   tc::cotask<void> verifyProvisionalIdentity(
       Verification::Verification const& verification);
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
   makeEncryptionStream(Streams::InputSource,
                        std::vector<SPublicIdentity> const& suserIds,
                        std::vector<SGroupId> const& sgroupIds,
                        ShareWithSelf shareWithSelf,
                        std::optional<uint32_t> paddingStep);
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
       makeDecryptionStream(Streams::InputSource);
 
   tc::cotask<EncryptionSession> makeEncryptionSession(
@@ -143,7 +144,7 @@ public:
 
   Status status() const;
 
-  static Trustchain::ResourceId getResourceId(
+  static Crypto::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> stop();
@@ -173,7 +174,7 @@ private:
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
-      Trustchain::ResourceId const&);
+      Crypto::SimpleResourceId const&);
 
   std::optional<std::string> makeWithTokenRandomNonce(VerifyWithToken wanted);
   tc::cotask<std::string> getSessionToken(

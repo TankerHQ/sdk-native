@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
+#include <Tanker/Crypto/SimpleResourceId.hpp>
 #include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
@@ -11,7 +12,6 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Verification/Verification.hpp>
 
 namespace Tanker::Users
@@ -68,7 +68,7 @@ createKeyPublishToProvisionalUserAction(
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
     Crypto::PublicSignatureKey const& appPublicSignatureKey,
     Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey);
 
 Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
@@ -76,6 +76,6 @@ Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
     Crypto::SealedSymmetricKey const& symKey,
-    Trustchain::ResourceId const& resourceId,
+    Crypto::SimpleResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey);
 }
