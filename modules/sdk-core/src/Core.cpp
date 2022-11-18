@@ -713,6 +713,10 @@ tc::cotask<void> Core::encrypt(
                           {{metadata.key, metadata.resourceId}},
                           spublicIdentitiesWithUs,
                           sgroupIds));
+
+    TC_AWAIT(
+        _session->accessors().transparentSessionAccessor.saveTransparentSession(
+            session));
   }
 }
 
@@ -1167,6 +1171,10 @@ Core::makeEncryptionStream(
                           {{session.sessionKey, session.sessionId}},
                           spublicIdentitiesWithUs,
                           sgroupIds));
+
+    TC_AWAIT(
+        _session->accessors().transparentSessionAccessor.saveTransparentSession(
+            session));
   }
 
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
