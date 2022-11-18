@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/ResourceId.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -732,7 +733,7 @@ tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
   assertStatus(Status::Ready, "decrypt");
   auto finder = [this](Crypto::SimpleResourceId const& resourceId)
       -> Encryptor::ResourceKeyFinder::result_type {
-    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, finder, encryptedData)));
 }
@@ -760,14 +761,72 @@ tc::cotask<void> Core::share(
   auto const resourceIds =
       sresourceIds | ranges::views::transform([](auto&& resourceId) {
         return decodeArgument<mgs::base64, Crypto::ResourceId>(resourceId,
-                                                               "resource id")
-            .individualResourceId();
+                                                               "resource id");
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
 
+  // Retrieve keys for simple resource IDs and known session keys for composites
+  std::vector<Crypto::SimpleResourceId> simpleResourceIds;
+  std::vector<Crypto::SimpleResourceId> sessionIds;
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::SimpleResourceId>(&ridVariant))
+      simpleResourceIds.push_back(*rid);
+    else if (auto const rid =
+                 boost::variant2::get_if<Crypto::CompositeResourceId>(
+                     &ridVariant))
+      sessionIds.push_back(rid->sessionId());
+  }
   auto const localUser = _session->accessors().localUserAccessor.get();
-  auto const resourceKeys =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(resourceIds));
+  auto resourceKeys = TC_AWAIT(
+      _session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
+
+  // If we fail to find the session key for some composites resource IDs, we may
+  // still have access to the individual resource key
+  auto sessionKeysMap = TC_AWAIT(
+      _session->accessors().resourceKeyAccessor.tryFindKeys(sessionIds));
+  std::vector<Crypto::SimpleResourceId> resourcesWithoutSession;
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+      if (sessionKeysMap.find(rid->sessionId()) == sessionKeysMap.end())
+        resourcesWithoutSession.push_back(rid->individualResourceId());
+  }
+  auto individualResourceKeys =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(
+          resourcesWithoutSession));
+  resourceKeys.insert(resourceKeys.end(),
+                      individualResourceKeys.begin(),
+                      individualResourceKeys.end());
+
+  // Derive keys for composite resource IDs for which we know the session key
+  for (auto const& ridVariant : resourceIds)
+  {
+    if (auto const rid =
+            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+    {
+      auto const sessionKey = sessionKeysMap.find(rid->sessionId());
+      if (sessionKey == sessionKeysMap.end())
+        continue;
+
+      if (rid->type() == Crypto::CompositeResourceId::transparentSessionType())
+      {
+        auto const resourceId = rid->individualResourceId();
+        auto const seed = Crypto::SubkeySeed{resourceId};
+        auto const key = EncryptorV11::deriveSubkey(sessionKey->second, seed);
+        resourceKeys.push_back(ResourceKeys::KeyResult{key, resourceId});
+      }
+      else
+      {
+        throw formatEx(Errc::InvalidArgument,
+                       "invalid or unsupported composite resource ID type: {}",
+                       rid->type());
+      }
+    }
+  }
+
   TC_AWAIT(Share::share(_session->accessors().userAccessor,
                         _session->accessors().groupAccessor,
                         _session->trustchainId(),
@@ -1115,11 +1174,17 @@ Core::makeEncryptionStream(
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
 
+tc::cotask<std::optional<Crypto::SymmetricKey>> Core::tryGetResourceKey(
+    Crypto::SimpleResourceId const& resourceId)
+{
+  TC_RETURN(
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId)));
+}
+
 tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
     Crypto::SimpleResourceId const& resourceId)
 {
-  auto const key =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId));
+  auto const key = TC_AWAIT(tryGetResourceKey(resourceId));
   if (!key)
   {
     throw formatEx(
@@ -1139,7 +1204,7 @@ Core::makeDecryptionStream(Streams::InputSource cb)
 
   auto resourceKeyFinder = [this](Crypto::SimpleResourceId const& resourceId)
       -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
-    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   switch (version[0])
   {

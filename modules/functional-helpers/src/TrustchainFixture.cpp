@@ -1,5 +1,6 @@
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
+#include <Tanker/Session.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
@@ -108,6 +109,15 @@ tc::cotask<void> TrustchainFixtureSimple::attachProvisionalIdentity(
     AsyncCore& session, AppProvisionalUser const& prov)
 {
   TC_AWAIT(trustchain.attachProvisionalIdentity(session, prov));
+}
+
+tc::cotask<void> TrustchainFixtureSimple::injectStoreResourceKey(
+    AsyncCore& session,
+    Crypto::SimpleResourceId const& id,
+    Crypto::SymmetricKey const& key)
+{
+  Session::Storage& storage = session._core._session->storage();
+  TC_AWAIT(storage.resourceKeyStore.putKey(id, key));
 }
 
 Trustchain TrustchainFixtureSimple::createOtherTrustchain()

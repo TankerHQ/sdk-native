@@ -34,6 +34,9 @@ public:
       Crypto::SimpleResourceId const& resourceId);
   tc::cotask<KeysResult> findKeys(
       std::vector<Crypto::SimpleResourceId> const& resourceId);
+  tc::cotask<boost::container::flat_map<Crypto::SimpleResourceId,
+                                        Crypto::SymmetricKey>>
+  tryFindKeys(std::vector<Crypto::SimpleResourceId> const& resourceId);
 
 private:
   tc::cotask<KeysResult> findOrFetchKeys(

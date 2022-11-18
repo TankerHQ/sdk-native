@@ -31,6 +31,9 @@ struct TrustchainFixtureSimple
   }
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
+  tc::cotask<void> injectStoreResourceKey(AsyncCore& session,
+                                          Crypto::SimpleResourceId const& id,
+                                          Crypto::SymmetricKey const& key);
   tc::cotask<VerificationKey> registerUser(Functional::User& user);
   Trustchain createOtherTrustchain();
 

@@ -1,7 +1,11 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Encryptor/v10.hpp>
+#include <Tanker/Encryptor/v11.hpp>
 #include <Tanker/Encryptor/v4.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v8.hpp>
+#include <Tanker/Encryptor/v9.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -655,6 +659,102 @@ TEST_CASE_METHOD(TrustchainFixture,
       TC_AWAIT(aliceSession->encrypt(
           clearData, {}, {SGroupId{alice.spublicIdentity().string()}})),
       Errc::InvalidArgument);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "It fails to share invalid composite resource IDs")
+{
+  auto const sessId = Crypto::getRandom<Crypto::SimpleResourceId>();
+  auto const sessKey = Crypto::getRandom<Crypto::SymmetricKey>();
+  auto const resId = Crypto::getRandom<Crypto::SimpleResourceId>();
+  auto id = Crypto::CompositeResourceId::newTransparentSessionId(sessId, resId);
+  id[0] = 0xF0; // Mess up the composite type
+
+  TC_AWAIT(injectStoreResourceKey(*aliceSession, sessId, sessKey));
+  auto const sResourceId = SResourceId{mgs::base64::encode(id)};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({sResourceId}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "unsupported composite resource ID type");
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "It fails to share without the key")
+{
+  // Simple resource IDs
+  auto simple = SResourceId{
+      mgs::base64::encode(Crypto::getRandom<Crypto::SimpleResourceId>())};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({simple}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "can't find keys");
+
+  // Composite resource ID
+  auto composite = SResourceId{
+      mgs::base64::encode(Crypto::CompositeResourceId::newTransparentSessionId(
+          Crypto::getRandom<Crypto::SimpleResourceId>(),
+          Crypto::getRandom<Crypto::SimpleResourceId>()))};
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({composite}, {bob.spublicIdentity()}, {})),
+      Errc::InvalidArgument,
+      "can't find keys");
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
+{
+  auto const clearData = make_buffer("crystal clear");
+  std::vector<uint8_t> encryptedData;
+  auto const session = TC_AWAIT(aliceSession->makeEncryptionSession());
+  auto const sessionId = session.resourceId();
+  auto const sessionKey = session.sessionKey();
+  auto const subkeySeed = Crypto::getRandom<Crypto::SubkeySeed>();
+
+  SECTION("It can share with the v9 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV9::encryptedSize(clearData.size()));
+    TC_AWAIT(EncryptorV9::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed));
+  }
+
+  SECTION("It can share with the v10 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV10::encryptedSize(clearData.size(), {}));
+    TC_AWAIT(EncryptorV10::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed, {}));
+  }
+
+  SECTION("It can share with the v11 encryption format")
+  {
+    encryptedData =
+        std::vector<uint8_t>(EncryptorV11::encryptedSize(clearData.size(), {}));
+    TC_AWAIT(EncryptorV11::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, subkeySeed, {}));
+  }
+
+  // Share the transparent session with Bob
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->decrypt(encryptedData)),
+                                Errc::InvalidArgument);
+
+  TC_AWAIT(injectStoreResourceKey(*bobSession, sessionId, sessionKey));
+  auto const decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
+  REQUIRE(decrypted == clearData);
+
+  // Share the individual resource with Charlie
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(charlieSession->decrypt(encryptedData)), Errc::InvalidArgument);
+
+  auto const resourceId = Core::getResourceId(encryptedData);
+  auto const sResourceId = SResourceId{mgs::base64::encode(resourceId)};
+  TC_AWAIT(aliceSession->share({sResourceId}, {charlie.spublicIdentity()}, {}));
+  auto const decryptedIndividual =
+      TC_AWAIT(charlieSession->decrypt(encryptedData));
+  REQUIRE(decryptedIndividual == clearData);
+
+  // Charlie can reshare the individual resource without knowing the session
+  auto const groupId =
+      TC_AWAIT(charlieSession->createGroup({charlie.spublicIdentity()}));
+  TC_AWAIT(charlieSession->share({sResourceId}, {}, {groupId}));
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "session token (2FA)")
