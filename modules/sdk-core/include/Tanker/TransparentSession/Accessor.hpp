@@ -13,6 +13,7 @@ namespace Tanker::TransparentSession
 {
 struct AccessorResult
 {
+  Crypto::Hash recipientsHash;
   Crypto::SimpleResourceId sessionId;
   Crypto::SymmetricKey sessionKey;
   bool isNew;
@@ -32,6 +33,7 @@ public:
   tc::cotask<AccessorResult> getOrCreateTransparentSession(
       std::vector<SPublicIdentity> const& users,
       std::vector<SGroupId> const& groups);
+  tc::cotask<void> saveTransparentSession(AccessorResult const& session);
 
 private:
   Store* _store;
