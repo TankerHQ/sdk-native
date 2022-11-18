@@ -2,7 +2,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
-#include <date/date.h>
+#include <Tanker/Utils.hpp>
 
 namespace Tanker::Users
 {
@@ -71,24 +71,6 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
           },
       },
       verification);
-}
-
-uint64_t secondsSinceEpoch()
-{
-  // LEGACY:
-  // While C++ provides a `time_since_epoch` function, unlike other advanced
-  // concepts such as "files and folders" introduced relatively early (C++17),
-  // "unix timestamps" are still considered a downright esoteric idea,
-  // so naturally time_since_epoch uses an implementation-defined
-  // epoch before C++20, which makes its return value unpredictable.
-  // Instead, we use date.h, which is theoretically usable.
-  using namespace std::chrono;
-
-  auto localTime = time_point_cast<std::chrono::seconds>(system_clock::now());
-  auto dateSeconds = date::sys_seconds{localTime};
-
-  // date::sys_seconds documents that its epoch is the unix epoch everywhere
-  return dateSeconds.time_since_epoch().count();
 }
 }
 

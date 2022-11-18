@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -8,6 +10,8 @@
 
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
+
+#include <date/date.h>
 
 #include <algorithm>
 #include <type_traits>
@@ -38,5 +42,16 @@ T decodeArgument(String const& b64, std::string const& argName)
     }
     throw;
   }
+}
+
+inline uint64_t secondsSinceEpoch()
+{
+  using namespace std::chrono;
+
+  auto localTime = time_point_cast<std::chrono::seconds>(system_clock::now());
+  auto dateSeconds = date::sys_seconds{localTime};
+
+  // date::sys_seconds documents that its epoch is the unix epoch everywhere
+  return dateSeconds.time_since_epoch().count();
 }
 }

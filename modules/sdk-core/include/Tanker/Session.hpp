@@ -13,6 +13,7 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/SdkInfo.hpp>
+#include <Tanker/TransparentSession/Store.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
@@ -49,6 +50,7 @@ public:
     Groups::Store groupStore;
     ResourceKeys::Store resourceKeyStore;
     ProvisionalUserKeysStore provisionalUserKeysStore;
+    TransparentSession::Store transparentSessionStore;
   };
 
   struct Accessors
