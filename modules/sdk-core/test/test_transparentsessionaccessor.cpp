@@ -16,26 +16,22 @@ TEST_CASE("TransparentSessionAccessor")
   auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
                                             DataStore::MemoryPath);
   Store store({}, db.get());
-  Accessor accessor(&store);
+  auto shareMock =
+      [](auto const& _sess, auto const& _users, auto const& _groups) {};
+  Accessor accessor(&store, shareMock);
 
   SECTION("it creates different sessions for different recipient lists")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"1"}}));
-    AWAIT_VOID(accessor.saveTransparentSession(sess1));
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"2"}}));
-    CHECK(sess1.isNew);
-    CHECK(sess2.isNew);
-    CHECK(sess1.sessionId != sess2.sessionId);
+    CHECK(sess1.id != sess2.id);
   }
 
   SECTION("it reuses an existing session that has not expired")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
-    AWAIT_VOID(accessor.saveTransparentSession(sess1));
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
-    CHECK(sess1.isNew);
-    CHECK(!sess2.isNew);
-    CHECK(sess1.sessionId == sess2.sessionId);
+    CHECK(sess1.id == sess2.id);
   }
 
   SECTION("it ignores duplicates and sorting order")
@@ -50,11 +46,9 @@ TEST_CASE("TransparentSessionAccessor")
   SECTION("it creates a new session if the old one has expired")
   {
     auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
-    CHECK(sess1.isNew);
-    AWAIT_VOID(store.put(sess1.recipientsHash, sess1.sessionId, sess1.sessionKey, 0));
+    AWAIT_VOID(store.put(sess1.recipientsHash, sess1.id, sess1.key, 0));
 
     auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"X"}}));
-    CHECK(sess2.isNew);
-    CHECK(sess1.sessionId != sess2.sessionId);
+    CHECK(sess1.id != sess2.id);
   }
 }

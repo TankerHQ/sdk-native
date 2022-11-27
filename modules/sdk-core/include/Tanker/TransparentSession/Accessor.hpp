@@ -8,21 +8,29 @@
 #include <Tanker/Users/IRequester.hpp>
 
 #include <boost/container/flat_map.hpp>
+#include <vector>
 
 namespace Tanker::TransparentSession
 {
 struct AccessorResult
 {
   Crypto::Hash recipientsHash;
-  Crypto::SimpleResourceId sessionId;
-  Crypto::SymmetricKey sessionKey;
-  bool isNew;
+  Crypto::SimpleResourceId id;
+  Crypto::SymmetricKey key;
 };
+bool operator==(AccessorResult const& lhs, AccessorResult const& rhs);
+bool operator!=(AccessorResult const& lhs, AccessorResult const& rhs);
+using AccessorResults = std::vector<AccessorResult>;
+
+using SessionShareCallback =
+    std::function<tc::cotask<void>(AccessorResult const& session,
+                                   std::vector<SPublicIdentity> const& users,
+                                   std::vector<SGroupId> const& groups)>;
 
 class Accessor
 {
 public:
-  Accessor(Store* store);
+  Accessor(Store* store, SessionShareCallback shareCallback);
   Accessor() = delete;
   Accessor(Accessor const&) = delete;
   Accessor(Accessor&&) = delete;
@@ -33,9 +41,13 @@ public:
   tc::cotask<AccessorResult> getOrCreateTransparentSession(
       std::vector<SPublicIdentity> const& users,
       std::vector<SGroupId> const& groups);
-  tc::cotask<void> saveTransparentSession(AccessorResult const& session);
 
 private:
+  SessionShareCallback _shareCallback;
   Store* _store;
+  Tanker::TaskCoalescer<AccessorResult,
+                        Crypto::Hash,
+                        &AccessorResult::recipientsHash>
+      _cache;
 };
 }
