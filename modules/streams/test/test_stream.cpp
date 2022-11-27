@@ -256,29 +256,6 @@ void commonStreamTests()
                                     makeKeyFinder(encryptor)),
         Errors::Errc::DecryptionFailed);
   }
-
-  SECTION("Wrong chunk order")
-  {
-    constexpr auto smallChunkSize = 0x46;
-    constexpr auto plainChunkSize = smallChunkSize - EncStream::overhead;
-
-    // Takes exactly 2 chunks + 1 empty chunk
-    std::vector<std::uint8_t> buffer(plainChunkSize * 2);
-    Crypto::randomFill(buffer);
-
-    EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
-    auto const encrypted = AWAIT(readAllStream(encryptor));
-    auto corrupted = encrypted;
-    // Swap the first two chunks
-    std::rotate(corrupted.begin(),
-                corrupted.begin() + smallChunkSize,
-                corrupted.begin() + 2 * smallChunkSize);
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        decryptAllStream<DecStream>(bufferViewToInputSource(corrupted),
-                                    makeKeyFinder(encryptor)),
-        Errors::Errc::DecryptionFailed);
-  }
 }
 
 // Tests that specifically touch the v4/v8 serialized header
@@ -362,6 +339,29 @@ void v4v8CommonStreamTests()
           gsl::make_span(buffer2).subspan(0, smallClearChunkSize));
     CHECK(gsl::make_span(decrypted2).subspan(smallClearChunkSize) ==
           gsl::make_span(buffer1).subspan(smallClearChunkSize));
+  }
+
+  SECTION("Wrong chunk order")
+  {
+    constexpr auto smallChunkSize = 0x46;
+    constexpr auto plainChunkSize = smallChunkSize - EncStream::overhead;
+
+    // Takes exactly 2 chunks + 1 empty chunk
+    std::vector<std::uint8_t> buffer(plainChunkSize * 2);
+    Crypto::randomFill(buffer);
+
+    EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+    auto const encrypted = AWAIT(readAllStream(encryptor));
+    auto corrupted = encrypted;
+    // Swap the first two chunks
+    std::rotate(corrupted.begin(),
+                corrupted.begin() + smallChunkSize,
+                corrupted.begin() + 2 * smallChunkSize);
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        decryptAllStream<DecStream>(bufferViewToInputSource(corrupted),
+                                    makeKeyFinder(encryptor)),
+        Errors::Errc::DecryptionFailed);
   }
 }
 
