@@ -30,14 +30,15 @@ namespace Tanker
  * the results from the previous task for the matching IDs and run the task
  * only with the remaining IDs.
  */
-template <typename Value>
+template <typename Value,
+          typename IdType = decltype(std::declval<Value>().id),
+          IdType Value::*IdMember = &Value::id>
 class TaskCoalescer
 {
 public:
-  using id_type = decltype(std::declval<Value>().id);
   using value_type = std::optional<Value>;
-  using task_handler_type = fu2::function<tc::cotask<std::vector<Value>>(
-      std::vector<id_type> const&)>;
+  using task_handler_type =
+      fu2::function<tc::cotask<std::vector<Value>>(std::vector<IdType> const&)>;
 
 private:
   using result_type = std::vector<Value>;
@@ -47,7 +48,7 @@ private:
   struct FutureResults
   {
     futures_type futures;
-    std::vector<id_type> newTaskIds;
+    std::vector<IdType> newTaskIds;
   };
 
   struct PromiseWrapper
@@ -60,11 +61,11 @@ private:
     }
   };
 
-  boost::container::flat_map<id_type, PromiseWrapper> _running;
+  boost::container::flat_map<IdType, PromiseWrapper> _running;
 
 public:
   tc::cotask<result_type> run(task_handler_type taskHandler,
-                              gsl::span<id_type const> ids)
+                              gsl::span<IdType const> ids)
   {
     auto idFutures = coalesceTasks(ids);
 
@@ -84,20 +85,20 @@ public:
 
 private:
   tc::cotask<void> lookup(task_handler_type taskHandler,
-                          std::vector<id_type> const& newTaskIds)
+                          std::vector<IdType> const& newTaskIds)
   {
     try
     {
       auto const result = TC_AWAIT(taskHandler(newTaskIds));
       ranges::for_each(result, [&](auto const& value) {
-        resolveEntry(value.id, std::make_optional<Value>(value));
+        resolveEntry(value.*IdMember, std::make_optional<Value>(value));
       });
 
       auto const requested =
           newTaskIds | ranges::to<std::vector> | ranges::actions::sort;
       auto const got = result |
                        ranges::views::transform(
-                           [&](auto const& value) { return value.id; }) |
+                           [&](auto const& value) { return value.*IdMember; }) |
                        ranges::to<std::vector> | ranges::actions::sort;
       ranges::for_each(ranges::views::set_difference(requested, got),
                        [&](auto const& id) { resolveEntry(id, std::nullopt); });
@@ -110,7 +111,7 @@ private:
     }
   };
 
-  void resolveEntry(id_type const& id, value_type value)
+  void resolveEntry(IdType const& id, value_type value)
   {
     if (auto const it = _running.find(id); it != _running.end())
     {
@@ -119,7 +120,7 @@ private:
     }
   }
 
-  void rejectEntry(id_type const& id, std::exception_ptr err)
+  void rejectEntry(IdType const& id, std::exception_ptr err)
   {
     if (auto const it = _running.find(id); it != _running.end())
     {
@@ -128,10 +129,10 @@ private:
     }
   }
 
-  FutureResults coalesceTasks(gsl::span<id_type const> taskIds)
+  FutureResults coalesceTasks(gsl::span<IdType const> taskIds)
   {
     futures_type futures;
-    std::vector<id_type> newTaskIds;
+    std::vector<IdType> newTaskIds;
     for (auto const& id : taskIds)
     {
       if (auto const it = _running.find(id); it != _running.end())
