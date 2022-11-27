@@ -6,6 +6,7 @@
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
+#include <Tanker/Share.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
@@ -46,9 +47,11 @@ Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
 {
 }
 
-Session::Accessors::Accessors(Storage& storage,
-                              Requesters* requesters,
-                              Users::LocalUserAccessor plocalUserAccessor)
+Session::Accessors::Accessors(
+    Storage& storage,
+    Requesters* requesters,
+    Users::LocalUserAccessor plocalUserAccessor,
+    TransparentSession::SessionShareCallback shareCallback)
   : localUserAccessor(std::move(plocalUserAccessor)),
     userAccessor(localUserAccessor.getContext(), requesters),
     provisionalUsersAccessor(requesters,
@@ -71,7 +74,7 @@ Session::Accessors::Accessors(Storage& storage,
                         &groupAccessor,
                         &provisionalUsersAccessor,
                         &storage.resourceKeyStore),
-    transparentSessionAccessor(&storage.transparentSessionStore)
+    transparentSessionAccessor(&storage.transparentSessionStore, shareCallback)
 {
 }
 
@@ -242,6 +245,12 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
 tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
                                            DeviceKeys const& deviceKeys)
 {
+  auto shareCallback =
+      [&](auto const& session, auto const& users, auto const& groups) {
+        TC_AWAIT(transparentSessionShareImpl(session, users, groups));
+        TC_RETURN();
+      };
+
   _httpClient->setDeviceAuthData(deviceId, deviceKeys.signatureKeyPair);
   _accessors = std::make_unique<Accessors>(
       storage(),
@@ -252,21 +261,51 @@ tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
                                                   &_requesters,
                                                   &storage().localUserStore,
                                                   deviceKeys,
-                                                  deviceId)));
+                                                  deviceId)),
+      shareCallback);
   setStatus(Status::Ready);
 }
 
 tc::cotask<void> Session::finalizeOpening()
 {
+  auto shareCallback =
+      [&](auto const& session, auto const& users, auto const& groups) {
+        TC_AWAIT(transparentSessionShareImpl(session, users, groups));
+        TC_RETURN();
+      };
   _accessors = std::make_unique<Accessors>(
       storage(),
       &requesters(),
       TC_AWAIT(Users::LocalUserAccessor::create(
-          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
+          userId(), trustchainId(), &_requesters, &storage().localUserStore)),
+      shareCallback);
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
       TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
   setStatus(Status::Ready);
+}
+
+tc::cotask<void> Session::transparentSessionShareImpl(
+    TransparentSession::AccessorResult const& session,
+    std::vector<SPublicIdentity> const& users,
+    std::vector<SGroupId> const& groups)
+{
+  auto selfIdentity = SPublicIdentity(
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()}));
+  if (std::find(users.begin(), users.end(), selfIdentity) != users.end())
+    TC_AWAIT(storage().resourceKeyStore.putKey(session.id, session.key));
+
+  auto const& localUser = TC_AWAIT(accessors().localUserAccessor.pull());
+  TC_AWAIT(Share::share(accessors().userAccessor,
+                        accessors().groupAccessor,
+                        trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        requesters(),
+                        {{session.key, session.id}},
+                        users,
+                        groups));
+  TC_RETURN();
 }
 
 }
