@@ -58,7 +58,8 @@ public:
   {
     Accessors(Storage& storage,
               Requesters* requesters,
-              Users::LocalUserAccessor plocalUserAccessor);
+              Users::LocalUserAccessor plocalUserAccessor,
+              TransparentSession::SessionShareCallback shareCallback);
     Users::LocalUserAccessor localUserAccessor;
     mutable Users::UserAccessor userAccessor;
     ProvisionalUsers::Accessor provisionalUsersAccessor;
@@ -112,6 +113,10 @@ private:
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
 
+  tc::cotask<void> transparentSessionShareImpl(
+      TransparentSession::AccessorResult const& session,
+      std::vector<SPublicIdentity> const& users,
+      std::vector<SGroupId> const& groups);
   void removeOldStorage(Identity::SecretPermanentIdentity const& identity,
                         std::string const& dataPath);
 };

@@ -692,32 +692,8 @@ tc::cotask<void> Core::encrypt(
       TC_AWAIT(_session->accessors()
                    .transparentSessionAccessor.getOrCreateTransparentSession(
                        spublicIdentitiesWithUs, sgroupIds));
-  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData,
-                                                    clearData,
-                                                    paddingStep,
-                                                    session.sessionId,
-                                                    session.sessionKey));
-
-  if (session.isNew)
-  {
-    if (shareWithSelf == ShareWithSelf::Yes)
-      TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
-                                                           metadata.key));
-    auto const& localUser = _session->accessors().localUserAccessor.get();
-    TC_AWAIT(Share::share(_session->accessors().userAccessor,
-                          _session->accessors().groupAccessor,
-                          _session->trustchainId(),
-                          localUser.deviceId(),
-                          localUser.deviceKeys().signatureKeyPair.privateKey,
-                          _session->requesters(),
-                          {{metadata.key, metadata.resourceId}},
-                          spublicIdentitiesWithUs,
-                          sgroupIds));
-
-    TC_AWAIT(
-        _session->accessors().transparentSessionAccessor.saveTransparentSession(
-            session));
-  }
+  TC_AWAIT(Encryptor::encrypt(
+      encryptedData, clearData, paddingStep, session.id, session.key));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
@@ -1151,31 +1127,9 @@ Core::makeEncryptionStream(
                        spublicIdentitiesWithUs, sgroupIds));
 
   Streams::EncryptionStreamV11 encryptor(
-      std::move(cb), session.sessionId, session.sessionKey, paddingStep);
+      std::move(cb), session.id, session.key, paddingStep);
   auto resourceId = encryptor.resourceId();
   Streams::InputSource encryptorStream = std::move(encryptor);
-
-  if (session.isNew)
-  {
-    if (shareWithSelf == ShareWithSelf::Yes)
-      TC_AWAIT(_session->storage().resourceKeyStore.putKey(session.sessionId,
-                                                           session.sessionKey));
-    auto const& localUser =
-        TC_AWAIT(_session->accessors().localUserAccessor.pull());
-    TC_AWAIT(Share::share(_session->accessors().userAccessor,
-                          _session->accessors().groupAccessor,
-                          _session->trustchainId(),
-                          localUser.deviceId(),
-                          localUser.deviceKeys().signatureKeyPair.privateKey,
-                          _session->requesters(),
-                          {{session.sessionKey, session.sessionId}},
-                          spublicIdentitiesWithUs,
-                          sgroupIds));
-
-    TC_AWAIT(
-        _session->accessors().transparentSessionAccessor.saveTransparentSession(
-            session));
-  }
 
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
