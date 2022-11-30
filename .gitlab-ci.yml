@@ -259,6 +259,7 @@ bridge/rust/linux:
   variables:
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
@@ -275,6 +276,7 @@ bridge/rust/windows:
   variables:
     UPSTREAM_JOB_TARGET: windows
     UPSTREAM_JOB_NAME: build/windows/shared
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
@@ -291,6 +293,7 @@ bridge/rust/ios:
   variables:
     UPSTREAM_JOB_TARGET: ios
     UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
@@ -307,6 +310,7 @@ bridge/rust/macos/x86_64:
   variables:
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
@@ -323,6 +327,7 @@ bridge/rust/macos/arm:
   variables:
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
@@ -339,6 +344,7 @@ bridge/rust/android:
   variables:
     UPSTREAM_JOB_TARGET: android
     UPSTREAM_JOB_NAME: build/android
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
