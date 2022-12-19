@@ -21,17 +21,18 @@ add_executable(test_tanker
   test_datastore.cpp
   test_datastore_new.cpp
   test_taskcoalescer.cpp
+  test_transparentsessionaccessor.cpp
   test_transparentsessionstore.cpp
 
   TrustchainGenerator.hpp
   TrustchainGenerator.cpp
 
   main.cpp
-)
+  )
 target_link_libraries(test_tanker
   tankercore
   tankertesthelpers
   catch2::catch2
   trompeloeil::trompeloeil
-)
+  )
 add_test(NAME test_tanker COMMAND test_tanker --durations=true)

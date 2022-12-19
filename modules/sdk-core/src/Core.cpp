@@ -23,10 +23,10 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
+#include <Tanker/Streams/DecryptionStreamV11.hpp>
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/DecryptionStreamV8.hpp>
-#include <Tanker/Streams/EncryptionStreamV4.hpp>
-#include <Tanker/Streams/EncryptionStreamV8.hpp>
+#include <Tanker/Streams/EncryptionStreamV11.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
@@ -677,35 +677,23 @@ tc::cotask<void> Core::encrypt(
     std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
-  auto const metadata =
-      TC_AWAIT(Encryptor::encrypt(encryptedData, clearData, paddingStep));
+
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
-  {
-    spublicIdentitiesWithUs.push_back(
-        SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-            _session->trustchainId(), _session->userId()})});
-
-    TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
-                                                         metadata.key));
-  }
+    spublicIdentitiesWithUs.emplace_back(
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
+                                                    _session->userId()}));
   else if (spublicIdentities.empty() && sgroupIds.empty())
-  {
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
         FMT_STRING("cannot encrypt without sharing with anybody"));
-  }
 
-  auto const& localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Share::share(_session->accessors().userAccessor,
-                        _session->accessors().groupAccessor,
-                        _session->trustchainId(),
-                        localUser.deviceId(),
-                        localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->requesters(),
-                        {{metadata.key, metadata.resourceId}},
-                        spublicIdentitiesWithUs,
-                        sgroupIds));
+  auto const session =
+      TC_AWAIT(_session->accessors()
+                   .transparentSessionAccessor.getOrCreateTransparentSession(
+                       spublicIdentitiesWithUs, sgroupIds));
+  TC_AWAIT(Encryptor::encrypt(
+      encryptedData, clearData, paddingStep, session.id, session.key));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
@@ -1123,53 +1111,25 @@ Core::makeEncryptionStream(
     std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
-  Streams::InputSource encryptorStream;
-  Crypto::SimpleResourceId resourceId;
-  Crypto::SymmetricKey symmetricKey;
-
-  if (paddingStep == Padding::Off)
-  {
-    Streams::EncryptionStreamV4 encryptor(std::move(cb));
-    resourceId = encryptor.resourceId();
-    symmetricKey = encryptor.symmetricKey();
-    encryptorStream = std::move(encryptor);
-  }
-  else
-  {
-    Streams::EncryptionStreamV8 encryptor(std::move(cb), paddingStep);
-    resourceId = encryptor.resourceId();
-    symmetricKey = encryptor.symmetricKey();
-    encryptorStream = std::move(encryptor);
-  }
-
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
-  {
-    spublicIdentitiesWithUs.push_back(
-        SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-            _session->trustchainId(), _session->userId()})});
-
-    TC_AWAIT(
-        _session->storage().resourceKeyStore.putKey(resourceId, symmetricKey));
-  }
+    spublicIdentitiesWithUs.emplace_back(
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
+                                                    _session->userId()}));
   else if (spublicIdentities.empty() && sgroupIds.empty())
-  {
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
         FMT_STRING("cannot encrypt without sharing with anybody"));
-  }
 
-  auto const& localUser =
-      TC_AWAIT(_session->accessors().localUserAccessor.pull());
-  TC_AWAIT(Share::share(_session->accessors().userAccessor,
-                        _session->accessors().groupAccessor,
-                        _session->trustchainId(),
-                        localUser.deviceId(),
-                        localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->requesters(),
-                        {{symmetricKey, resourceId}},
-                        spublicIdentitiesWithUs,
-                        sgroupIds));
+  auto const session =
+      TC_AWAIT(_session->accessors()
+                   .transparentSessionAccessor.getOrCreateTransparentSession(
+                       spublicIdentitiesWithUs, sgroupIds));
+
+  Streams::EncryptionStreamV11 encryptor(
+      std::move(cb), session.id, session.key, paddingStep);
+  auto resourceId = encryptor.resourceId();
+  Streams::InputSource encryptorStream = std::move(encryptor);
 
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
@@ -1216,6 +1176,12 @@ Core::makeDecryptionStream(Streams::InputSource cb)
   }
   case 8: {
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(
+        std::move(peekableSource), resourceKeyFinder));
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor),
+                              streamDecryptor.resourceId()));
+  }
+  case 11: {
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV11::create(
         std::move(peekableSource), resourceKeyFinder));
     TC_RETURN(std::make_tuple(std::move(streamDecryptor),
                               streamDecryptor.resourceId()));

@@ -1,5 +1,6 @@
 #include <Tanker/TransparentSession/Store.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Encryptor/v2.hpp>
@@ -8,6 +9,8 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <gsl/gsl-lite.hpp>
+
+using namespace std::literals;
 
 namespace Tanker::TransparentSession
 {
@@ -73,17 +76,38 @@ TransparentSessionData deserializeTransparentSession(
 }
 }
 
-Store::Store(
-    Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
   : _userSecret(userSecret), _db(db)
 {
 }
 
-tc::cotask<void> Store::put(
-    Crypto::Hash const& recipientsHash,
-    Crypto::SimpleResourceId const& sessionId,
-    Crypto::SymmetricKey const& sessionKey,
-    std::uint64_t creationTimestamp)
+Crypto::Hash Store::hashRecipients(std::vector<SPublicIdentity> users,
+                                   std::vector<SGroupId> groups)
+{
+  users |= Actions::deduplicate;
+  groups |= Actions::deduplicate;
+
+  std::vector<uint8_t> input;
+  auto serializeWithLenPrefix = [&](auto const& s) {
+    auto pos = input.size();
+    input.resize(input.size() + sizeof(uint32_t) + s.size());
+    Serialization::serialize<uint32_t>(&input[pos], s.size());
+    std::copy(s.begin(), s.end(), &input[pos + sizeof(uint32_t)]);
+  };
+
+  for (auto&& user : users)
+    serializeWithLenPrefix(user);
+  input.push_back('|');
+  for (auto&& group : groups)
+    serializeWithLenPrefix(group);
+
+  return Crypto::generichash(input);
+}
+
+tc::cotask<void> Store::put(Crypto::Hash const& recipientsHash,
+                            Crypto::SimpleResourceId const& sessionId,
+                            Crypto::SymmetricKey const& sessionKey,
+                            std::uint64_t creationTimestamp)
 {
   FUNC_TIMER(DB);
   auto const keyBuffer = serializeStoreKey(recipientsHash);

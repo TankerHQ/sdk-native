@@ -13,6 +13,7 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/SdkInfo.hpp>
+#include <Tanker/TransparentSession/Accessor.hpp>
 #include <Tanker/TransparentSession/Store.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -57,13 +58,15 @@ public:
   {
     Accessors(Storage& storage,
               Requesters* requesters,
-              Users::LocalUserAccessor plocalUserAccessor);
+              Users::LocalUserAccessor plocalUserAccessor,
+              TransparentSession::SessionShareCallback shareCallback);
     Users::LocalUserAccessor localUserAccessor;
     mutable Users::UserAccessor userAccessor;
     ProvisionalUsers::Accessor provisionalUsersAccessor;
     ProvisionalUsers::Manager provisionalUsersManager;
     Groups::Accessor groupAccessor;
     ResourceKeys::Accessor resourceKeyAccessor;
+    TransparentSession::Accessor transparentSessionAccessor;
   };
 
   Session(std::unique_ptr<Network::HttpClient> client,
@@ -110,6 +113,10 @@ private:
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
 
+  tc::cotask<void> transparentSessionShareImpl(
+      TransparentSession::AccessorResult const& session,
+      std::vector<SPublicIdentity> const& users,
+      std::vector<SGroupId> const& groups);
   void removeOldStorage(Identity::SecretPermanentIdentity const& identity,
                         std::string const& dataPath);
 };

@@ -72,17 +72,14 @@ uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 {
   if (isHugeClearData(clearSize, paddingStep))
   {
-    if (paddingStep == Padding::Off)
-      return EncryptorV4::encryptedSize(clearSize);
-    else
-      return EncryptorV8::encryptedSize(clearSize, paddingStep);
+    return EncryptorV11::encryptedSize(clearSize, paddingStep);
   }
   else
   {
     if (paddingStep == Padding::Off)
-      return EncryptorV3::encryptedSize(clearSize);
+      return EncryptorV9::encryptedSize(clearSize);
     else
-      return EncryptorV6::encryptedSize(clearSize, paddingStep);
+      return EncryptorV10::encryptedSize(clearSize, paddingStep);
   }
 }
 
@@ -100,24 +97,25 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 }
 
 tc::cotask<EncryptCacheMetadata> encrypt(gsl::span<uint8_t> encryptedData,
-                                       gsl::span<uint8_t const> clearData,
-                                       std::optional<uint32_t> paddingStep)
+                                         gsl::span<uint8_t const> clearData,
+                                         std::optional<uint32_t> paddingStep,
+                                         Crypto::SimpleResourceId sessionId,
+                                         Crypto::SymmetricKey sessionKey)
 {
+  auto seed = Crypto::getRandom<Crypto::SubkeySeed>();
   if (isHugeClearData(clearData.size(), paddingStep))
   {
-    if (paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
-    else
-      TC_RETURN(TC_AWAIT(
-          EncryptorV8::encrypt(encryptedData, clearData, paddingStep)));
+    TC_RETURN(TC_AWAIT(EncryptorV11::encrypt(
+        encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
   }
   else
   {
     if (paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+      TC_RETURN(TC_AWAIT(EncryptorV9::encrypt(
+          encryptedData, clearData, sessionId, sessionKey, seed)));
     else
-      TC_RETURN(TC_AWAIT(
-          EncryptorV6::encrypt(encryptedData, clearData, paddingStep)));
+      TC_RETURN(TC_AWAIT(EncryptorV10::encrypt(
+          encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
   }
 }
 
