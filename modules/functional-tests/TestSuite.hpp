@@ -5,7 +5,7 @@
 
 #include <range/v3/view/take.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_tostring.hpp>
 
 template <>
 struct Catch::StringMaker<std::vector<unsigned char>>

@@ -11,9 +11,7 @@ add_executable(test_trustchain
   test_actions_sessioncertificate.cpp
   test_preprocessor_actions.cpp
   test_upgrade_required.cpp
-
-  main.cpp
 )
-target_link_libraries(test_trustchain tankertrustchain tankertesthelpers catch2::catch2)
+target_link_libraries(test_trustchain tankertrustchain tankertesthelpers Catch2::Catch2WithMain)
 
 add_test(NAME test_trustchain COMMAND test_trustchain)

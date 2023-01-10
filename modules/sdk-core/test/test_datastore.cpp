@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlpp11.h>

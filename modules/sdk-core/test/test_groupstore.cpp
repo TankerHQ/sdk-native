@@ -6,7 +6,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace Tanker;
 using Tanker::Trustchain::GroupId;

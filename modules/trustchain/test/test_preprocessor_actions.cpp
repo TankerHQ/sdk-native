@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 #include <ostream>
 #include <string>

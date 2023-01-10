@@ -90,32 +90,32 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared
 
-        self.requires("boost/1.78.0-r6", private=private)
-        self.requires("libressl/3.5.3", private=private)
-        self.requires("libcurl/7.80.0-r3", private=private)
+        self.requires("boost/1.78.0-r7", private=private)
+        self.requires("libressl/3.5.3-r1", private=private)
+        self.requires("libcurl/7.80.0-r4", private=private)
         if self.options.with_sqlite:
-            self.requires("sqlpp11/0.60-r4", private=private)
-            self.requires("sqlpp11-connector-sqlite3/0.30-r4", private=private)
+            self.requires("sqlpp11/0.60-r5", private=private)
+            self.requires("sqlpp11-connector-sqlite3/0.30-r5", private=private)
         self.requires("mgs/0.2.1-r1", private=private)
-        self.requires("enum-flags/0.1a-r1", private=private)
+        self.requires("enum-flags/0.1a-r2", private=private)
         self.requires("range-v3/0.11.0-r4", private=private)
-        self.requires("fmt/7.1.3-r2", private=private)
+        self.requires("fmt/7.1.3-r3", private=private)
         self.requires("gsl-lite/0.37.0-r1", private=private)
         self.requires("nlohmann_json/3.10.5-r1", private=private)
-        self.requires("libsodium/1.0.18-r1", private=private)
-        self.requires("tconcurrent/0.40.0-r3", private=private)
-        self.requires("date/3.0.0-r3", private=private)
+        self.requires("libsodium/1.0.18-r2", private=private)
+        self.requires("tconcurrent/0.40.0-r4", private=private)
+        self.requires("date/3.0.0-r4", private=private)
         # catch2 is needed to export datastore tests
-        self.requires("catch2/2.13.6-r2", private=private)
+        self.requires("catch2/3.2.1-r1", private=private)
         if is_apple_os(self):
-            self.requires("libcxx/11.1.0-r2", private=private)
+            self.requires("libcxx/11.1.0-r3", private=private)
 
 
     def build_requirements(self):
         if self.should_build_tools:
             self.test_requires("docopt.cpp/0.6.2-r2")
         if self.should_build_tests:
-            self.test_requires("catch2-async/2.13.6-r4")
+            self.test_requires("catch2-async/3.2.1-r1")
             self.test_requires("trompeloeil/38-r1")
 
     def generate(self):

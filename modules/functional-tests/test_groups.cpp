@@ -18,6 +18,8 @@
 
 #include "TestSuite.hpp"
 
+#include <catch2/generators/catch_generators.hpp>
+
 #include <mgs/base64.hpp>
 #include <mgs/base64url.hpp>
 
