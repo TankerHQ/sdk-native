@@ -5,6 +5,7 @@
 #include <tconcurrent/thread_pool.hpp>
 
 #include "TestSuite.hpp"
+#include "TestNameReporter.hpp"
 #include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>

@@ -22,6 +22,8 @@ target_link_libraries(test_functional
   tankeradmin
   tankercore
   catch2-async::catch2-async
+  nlohmann_json::nlohmann_json
+  range-v3::range-v3
 )
 
 add_test(NAME test_functional COMMAND test_functional --durations=true)
