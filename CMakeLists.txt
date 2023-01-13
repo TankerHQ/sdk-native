@@ -114,7 +114,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 find_package(Boost)
-find_package(catch2)
+find_package(Catch2)
 find_package(catch2-async)
 find_package(date)
 find_package(docopt.cpp)

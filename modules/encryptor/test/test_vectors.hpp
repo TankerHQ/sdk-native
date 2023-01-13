@@ -11,7 +11,7 @@
 #include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Encryptor/v9.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 namespace
 {

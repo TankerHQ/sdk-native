@@ -7,7 +7,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <gsl/gsl-lite.hpp>
 #include <mgs/base64.hpp>
 #include <mgs/base64url.hpp>

@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_RUNNER
 #include <iostream>
 
 #include <tconcurrent/coroutine.hpp>
@@ -10,6 +9,8 @@
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Init.hpp>
+
+#include <catch2/catch_session.hpp>
 
 using namespace std::literals::chrono_literals;
 using namespace Tanker::Functional;

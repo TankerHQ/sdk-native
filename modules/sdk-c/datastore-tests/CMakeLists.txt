@@ -28,7 +28,7 @@ tanker_link_libraries(tankerdatastoretests
   tanker_utils-c
   ctankerdatastore
 
-  catch2::catch2
+  Catch2::Catch2
 
   ${_additional_link_flags}
 )

@@ -1,8 +1,6 @@
 add_executable(test_tanker_streams
   test_peekableinputsource.cpp
   test_stream.cpp
-
-  main.cpp
   )
 
 
@@ -13,7 +11,7 @@ endif()
 target_link_libraries(test_tanker_streams
   tankerstreams
   tankertesthelpers
-  catch2::catch2
+  Catch2::Catch2WithMain
 )
 
 add_test(NAME test_tanker_streams COMMAND test_tanker_streams)

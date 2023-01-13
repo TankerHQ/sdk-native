@@ -1,6 +1,6 @@
 #include <Tanker/Errors/Errc.hpp>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 
 using namespace Tanker::Errors;
 

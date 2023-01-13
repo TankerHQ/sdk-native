@@ -9,7 +9,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserRequesterStub.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <trompeloeil.hpp>
 
 using namespace Tanker;
