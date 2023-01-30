@@ -2,7 +2,7 @@
 name = "tanker-native-sdk"
 version = "0.1.0"
 description = "C++ client for Tanker"
-authors = ["Tanker team <tech@tanker.io>"]
+authors = ["Tanker team"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
