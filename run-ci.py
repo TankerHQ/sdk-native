@@ -34,6 +34,22 @@ def build(profiles: List[Profile], coverage: bool, test: bool) -> None:
     shutil.copy(recipe, Path.cwd() / "package")
 
 
+def test_matcher(profile: Profile) -> None:
+    build_profile = tankerci.conan.get_build_profile()
+    build_path = tankerci.cpp.build(
+        host_profile=profile,
+        build_profile=build_profile,
+        make_package=True,
+    )
+
+    tankerci.run(
+        build_path / "bin" / "test_functional",
+        "--list-tests", "--reporter", "test-names",
+        "--out",
+        "functional_test_list.json",
+    )
+
+
 def benchmark_artifact(
     *, profiles: List[str], iterations: int, compare_results: bool, upload_results: bool
 ) -> None:
@@ -269,6 +285,13 @@ def main() -> None:
     build_parser.add_argument("--test", action="store_true")
     build_parser.add_argument("--remote", default="artifactory")
 
+    matcher_parser = subparsers.add_parser("test-matcher")
+    matcher_parser.add_argument(
+        "--profile",
+        required=True,
+    )
+    matcher_parser.add_argument("--remote", default="artifactory")
+
     benchmark_artifact_parser = subparsers.add_parser("benchmark-artifact")
     benchmark_artifact_parser.add_argument(
         "--profile", dest="profiles", action="append", required=True
@@ -303,6 +326,11 @@ def main() -> None:
         ):
             profiles = [Profile(p) for p in args.profiles]
             build(profiles, args.coverage, args.test)
+    elif args.command == "test-matcher":
+        with tankerci.conan.ConanContextManager(
+            [args.remote, "conancenter"], conan_home=user_home
+        ):
+            test_matcher(Profile(args.profile))
     elif args.command == "benchmark-artifact":
         benchmark_artifact(
             profiles=args.profiles,

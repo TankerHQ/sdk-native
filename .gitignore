@@ -8,6 +8,7 @@ __pycache__
 package/
 testtmp/
 compat/conan
+functional_test_list.json
 
 .ycm_extra_conf.py
 .venv/
