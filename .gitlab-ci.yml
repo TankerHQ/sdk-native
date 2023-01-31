@@ -178,6 +178,20 @@ nightly/coverage:
     expire_in: 7 days
   tags: !reference [.tags/compilation-linux, tags]
 
+check/test-matcher:
+  extends:
+    - .build
+  rules:
+    - !reference [.rules/push-master, rules]
+    - !reference [.rules/mr/manual, rules]
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home test-matcher --remote $CONAN_REMOTE --profile linux-x86_64
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - functional_test_list.json
+  tags: !reference [.tags/compilation-linux, tags]
+
 build/bridge-dotenv:
   extends:
     - .build
