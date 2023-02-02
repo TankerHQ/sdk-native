@@ -67,7 +67,7 @@ def main() -> None:
             "prepare",
             f"--use-tanker={args.tanker_source.value}",
             f"--profile={args.profile}",
-            f"--remote={args.remote}"
+            f"--remote={args.remote}",
         )
         tankerci.run("poetry", "install")
 
