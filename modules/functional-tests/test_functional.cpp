@@ -1009,21 +1009,21 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
                                         device1.writablePath());
 
   auto const status = TC_AWAIT(core->start(device1.identity()));
-  SECTION("Can open a Session")
+  SECTION("Can open a Session [VDTNXV]")
   {
     REQUIRE(status == Tanker::Status::Ready);
   }
-  SECTION("Can decrypt a resource offline")
+  SECTION("Can decrypt a resource offline [FMHLH4]")
   {
     auto const decrypted = TC_AWAIT(core->decrypt(encryptedData));
     REQUIRE(decrypted == clearData);
   }
-  SECTION("Throws if trying to encrypt")
+  SECTION("Throws if trying to encrypt [AFOZAL]")
   {
     TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->encrypt(clearData)),
                                   Errors::Errc::NetworkError);
   }
-  SECTION("Throws if trying to decrypt without the key")
+  SECTION("Throws if trying to decrypt without the key [0MYRMO]")
   {
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
     TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->decrypt(encryptedData)),
