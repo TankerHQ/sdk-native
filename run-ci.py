@@ -44,7 +44,8 @@ def test_matcher(profile: Profile) -> None:
 
     tankerci.run(
         build_path / "bin" / "test_functional",
-        "--list-tests", "--reporter", "test-names",
+        "--reporter",
+        "test-names",
         "--out",
         "functional_test_list.json",
     )

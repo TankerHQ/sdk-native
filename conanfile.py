@@ -110,7 +110,6 @@ class TankerConan(ConanFile):
         if is_apple_os(self):
             self.requires("libcxx/11.1.0-r3", private=private)
 
-
     def build_requirements(self):
         if self.should_build_tools:
             self.test_requires("docopt.cpp/0.6.2-r2")
