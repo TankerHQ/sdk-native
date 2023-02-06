@@ -369,9 +369,9 @@ tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
   auto const lock = TC_AWAIT(_semaphore.get_scope_lock());
 
   FUNC_TIMER(Net);
-  TINFO("{} {}", httpMethodToString(req.method), req.url);
+  TDEBUG("{} {}", httpMethodToString(req.method), req.url);
   auto res = TC_AWAIT(_backend->fetch(req));
-  TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
+  TDEBUG("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
   TC_RETURN(handleResponse(std::move(res), req));
 }
 }
