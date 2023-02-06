@@ -423,7 +423,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
                                   Errc::PreconditionFailed);
   }
 
-  SECTION("it throws when trying to verify with an invalid passphrase")
+  SECTION("it throws when trying to verify with an invalid passphrase [KHWR1T]")
   {
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->registerIdentity(Verification::Verification{passphrase})));
