@@ -98,7 +98,7 @@ tc::cotask<void> ProvisionalUserKeysStore::putProvisionalUserKeys(
     ProvisionalUserKeys const& provisionalUserKeys)
 {
   FUNC_TIMER(DB);
-  TINFO("Adding provisional user keys for {} {}",
+  TDEBUG("Adding provisional user keys for {} {}",
         appPublicSigKey,
         tankerPublicSigKey);
 

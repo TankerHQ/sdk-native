@@ -39,7 +39,7 @@ Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
 tc::cotask<void> Store::putKey(SimpleResourceId const& resourceId,
                                Crypto::SymmetricKey const& key)
 {
-  TINFO("Adding key for {}", resourceId);
+  TDEBUG("Adding key for {}", resourceId);
   FUNC_TIMER(DB);
 
   auto const storeRid = serializeStoreKey(resourceId);

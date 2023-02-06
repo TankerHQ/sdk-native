@@ -156,7 +156,7 @@ tc::cotask<void> Store::put(Group const& group)
 {
   FUNC_TIMER(DB);
   auto const groupId = getGroupId(group);
-  TINFO("Adding group {}", groupId);
+  TDEBUG("Adding group {}", groupId);
 
   auto const keyBuffer = serializeStoreKey(groupId);
   auto const valueBuffer = serializeStoreValue(group);
