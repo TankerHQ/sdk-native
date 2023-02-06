@@ -240,7 +240,7 @@ Core::Core(std::string url,
         _datastoreBackend.get())),
     _oidcManager(std::make_shared<Oidc::NonceManager>())
 {
-  TINFO("Creating core {}", static_cast<void*>(this));
+  TDEBUG("Creating core {}", static_cast<void*>(this));
   if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "no built-in HTTP backend, please provide one");

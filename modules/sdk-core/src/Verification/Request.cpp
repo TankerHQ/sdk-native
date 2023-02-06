@@ -123,7 +123,7 @@ RequestWithVerif makeRequestWithVerif(
           },
           [](OidcIdTokenWithChallenge const& v) -> RequestVerificationPayload {
             // sanity checks are performed before fetching the challenge
-            TINFO(
+            TWARNING(
                 "'testNonce' field should be used for tests purposes only. It "
                 "will be rejected for non-test Tanker application");
             return v;

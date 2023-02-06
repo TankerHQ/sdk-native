@@ -46,4 +46,6 @@ void format(Log::Level level,
 
 #define TINFO(...) TLOG(Info, __VA_ARGS__)
 
+#define TWARNING(...) TLOG(Warning, __VA_ARGS__)
+
 #define TERROR(...) TLOG(Error, __VA_ARGS__)

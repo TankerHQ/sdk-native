@@ -60,7 +60,7 @@ ConnPtr createConnection(std::string const& dbPath,
                          std::optional<Crypto::SymmetricKey> userSecret,
                          bool exclusive)
 {
-  TINFO("creating database {}", dbPath);
+  TDEBUG("creating database {}", dbPath);
   try
   {
     auto db = [&] {
