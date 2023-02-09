@@ -18,6 +18,8 @@ namespace Tanker::ResourceKeys
 {
 namespace
 {
+// Prefix should never be reused. List of previously used prefix:
+// None
 std::string const KeyPrefix = "resourcekey-";
 
 std::vector<uint8_t> serializeStoreKey(SimpleResourceId const& resourceId)

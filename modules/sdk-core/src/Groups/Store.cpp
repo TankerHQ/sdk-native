@@ -19,6 +19,8 @@ namespace Tanker::Groups
 {
 namespace
 {
+// Prefix should never be reused. List of previously used prefix:
+// None
 std::string const KeyPrefix = "groups-";
 std::string const IndexPrefix = "groups-index-encryptionpublickey-";
 
