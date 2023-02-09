@@ -130,13 +130,13 @@ Group deserializeStoreValue(gsl::span<uint8_t const> serialized)
 }
 
 std::vector<uint8_t> serializeIndexKey(
-    Crypto::PublicEncryptionKey const& appPublicEncryptionKey)
+    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey)
 {
   std::vector<uint8_t> keyBuffer(IndexPrefix.size() +
-                                 appPublicEncryptionKey.size());
+                                 groupPublicEncryptionKey.size());
   auto it = keyBuffer.data();
   it = std::copy(IndexPrefix.begin(), IndexPrefix.end(), it);
-  it = Serialization::serialize(it, appPublicEncryptionKey);
+  it = Serialization::serialize(it, groupPublicEncryptionKey);
   assert(it == keyBuffer.data() + keyBuffer.size());
   return keyBuffer;
 }
