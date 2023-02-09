@@ -14,6 +14,8 @@ namespace Tanker
 {
 namespace
 {
+// Prefix should never be reused. List of previously used prefix:
+// None
 std::string const KeyPrefix = "provisionaluserkeys-";
 std::string const IndexPrefix = "provisionaluserkeys-index-";
 

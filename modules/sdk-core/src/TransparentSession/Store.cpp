@@ -17,6 +17,8 @@ namespace Tanker::TransparentSession
 namespace
 {
 constexpr auto Version = 1;
+// Prefix should never be reused. List of previously used prefix:
+// None
 std::string const KeyPrefix = "transparent-session-";
 
 std::vector<uint8_t> serializeStoreKey(Crypto::Hash const& recipients)
