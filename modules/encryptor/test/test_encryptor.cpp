@@ -299,6 +299,31 @@ void paddedEncryptorTests(TestContext<T> ctx)
   }
 }
 
+TEST_CASE("decryptedSize should throw when called with an empty buffer")
+{
+  auto encryptedData = make_buffer("");
+  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::decryptedSize(encryptedData),
+                                Errc::InvalidArgument);
+}
+
+TEST_CASE("decrypt should throw when called with an empty buffer")
+{
+  std::vector<uint8_t> decryptedData;
+  Crypto::SymmetricKey key;
+  auto keyFinder = Encryptor::fixedKeyFinder(key);
+  auto encryptedData = make_buffer("");
+  TANKER_CHECK_THROWS_WITH_CODE(
+      Encryptor::decrypt(decryptedData, keyFinder, encryptedData),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE("extractResourceId should throw when called with an empty buffer")
+{
+  auto encryptedData = make_buffer("");
+  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
+                                Errc::InvalidArgument);
+}
+
 TEST_CASE("EncryptorV2 tests")
 {
   TestContext<EncryptorV2> ctx;
@@ -405,14 +430,6 @@ TEST_CASE("EncryptorV5 tests")
     CHECK(EncryptorV5::encryptedSize(1) ==
           versionSize + ResourceIdSize + IvSize + 1 + MacSize);
   }
-}
-
-TEST_CASE("extractResourceId should throw on a truncated buffer")
-{
-  auto encryptedData = make_buffer("");
-
-  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
-                                Errc::InvalidArgument);
 }
 
 TEST_CASE("EncryptorV6 tests")

@@ -85,9 +85,9 @@ uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
-  if (encryptedData.size() < 1)
-    throw Errors::Exception(Serialization::Errc::TruncatedInput,
-                            "Could not read version");
+  if (encryptedData.empty())
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
@@ -123,9 +123,9 @@ tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                              ResourceKeyFinder const& keyFinder,
                              gsl::span<uint8_t const> encryptedData)
 {
-  if (encryptedData.size() < 1)
-    throw Errors::Exception(Serialization::Errc::TruncatedInput,
-                            "Could not read version");
+  if (encryptedData.empty())
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
@@ -146,9 +146,9 @@ tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
-  if (encryptedData.size() < 1)
-    throw Errors::Exception(Serialization::Errc::TruncatedInput,
-                            "Could not read version");
+  if (encryptedData.empty())
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
