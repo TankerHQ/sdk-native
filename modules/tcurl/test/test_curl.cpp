@@ -29,25 +29,25 @@ TEST_CASE("curl simple request")
   SECTION("http")
   {
     expectedhttpcode = 200;
-    req->set_url("http://httpbin.org/get?TEST=test");
+    req->set_url("http://httpbingo.org/get?TEST=test");
   }
 
   SECTION("https")
   {
     expectedhttpcode = 200;
-    req->set_url("https://httpbin.org/get?TEST=test");
+    req->set_url("https://httpbingo.org/get?TEST=test");
   }
 
   SECTION("not found")
   {
     expectedhttpcode = 404;
-    req->set_url("http://httpbin.org/whatever");
+    req->set_url("http://httpbingo.org/whatever");
   }
 
   SECTION("post")
   {
     expectedhttpcode = 200;
-    req->set_url("http://httpbin.org/post");
+    req->set_url("http://httpbingo.org/post");
     static char const buf[] = "Test test test";
     curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1l);
     curl_easy_setopt(
@@ -72,7 +72,7 @@ TEST_CASE("curl cancel request")
   req->set_read_callback(
       [](request&, void const*, std::size_t size) { return size; });
   req->set_finish_callback([](request&, CURLcode c) { CHECK(false); });
-  req->set_url("http://httpbin.org/delay/10");
+  req->set_url("http://httpbingo.org/delay/10");
 
   auto before = std::chrono::steady_clock::now();
   mul.process(req);
@@ -90,7 +90,7 @@ TEST_CASE("curl destroy multi during request")
   req->set_read_callback(
       [](request&, void const*, std::size_t size) { return size; });
   req->set_finish_callback([](request&, CURLcode c) { CHECK(false); });
-  req->set_url("http://httpbin.org/delay/5");
+  req->set_url("http://httpbingo.org/delay/5");
 
   mul->process(req);
 
@@ -121,7 +121,7 @@ TEST_CASE("curl multiple requests")
     promise<void> finish = finished[i];
     reqs[i]->set_finish_callback(
         [finish](request&, CURLcode) mutable { finish.set_value({}); });
-    reqs[i]->set_url("http://httpbin.org/drip?numbytes=100&duration=1");
+    reqs[i]->set_url("http://httpbingo.org/drip?numbytes=100&duration=1");
   }
 
   for (int i = 0; i < NB; ++i)
@@ -163,13 +163,13 @@ TEST_CASE("curl read_all")
 
   SECTION("simple")
   {
-    req->set_url("http://httpbin.org/get?TEST=test");
+    req->set_url("http://httpbingo.org/get?TEST=test");
     CHECK_READALL()
   }
 
   SECTION("post continue")
   {
-    req->set_url("http://httpbin.org/post");
+    req->set_url("http://httpbingo.org/post");
     static char const buf[] = "Test test test";
     curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1l);
     curl_easy_setopt(
@@ -184,7 +184,7 @@ TEST_CASE("curl read_all cancel")
 {
   multi mul;
   auto req = std::make_shared<request>();
-  req->set_url("http://httpbin.org/delay/10");
+  req->set_url("http://httpbingo.org/delay/10");
 
   auto fut = read_all(mul, req);
   async([&] { fut.request_cancel(); }).get();
@@ -200,7 +200,7 @@ TEST_CASE("curl read_all destroy multi")
   auto mul = std::make_unique<multi>();
 
   auto req = std::make_shared<request>();
-  req->set_url("http://httpbin.org/delay/10");
+  req->set_url("http://httpbingo.org/delay/10");
   auto fut = read_all(*mul, req);
   async([&] { mul.reset(); }).get();
   auto before = std::chrono::steady_clock::now();
