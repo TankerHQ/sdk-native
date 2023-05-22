@@ -69,7 +69,7 @@ def main() -> None:
             f"--profile={args.profile}",
             f"--remote={args.remote}",
         )
-        tankerci.run("poetry", "install")
+        tankerci.run("poetry", "run", "python", "run-ci.py", "build")
 
     with tankerci.working_directory(base_path / "qa-python-js"):
         tankerci.run("poetry", "install")
