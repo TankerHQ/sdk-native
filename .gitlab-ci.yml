@@ -130,6 +130,17 @@ build/macos/arm/shared/no-http-backend:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile macos-armv8 shared no-http-backend
   tags: !reference [.tags/macos/arm, tags]
 
+build/android/shared:
+  extends:
+    - .build
+    - .rules/build/manual
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile android-armv7 --profile android-armv8 --profile android-x86 --profile android-x86_64 --profile linux-x86_64 shared
+  tags: !reference [.tags/compilation-linux, tags]
+
 build/android:
   extends:
     - .build
@@ -189,7 +200,9 @@ build/bridge-dotenv:
     default: # Skip docker image
       - "before_script"
   script:
-    - poetry run python run-ci.py write-bridge-dotenv --downstream sdk-python
+    - poetry run python run-ci.py write-bridge-dotenv --downstream sdk-android
+                                                      --downstream sdk-ios
+                                                      --downstream sdk-python
                                                       --downstream sdk-ruby
                                                       --downstream sdk-rust
                                                       --downstream benchmarks
@@ -250,6 +263,40 @@ bridge/compat/linux:
   trigger:
     project: TankerHQ/compatibility-tests
     branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/ios:
+  stage: bridge-check
+  extends:
+    - .rules/bridge/auto
+    - .variables/bridge-common
+  needs:
+    - build/ios
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_JOB_TARGET: ios
+    UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/sdk-ios
+    branch: $SDK_IOS_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/android:
+  extends:
+    - .bridge-check
+    - .rules/bridge/auto
+    - .variables/bridge-common
+  needs:
+    - build/android/shared
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_JOB_TARGET: android
+    UPSTREAM_JOB_NAME: build/android/shared
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/sdk-android
+    branch: $SDK_ANDROID_BRIDGE_BRANCH
     strategy: depend
 
 bridge/rust/linux:
@@ -536,6 +583,42 @@ bridge/bump-native-compat-tests:
     strategy: depend
   allow_failure: true
 
+bridge/ios/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/ios
+    - .variables/bridge-common
+  needs:
+    - bridge/ios
+    - deploy
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-ios
+    branch: $SDK_IOS_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/android/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/android
+    - .variables/bridge-common
+  needs:
+    - bridge/android
+    - deploy
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+    SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-android
+    branch: $SDK_ANDROID_BRIDGE_BRANCH
+    strategy: depend
+
 bridge/python/deploy:
   extends:
     - .bridge-deploy
@@ -598,3 +681,4 @@ bridge/rust/deploy:
     project: TankerHQ/sdk-rust
     branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
+
