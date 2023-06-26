@@ -1,6 +1,9 @@
 include:
   local: /.gitlab/ci/native.yml
 
+variables:
+  GIT_DEPTH: 1
+
 .after-script/branch_name:
   after_script:
     - echo $CI_COMMIT_REF_NAME > branch_name.txt
