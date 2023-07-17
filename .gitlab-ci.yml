@@ -84,6 +84,7 @@ build/windows/shared:
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
+    - $env:TANKER_MAX_TEST_EXECUTION_TIMEOUT = '10'
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile windows-x86_64 shared
   tags: !reference [.tags/compilation-windows, tags]
 
