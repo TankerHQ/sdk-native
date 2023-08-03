@@ -636,6 +636,27 @@ TEST_CASE_METHOD(TrustchainFixture,
 }
 
 TEST_CASE_METHOD(TrustchainFixture,
+    "Alice cannot share with more than 100 `resources * recipients`")
+{
+  std::vector<SPublicIdentity> identities;
+  for (int i = 0; i < 51; ++i)
+    identities.push_back(trustchain.makeEmailProvisionalUser().publicIdentity);
+
+  auto const clearData = make_buffer("my clear data is clear");
+
+  std::vector<SResourceId> resourceIds;
+  resourceIds.push_back(
+      AsyncCore::getResourceId(TC_AWAIT(aliceSession->encrypt(clearData)))
+          .get());
+  resourceIds.push_back(
+      AsyncCore::getResourceId(TC_AWAIT(aliceSession->encrypt(clearData)))
+          .get());
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->share(resourceIds, identities, {})),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
                  "Alice cannot encrypt and share with an illformed groupId")
 {
   auto const clearData = make_buffer("my clear data is clear");
