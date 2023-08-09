@@ -24,7 +24,7 @@ workflow:
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_NATIVE_RELEASE_VERSION != null && $SDK_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(\.(a|b)\d+)?\z/)
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(\.(alpha|beta)\.\d+)?\z/)
       when: never
