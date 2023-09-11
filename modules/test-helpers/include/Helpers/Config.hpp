@@ -19,7 +19,8 @@ struct OidcConfig
 {
   std::string clientSecret;
   std::string clientId;
-  std::string provider;
+  std::string displayName;
+  std::string issuer;
   std::map<std::string, User> users;
 };
 
