@@ -60,20 +60,26 @@ auto errorReport(Errors::AppdErrc err_code,
   }
 }
 }
+void from_json(nlohmann::json const& j, OidcConfiguration& config)
+{
+  if (auto value = j.at("display_name").get<std::string>(); !value.empty())
+    config.displayName = value;
+  if (auto value = j.at("client_id").get<std::string>(); !value.empty())
+    config.clientId = value;
+  if (auto value = j.at("issuer").get<std::string>(); !value.empty())
+    config.issuer = value;
+}
 void from_json(nlohmann::json const& j, App& app)
 {
   j.at("id").get_to(app.id);
   j.at("secret").get_to(app.secret);
-  if (auto value = j.at("oidc_client_id").get<std::string>(); !value.empty())
-    app.oidcClientId = value;
-  if (auto value = j.at("oidc_provider").get<std::string>(); !value.empty())
-    app.oidcProvider = value;
+  j.at("oidc_providers").get_to(app.oidcProviders);
 }
 
 Client::Client(std::string_view appManagementUrl,
                std::string_view appManagementToken,
                std::string_view environmentName)
-  : _baseUrl(fmt::format("{}/v1/apps", appManagementUrl)),
+  : _baseUrl(fmt::format("{}/v2/apps", appManagementUrl)),
     _appManagementToken(appManagementToken),
     _environmentName(environmentName)
 {
@@ -148,10 +154,18 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 {
   TINFO("updating trustchain {:#S}", trustchainId);
   auto body = nlohmann::json{};
-  if (options.oidcClientId)
-    body["oidc_client_id"] = *options.oidcClientId;
-  if (options.oidcProvider)
-    body["oidc_provider"] = *options.oidcProvider;
+  if (options.oidcProvider) {
+    auto const& provider = options.oidcProvider.value();
+    bool ignoreTokenExpiration = provider.displayName == "pro-sante-bas-no-expiry";
+    auto providerJson = nlohmann::json{
+        {"client_id", provider.clientId},
+        {"issuer", provider.issuer},
+        {"display_name", provider.displayName},
+        {"ignore_token_expiration", ignoreTokenExpiration}
+    };
+    body["oidc_providers"] = nlohmann::json::array({providerJson});
+  }
+
   if (options.preverifiedVerification)
     body["preverified_verification_enabled"] = *options.preverifiedVerification;
   if (options.userEnrollment)

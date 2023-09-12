@@ -18,22 +18,28 @@
 
 namespace Tanker::Admin
 {
+struct OidcConfiguration
+{
+  std::string displayName;
+  std::string clientId;
+  std::string issuer;
+};
+
 struct App
 {
   Trustchain::TrustchainId id;
   Crypto::PrivateSignatureKey secret;
-  std::optional<std::string> oidcProvider;
-  std::optional<std::string> oidcClientId;
+  std::vector<OidcConfiguration> oidcProviders;
 };
 
 struct AppUpdateOptions
 {
-  std::optional<std::string> oidcProvider;
-  std::optional<std::string> oidcClientId;
+  std::optional<OidcConfiguration> oidcProvider;
   std::optional<bool> preverifiedVerification;
   std::optional<bool> userEnrollment;
 };
 
+void from_json(nlohmann::json const& j, OidcConfiguration& oidcConfig);
 void from_json(nlohmann::json const& j, App& app);
 
 class Client

@@ -49,9 +49,13 @@ tc::cotask<void> TrustchainFactory::enableOidc(
     Tanker::Trustchain::TrustchainId const& id)
 {
   auto const& oidcConfig = TestConstants::oidcConfig();
+  Admin::OidcConfiguration adminOidcConf{};
+  adminOidcConf.displayName = oidcConfig.displayName;
+  adminOidcConf.clientId = oidcConfig.clientId;
+  adminOidcConf.issuer = oidcConfig.issuer;
+
   Admin::AppUpdateOptions options{};
-  options.oidcClientId = oidcConfig.clientId;
-  options.oidcProvider = oidcConfig.provider;
+  options.oidcProvider = adminOidcConf;
   TC_AWAIT(_admin->update(id, options));
 }
 
@@ -71,9 +75,13 @@ std::string to_string(PSCProvider provider)
 tc::cotask<void> TrustchainFactory::enablePSCOidc(
     Tanker::Trustchain::TrustchainId const& id, PSCProvider const& provider)
 {
+  Admin::OidcConfiguration adminOidcConf{};
+  adminOidcConf.displayName = to_string(provider);
+  adminOidcConf.clientId = "doctolib-dev";
+  adminOidcConf.issuer = "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
+
   Admin::AppUpdateOptions options{};
-  options.oidcClientId = "doctolib-dev";
-  options.oidcProvider = to_string(provider);
+  options.oidcProvider = adminOidcConf;
   TC_AWAIT(_admin->update(id, options));
 }
 

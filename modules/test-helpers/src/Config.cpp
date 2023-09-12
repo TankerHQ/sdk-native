@@ -29,6 +29,7 @@ OidcConfig const& oidcConfig()
       OidcConfig{getSafeEnv("TANKER_OIDC_CLIENT_SECRET"),
                  getSafeEnv("TANKER_OIDC_CLIENT_ID"),
                  getSafeEnv("TANKER_OIDC_PROVIDER"),
+                 getSafeEnv("TANKER_OIDC_ISSUER"),
                  {{"kevin",
                    {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"),
                     getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
