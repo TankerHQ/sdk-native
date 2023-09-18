@@ -164,6 +164,7 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   static std::string const& version();
+  SdkInfo const& sdkInfo();
 
   tc::future<void> setHttpSessionToken(std::string token);
 

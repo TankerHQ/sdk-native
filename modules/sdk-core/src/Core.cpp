@@ -98,13 +98,13 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
 {
-  if (oidcIdToken.size() == 0)
+  if (oidcIdToken.token.size() == 0)
   {
     throw formatEx(Errc::InvalidArgument, "oidcIdToken should not be empty");
   }
 
   auto const testNonce = nonceManager.testNonce();
-  auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
+  auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken.token);
 
   // Only checking nonce format
   (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(
@@ -1100,6 +1100,11 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 void Core::setHttpSessionToken(std::string_view token)
 {
   this->_session->httpClient().setAccessToken(token);
+}
+
+SdkInfo const& Core::sdkInfo()
+{
+  return this->_info;
 }
 
 tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>

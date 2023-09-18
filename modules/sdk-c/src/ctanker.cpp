@@ -90,7 +90,7 @@ Verification::Verification cverificationToVerification(
   case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN: {
     if (!cverification->oidc_id_token)
       throw formatEx(Errc::InvalidArgument, "oidc id token field is null");
-    verification = OidcIdToken{cverification->oidc_id_token};
+    verification = OidcIdToken{cverification->oidc_id_token, {}, {}};
     break;
   }
   case TANKER_VERIFICATION_METHOD_PHONE_NUMBER: {
@@ -141,17 +141,22 @@ void cVerificationMethodFromVerificationMethod(
     tanker_verification_method_t& c_verif_method,
     Verification::VerificationMethod const& method)
 {
-  c_verif_method.version = 1;
-  c_verif_method.value = nullptr;
+  c_verif_method.version = 2;
+  c_verif_method.value1 = nullptr;
+  c_verif_method.value2 = nullptr;
   if (method.holds_alternative<Passphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
   else if (method.holds_alternative<E2ePassphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE);
-  else if (method.holds_alternative<OidcIdToken>())
+  else if (auto const oidc = method.get_if<OidcIdToken>())
+  {
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN);
+    c_verif_method.value1 = duplicateString(oidc->provider_id);
+    c_verif_method.value2 = duplicateString(oidc->provider_display_name);
+  }
   else if (method.holds_alternative<VerificationKey>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
@@ -159,26 +164,26 @@ void cVerificationMethodFromVerificationMethod(
   {
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
-    c_verif_method.value = duplicateString(email->c_str());
+    c_verif_method.value1 = duplicateString(email->c_str());
   }
   else if (auto const phoneNumber = method.get_if<PhoneNumber>())
   {
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PHONE_NUMBER);
-    c_verif_method.value = duplicateString(phoneNumber->c_str());
+    c_verif_method.value1 = duplicateString(phoneNumber->c_str());
   }
   else if (auto const preverifiedEmail = method.get_if<PreverifiedEmail>())
   {
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL);
-    c_verif_method.value = duplicateString(preverifiedEmail->c_str());
+    c_verif_method.value1 = duplicateString(preverifiedEmail->c_str());
   }
   else if (auto const preverifiedPhoneNumber =
                method.get_if<PreverifiedPhoneNumber>())
   {
     c_verif_method.verification_method_type = static_cast<uint8_t>(
         TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER);
-    c_verif_method.value = duplicateString(preverifiedPhoneNumber->c_str());
+    c_verif_method.value1 = duplicateString(preverifiedPhoneNumber->c_str());
   }
   else
     throw AssertionError("unknown verification type");
@@ -736,11 +741,13 @@ void tanker_free_verification_method_list(
 {
   for (size_t i = 0; i < methodList->count; ++i)
   {
-    if (methodList->methods[i].verification_method_type ==
-            TANKER_VERIFICATION_METHOD_EMAIL ||
-        methodList->methods[i].verification_method_type ==
-            TANKER_VERIFICATION_METHOD_PHONE_NUMBER)
-      free(const_cast<char*>(methodList->methods[i].value));
+    auto method_type = methodList->methods[i].verification_method_type;
+    if (method_type == TANKER_VERIFICATION_METHOD_EMAIL ||
+        method_type == TANKER_VERIFICATION_METHOD_PHONE_NUMBER ||
+        method_type == TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN)
+      free(const_cast<char*>(methodList->methods[i].value1));
+    if (method_type == TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN)
+      free(const_cast<char*>(methodList->methods[i].value2));
   }
   delete[] methodList->methods;
   delete methodList;
@@ -750,11 +757,13 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
 {
   if (result->method)
   {
-    if (result->method->verification_method_type ==
-            TANKER_VERIFICATION_METHOD_EMAIL ||
-        result->method->verification_method_type ==
-            TANKER_VERIFICATION_METHOD_PHONE_NUMBER)
-      free(const_cast<char*>(result->method->value));
+    auto method_type = result->method->verification_method_type;
+    if (method_type == TANKER_VERIFICATION_METHOD_EMAIL ||
+        method_type == TANKER_VERIFICATION_METHOD_PHONE_NUMBER ||
+        method_type == TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN)
+      free(const_cast<char*>(result->method->value1));
+    if (method_type == TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN)
+      free(const_cast<char*>(result->method->value2));
     delete result->method;
   }
   delete result;
