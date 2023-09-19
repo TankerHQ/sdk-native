@@ -43,9 +43,7 @@ VerificationMethod VerificationMethod::from(Verification const& v)
           [](VerificationKey const&) -> VerificationMethod {
             return VerificationKey{};
           },
-          [](OidcIdToken const&) -> VerificationMethod {
-            return OidcIdToken{};
-          },
+          [](OidcIdToken const& t) -> VerificationMethod { return t; },
           [](ByEmail const& v) -> VerificationMethod { return v.email; },
           [](ByPhoneNumber const& v) -> VerificationMethod {
             return v.phoneNumber;
@@ -120,7 +118,13 @@ void from_json(nlohmann::json const& j,
   else if (value == "verificationKey")
     m = VerificationKey{};
   else if (value == "oidc_id_token")
-    m = OidcIdToken{};
+  {
+    m = OidcIdToken{
+        {},
+        j.value("provider_id", ""),
+        j.value("provider_display_name", ""),
+    };
+  }
   else if (value == "email")
   {
     auto const email = j.at("encrypted_email").get<std::string>();

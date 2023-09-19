@@ -90,7 +90,7 @@ SignedChallenge NonceManager::signOidcChallenge(
   };
 }
 
-Nonce extractNonce(OidcIdToken const& idToken)
+Nonce extractNonce(std::string const& idToken)
 {
   namespace ba = boost::algorithm;
   using b64 = mgs::base64url_nopad;

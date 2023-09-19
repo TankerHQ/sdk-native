@@ -431,6 +431,11 @@ void AsyncCore::nukeAndStop()
   _core.quickStop();
 }
 
+SdkInfo const& AsyncCore::sdkInfo()
+{
+  return this->_core.sdkInfo();
+}
+
 std::string const& AsyncCore::version()
 {
   return TANKER_VERSION;

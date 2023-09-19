@@ -86,6 +86,7 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
                            httpcode);
   auto const jresponse =
       nlohmann::json::parse(response.data.begin(), response.data.end());
-  TC_RETURN(jresponse.at("id_token").get<OidcIdToken>());
+  auto idToken = jresponse.at("id_token").get<std::string>();
+  TC_RETURN((OidcIdToken{idToken, {}, {}}));
 }
 }

@@ -153,6 +153,8 @@ public:
   static Crypto::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
 
+  SdkInfo const& sdkInfo();
+
   tc::cotask<void> stop();
   void quickStop();
   void nukeDatabase();

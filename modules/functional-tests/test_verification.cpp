@@ -21,6 +21,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/variant2/variant.hpp>
 
 #include "CheckDecrypt.hpp"
 #include "HttpHelpers.hpp"
@@ -35,6 +36,26 @@ using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
+std::string oidcProviderId(Tanker::Trustchain::TrustchainId const& appId,
+                           std::string const& issuer,
+                           std::string const& clientId)
+{
+  auto normalizedIssuer = issuer;
+  if (issuer == "accounts.google.com")
+    normalizedIssuer = "https://accounts.google.com";
+
+  auto hashedIssuer = Crypto::generichash(gsl::make_span(normalizedIssuer).as_span<std::uint8_t const>());
+  auto hashedClientId = Crypto::generichash(gsl::make_span(clientId).as_span<std::uint8_t const>());
+
+  std::vector<std::uint8_t> toHash;
+  toHash.insert(toHash.end(), appId.begin(), appId.end());
+  toHash.insert(toHash.end(), hashedIssuer.begin(), hashedIssuer.end());
+  toHash.insert(toHash.end(), hashedClientId.begin(), hashedClientId.end());
+
+  return mgs::base64url_nopad::encode(Crypto::generichash(
+           gsl::make_span(toHash).as_span<std::uint8_t const>()));
+}
+
 void checkVerificationMethods(
     std::vector<Verification::VerificationMethod> actual,
     std::vector<Verification::VerificationMethod> expected)
@@ -53,9 +74,20 @@ tc::cotask<Tanker::Status> expectVerification(
   REQUIRE(TC_AWAIT(session->start(identity)) ==
           Status::IdentityVerificationNeeded);
   TC_AWAIT(session->verifyIdentity(verification));
-  checkVerificationMethods(
-      TC_AWAIT(session->getVerificationMethods()),
-      {Verification::VerificationMethod::from(verification)});
+
+  auto expected = Verification::VerificationMethod::from(verification);
+  if (auto const oidc = boost::variant2::get_if<OidcIdToken>(&verification))
+  {
+    auto const& oidcConf = TestConstants::oidcConfig();
+    expected = OidcIdToken{
+        {},
+        oidcProviderId(session->sdkInfo().trustchainId, oidcConf.issuer, oidcConf.clientId),
+        oidcConf.displayName,
+    };
+  }
+
+  checkVerificationMethods(TC_AWAIT(session->getVerificationMethods()),
+                           {expected});
   TC_RETURN(session->status());
 }
 
@@ -65,11 +97,11 @@ OidcIdToken alterOidcTokenSignature(OidcIdToken const& idToken)
   using b64 = mgs::base64url_nopad;
 
   std::vector<std::string> res;
-  auto itSig = ba::split(res, idToken, ba::is_any_of(".")).rbegin();
+  auto itSig = ba::split(res, idToken.token, ba::is_any_of(".")).rbegin();
   auto alterSig = b64::decode(*itSig);
   ++alterSig[5];
   *itSig = b64::encode(alterSig);
-  return OidcIdToken{ba::join(res, ".")};
+  return OidcIdToken{ba::join(res, "."), {}, {}};
 }
 }
 
@@ -126,7 +158,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
   SECTION("registerIdentity throws if OidcIdToken is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->registerIdentity(OidcIdToken{""})),
+        TC_AWAIT(core1->registerIdentity(OidcIdToken{"", {}, {}})),
         Errc::InvalidArgument);
     REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
@@ -1071,9 +1103,16 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
         testNonce = TC_AWAIT(martinePhone->createOidcNonce());
         martinePhone->setOidcTestNonce(testNonce);
         REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
+
+        auto const& oidcConf = TestConstants::oidcConfig();
+        auto expectedOidc = OidcIdToken{
+            {},
+            oidcProviderId(martinePhone->sdkInfo().trustchainId, oidcConf.issuer, oidcConf.clientId),
+            oidcConf.displayName,
+        };
         REQUIRE_NOTHROW(checkVerificationMethods(
             TC_AWAIT(martinePhone->getVerificationMethods()),
-            {Passphrase{}, OidcIdToken{}}));
+            {Passphrase{}, expectedOidc}));
       }
       SECTION("fails to attach a provisional identity using OIDC")
       {
@@ -1101,7 +1140,28 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
     // doctolib/doctolib/test/fixtures/configuration/profile/*.json
     // Field name where the tokens are `credentials.id_token`
     auto const pscIdToken = OidcIdToken{
-        "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJKRlRBM1llVVdQbERCTEJfeU5qWUs0bWZJcTdhYXBBS21ieVdyczRPZ0RnIn0.eyJleHAiOjE2NjU1Nzk5NjgsImlhdCI6MTY2NTU3OTg0OCwiYXV0aF90aW1lIjoxNjY1NTc5NDkyLCJqdGkiOiI4NTI4MzIwNi01ZmQyLTQ0YjQtYWI4NS0yZWI1ODA2ZWIwMzQiLCJpc3MiOiJodHRwczovL2F1dGguYmFzLnBzYy5lc2FudGUuZ291di5mci9hdXRoL3JlYWxtcy9lc2FudGUtd2FsbGV0IiwiYXVkIjoiZG9jdG9saWItZGV2Iiwic3ViIjoiZjo1NTBkYzFjOC1kOTdiLTRiMWUtYWM4Yy04ZWI0NDcxY2Y5ZGQ6QU5TMjAyMjAyMTUxODM5MzIiLCJ0eXAiOiJJRCIsImF6cCI6ImRvY3RvbGliLWRldiIsIm5vbmNlIjoibzVWUHh0WlY0bl8wRXBxR2h0UGduYXd6T3lRY1VQWmk4b1RjNjJWajNkSSIsInNlc3Npb25fc3RhdGUiOiIwNDRiOWMzNS0xZDhmLTQ5MjUtOGFlOC0yMmNmNTg1ZTA3OWMiLCJhdF9oYXNoIjoibVV0bkp2V3d0VHRQMkFDSDR2RElBUSIsInNpZCI6IjA0NGI5YzM1LTFkOGYtNDkyNS04YWU4LTIyY2Y1ODVlMDc5YyIsImF1dGhNb2RlIjoiTU9CSUxFIiwiYWNyIjoiZWlkYXMxIiwiU3ViamVjdE5hbWVJRCI6IkFOUzIwMjIwMjE1MTgzOTMyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiQU5TMjAyMjAyMTUxODM5MzIiLCJnaXZlbl9uYW1lIjoiR3VpbGxhdW1lIiwiZmFtaWx5X25hbWUiOiJGYXlhcmQifQ.l272gvwOt5aVXiG4F7ZCpQVqWByQ_DvQpuJPMR50TVqtAy76kdngHKgiNEg7CIe6UkMGsqcXMvrm0ihROTp3OWpwnaS2LityoE_Kv32HMNgHazsOS19snlBz8TbV3MkpW5JFkdjLVdFVVqxDqkZzozKxpqIvbumPQBl100bEtwakMw4em-8Hk69wi6jQNsVADRSslpHVSyYhHXwMX8l-yhR965nyxIETVlIHbwKvpyy05a3B0GmmCReZT4UnCPA4eqFUw5VL9GwKXl0Ok46ZKMp742qW6oytC7V4KIc01ErcoQ_D4EwM6rBWgZcqaDxUazcCTlZUEAlS7wXXw6UXWQ"};
+        "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJKRlRBM1llVVdQbERCTE"
+        "JfeU5qWUs0bWZJcTdhYXBBS21ieVdyczRPZ0RnIn0."
+        "eyJleHAiOjE2NjU1Nzk5NjgsImlhdCI6MTY2NTU3OTg0OCwiYXV0aF90aW1lIjoxNjY1NT"
+        "c5NDkyLCJqdGkiOiI4NTI4MzIwNi01ZmQyLTQ0YjQtYWI4NS0yZWI1ODA2ZWIwMzQiLCJp"
+        "c3MiOiJodHRwczovL2F1dGguYmFzLnBzYy5lc2FudGUuZ291di5mci9hdXRoL3JlYWxtcy"
+        "9lc2FudGUtd2FsbGV0IiwiYXVkIjoiZG9jdG9saWItZGV2Iiwic3ViIjoiZjo1NTBkYzFj"
+        "OC1kOTdiLTRiMWUtYWM4Yy04ZWI0NDcxY2Y5ZGQ6QU5TMjAyMjAyMTUxODM5MzIiLCJ0eX"
+        "AiOiJJRCIsImF6cCI6ImRvY3RvbGliLWRldiIsIm5vbmNlIjoibzVWUHh0WlY0bl8wRXBx"
+        "R2h0UGduYXd6T3lRY1VQWmk4b1RjNjJWajNkSSIsInNlc3Npb25fc3RhdGUiOiIwNDRiOW"
+        "MzNS0xZDhmLTQ5MjUtOGFlOC0yMmNmNTg1ZTA3OWMiLCJhdF9oYXNoIjoibVV0bkp2V3d0"
+        "VHRQMkFDSDR2RElBUSIsInNpZCI6IjA0NGI5YzM1LTFkOGYtNDkyNS04YWU4LTIyY2Y1OD"
+        "VlMDc5YyIsImF1dGhNb2RlIjoiTU9CSUxFIiwiYWNyIjoiZWlkYXMxIiwiU3ViamVjdE5h"
+        "bWVJRCI6IkFOUzIwMjIwMjE1MTgzOTMyIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiQU5TMj"
+        "AyMjAyMTUxODM5MzIiLCJnaXZlbl9uYW1lIjoiR3VpbGxhdW1lIiwiZmFtaWx5X25hbWUi"
+        "OiJGYXlhcmQifQ.l272gvwOt5aVXiG4F7ZCpQVqWByQ_"
+        "DvQpuJPMR50TVqtAy76kdngHKgiNEg7CIe6UkMGsqcXMvrm0ihROTp3OWpwnaS2LityoE_"
+        "Kv32HMNgHazsOS19snlBz8TbV3MkpW5JFkdjLVdFVVqxDqkZzozKxpqIvbumPQBl100bEt"
+        "wakMw4em-8Hk69wi6jQNsVADRSslpHVSyYhHXwMX8l-"
+        "yhR965nyxIETVlIHbwKvpyy05a3B0GmmCReZT4UnCPA4eqFUw5VL9GwKXl0Ok46ZKMp742"
+        "qW6oytC7V4KIc01ErcoQ_D4EwM6rBWgZcqaDxUazcCTlZUEAlS7wXXw6UXWQ",
+        {},
+        {}};
 
     SECTION("rejects expired token on pro-sante-bas")
     {

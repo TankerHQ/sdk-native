@@ -173,7 +173,7 @@ RequestWithVerif makeRequestWithVerif(
   namespace bv2 = boost::variant2;
   if (auto const v = bv2::get_if<OidcIdToken>(&verification))
   {
-    checkNotEmpty(v->string(), "oidcIdToken");
+    checkNotEmpty(v->token, "oidcIdToken");
     return {*v, withTokenNonce};
   }
 
@@ -281,9 +281,9 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
           [&](Trustchain::HashedE2ePassphrase const& p) {
             j["hashed_e2e_passphrase"] = p;
           },
-          [&](OidcIdToken const& t) { j["oidc_id_token"] = t; },
+          [&](OidcIdToken const& t) { j["oidc_id_token"] = t.token; },
           [&](Verification::OidcIdTokenWithChallenge const& t) {
-            j["oidc_id_token"] = t.oidcIdToken;
+            j["oidc_id_token"] = t.oidcIdToken.token;
             j["oidc_challenge"] = t.oidcChallenge.challenge;
             j["oidc_challenge_signature"] = t.oidcChallenge.signature;
             if (t.oidcTestNonce)
