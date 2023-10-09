@@ -158,8 +158,15 @@ void commonStreamTests()
 
     EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
 
+    // This should be the AWAIT() macro, but that breaks Visual,
+    // so we have to explicitly give it the tc::cotask type here
     auto decryptor =
-        AWAIT(DecStream::create(encryptor, makeKeyFinder(encryptor)));
+        tc::async_resumable(
+        [&]() -> tc::cotask<DecStream> {
+              TC_RETURN(TC_AWAIT(
+                  DecStream::create(encryptor, makeKeyFinder(encryptor))));
+            })
+            .get();
 
     auto const decrypted = AWAIT(readAllStream(decryptor));
 
@@ -323,10 +330,18 @@ void v4v8CommonStreamTests()
 
     swapv4v8SecondChunk(encrypted1, encrypted2);
 
-    auto decryptor1 = AWAIT(DecStream::create(
-        bufferViewToInputSource(encrypted1), makeKeyFinder(encryptor1)));
-    auto decryptor2 = AWAIT(DecStream::create(
-        bufferViewToInputSource(encrypted2), makeKeyFinder(encryptor2)));
+    // This should be the AWAIT() macro, but that breaks Visual,
+    // so we have to explicitly give it the tc::cotask type here
+    auto decryptor1 =
+        tc::async_resumable([&]() -> tc::cotask<DecStream> {
+          TC_RETURN(TC_AWAIT(DecStream::create(
+              bufferViewToInputSource(encrypted1), makeKeyFinder(encryptor1))));
+        }).get();
+    auto decryptor2 =
+        tc::async_resumable([&]() -> tc::cotask<DecStream> {
+          TC_RETURN(TC_AWAIT(DecStream::create(
+              bufferViewToInputSource(encrypted2), makeKeyFinder(encryptor2))));
+        }).get();
 
     auto const decrypted1 = AWAIT(readAllStream(decryptor1));
     auto const decrypted2 = AWAIT(readAllStream(decryptor2));
@@ -437,10 +452,18 @@ void v11StreamTests()
 
     swapv11SecondChunk(encrypted1, encrypted2);
 
-    auto decryptor1 = AWAIT(DecStream::create(
-        bufferViewToInputSource(encrypted1), makeKeyFinder(encryptor1)));
-    auto decryptor2 = AWAIT(DecStream::create(
-        bufferViewToInputSource(encrypted2), makeKeyFinder(encryptor2)));
+    // This should be the AWAIT() macro, but that breaks Visual,
+    // so we have to explicitly give it the tc::cotask type here
+    auto decryptor1 =
+        tc::async_resumable([&]() -> tc::cotask<DecStream> {
+          TC_RETURN(TC_AWAIT(DecStream::create(
+              bufferViewToInputSource(encrypted1), makeKeyFinder(encryptor1))));
+        }).get();
+    auto decryptor2 =
+        tc::async_resumable([&]() -> tc::cotask<DecStream> {
+          TC_RETURN(TC_AWAIT(DecStream::create(
+              bufferViewToInputSource(encrypted2), makeKeyFinder(encryptor2))));
+        }).get();
 
     auto const decrypted1 = AWAIT(readAllStream(decryptor1));
     auto const decrypted2 = AWAIT(readAllStream(decryptor2));
