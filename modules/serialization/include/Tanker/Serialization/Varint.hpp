@@ -10,6 +10,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstdint>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
