@@ -5,6 +5,8 @@
 
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/async_wait.hpp>
+#include <tconcurrent/future.hpp>
+#include <tconcurrent/promise.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
 #include <boost/asio.hpp>
@@ -263,6 +265,7 @@ void multi::event_cb(curl_socket_t sock,
 }
 
 // Called by asio when our timeout expires
+// .. also called by curl directly (so we cannot call/recurse into curl here!)
 void multi::timer_cb()
 {
   scope_lock l{_mutex};
@@ -290,17 +293,17 @@ int multi::multi_timer_cb(CURLM* multi, long timeout_ms)
   if (_timer_future.is_valid())
     _timer_future.request_cancel();
 
-  if (timeout_ms > 0)
+  if (timeout_ms >= 0)
   {
+    // Always wait at least 1ms, because we cannot call curl back
+    // from a curl callback. The timer will force the timer_cb()
+    // to be called from asion, wen the timer resolves
+    auto safe_timeout_ms = std::max(timeout_ms, 1L);
+
     // update timer
-    _timer_future = tc::async_wait(std::chrono::milliseconds(timeout_ms))
+    _timer_future = tc::async_wait(std::chrono::milliseconds(safe_timeout_ms))
                         .and_then(tconcurrent::get_synchronous_executor(),
                                   [this](tc::tvoid) { timer_cb(); });
-  }
-  else
-  {
-    // call timeout function immediately
-    timer_cb();
   }
 
   return 0;
