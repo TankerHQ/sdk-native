@@ -98,11 +98,11 @@ class TankerConan(ConanFile):
             self.requires("sqlpp11-connector-sqlite3/0.30-r7", private=private)
         self.requires("mgs/0.2.1-r1", private=private)
         self.requires("enum-flags/0.1a-r3", private=private)
-        self.requires("range-v3/0.11.0-r4", private=private)
+        self.requires("range-v3/0.12.0-r1", private=private)
         self.requires("fmt/7.1.3-r3", private=private)
         self.requires("gsl-lite/0.37.0-r1", private=private)
         self.requires("nlohmann_json/3.10.5-r1", private=private)
-        self.requires("libsodium/1.0.18-r2", private=private)
+        self.requires("libsodium/1.0.19-r1", private=private)
         self.requires("tconcurrent/0.40.0-r7", private=private)
         self.requires("date/3.0.0-r5", private=private)
         # catch2 is needed to export datastore tests

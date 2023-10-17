@@ -52,7 +52,7 @@ TEST_CASE("makeRequestWithVerifChecks(Verification)")
 
   SECTION("accepts verifications OidcIdToken")
   {
-    VVerification const verification = OidcIdToken{"not empty"};
+    VVerification const verification = OidcIdToken{"not empty", {}, {}};
     CHECK_NOTHROW(makeRequestWithVerif(
         verification, userSecret, std::nullopt, std::nullopt));
   }

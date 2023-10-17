@@ -295,7 +295,7 @@ tc::cotask<void> Session::transparentSessionShareImpl(
   if (std::find(users.begin(), users.end(), selfIdentity) != users.end())
     TC_AWAIT(storage().resourceKeyStore.putKey(session.id, session.key));
 
-  auto const& localUser = TC_AWAIT(accessors().localUserAccessor.pull());
+  auto const localUser = TC_AWAIT(accessors().localUserAccessor.pull());
   TC_AWAIT(Share::share(accessors().userAccessor,
                         accessors().groupAccessor,
                         trustchainId(),

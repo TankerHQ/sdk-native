@@ -80,4 +80,4 @@ private:
   std::vector<std::string> _testNames{};
 };
 
-CATCH_REGISTER_REPORTER("test-names", TestNameReporter);
+CATCH_REGISTER_REPORTER("test-names", TestNameReporter)

@@ -134,7 +134,7 @@ tc::future<void> AsyncCore::destroy()
 
 tc::future<Status> AsyncCore::start(std::string const& identity)
 {
-  return runResumable([=]() -> tc::cotask<Status> {
+  return runResumable([=, this]() -> tc::cotask<Status> {
     TC_RETURN(TC_AWAIT(this->_core.start(identity)));
   });
 }
@@ -143,7 +143,7 @@ tc::future<void> AsyncCore::enrollUser(
     std::string const& identity,
     std::vector<Verification::Verification> const& verifications)
 {
-  return runResumable([=]() -> tc::cotask<void> {
+  return runResumable([=, this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.enrollUser(identity, verifications));
   });
 }
@@ -152,7 +152,7 @@ tc::future<std::optional<std::string>> AsyncCore::registerIdentity(
     Verification::Verification const& verification,
     Core::VerifyWithToken withToken)
 {
-  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+  return runResumable([=, this]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(this->_core.registerIdentity(verification, withToken)));
   });
 }
@@ -161,7 +161,7 @@ tc::future<std::optional<std::string>> AsyncCore::verifyIdentity(
     Verification::Verification const& verification,
     Core::VerifyWithToken withToken)
 {
-  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+  return runResumable([=, this]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(this->_core.verifyIdentity(verification, withToken)));
   });
 }
@@ -194,14 +194,14 @@ tc::future<void> AsyncCore::stop()
 
 tc::future<Oidc::Nonce> AsyncCore::createOidcNonce()
 {
-  return runResumable([=]() -> tc::cotask<Oidc::Nonce> {
+  return runResumable([=, this]() -> tc::cotask<Oidc::Nonce> {
     TC_RETURN(TC_AWAIT(this->_core.createOidcNonce()));
   });
 }
 
 tc::future<void> AsyncCore::setOidcTestNonce(Oidc::Nonce const& nonce)
 {
-  return tc::sync([=]() { this->_core.setOidcTestNonce(nonce); });
+  return tc::sync([=, this]() { this->_core.setOidcTestNonce(nonce); });
 }
 
 Tanker::Status AsyncCore::status() const
@@ -217,7 +217,7 @@ tc::future<void> AsyncCore::encrypt(
     Core::ShareWithSelf shareWithSelf,
     std::optional<uint32_t> paddingStep)
 {
-  return runResumable([=]() -> tc::cotask<void> {
+  return runResumable([=, this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.encrypt(encryptedData,
                                  clearData,
                                  publicIdentities,
@@ -230,7 +230,7 @@ tc::future<void> AsyncCore::encrypt(
 tc::future<uint64_t> AsyncCore::decrypt(gsl::span<uint8_t> decryptedData,
                                         gsl::span<uint8_t const> encryptedData)
 {
-  return runResumable([=]() -> tc::cotask<uint64_t> {
+  return runResumable([=, this]() -> tc::cotask<uint64_t> {
     TC_RETURN(TC_AWAIT(this->_core.decrypt(decryptedData, encryptedData)));
   });
 }
@@ -242,7 +242,7 @@ tc::future<std::vector<uint8_t>> AsyncCore::encrypt(
     Core::ShareWithSelf shareWithSelf,
     std::optional<uint32_t> paddingStep)
 {
-  return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
+  return runResumable([=, this]() -> tc::cotask<std::vector<uint8_t>> {
     TC_RETURN(TC_AWAIT(_core.encrypt(
         clearData, publicIdentities, groupIds, shareWithSelf, paddingStep)));
   });
@@ -251,7 +251,7 @@ tc::future<std::vector<uint8_t>> AsyncCore::encrypt(
 tc::future<std::vector<uint8_t>> AsyncCore::decrypt(
     gsl::span<uint8_t const> encryptedData)
 {
-  return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
+  return runResumable([=, this]() -> tc::cotask<std::vector<uint8_t>> {
     std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
     auto const clearSize =
         TC_AWAIT(_core.decrypt(decryptedData, encryptedData));
@@ -265,7 +265,7 @@ tc::future<void> AsyncCore::share(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  return runResumable([=]() -> tc::cotask<void> {
+  return runResumable([=, this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.share(resourceId, publicIdentities, groupIds));
   });
 }
@@ -273,7 +273,7 @@ tc::future<void> AsyncCore::share(
 tc::future<SGroupId> AsyncCore::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
-  return runResumable([=]() -> tc::cotask<SGroupId> {
+  return runResumable([=, this]() -> tc::cotask<SGroupId> {
     TC_RETURN(TC_AWAIT(this->_core.createGroup(members)));
   });
 }
@@ -283,7 +283,7 @@ tc::future<void> AsyncCore::updateGroupMembers(
     std::vector<SPublicIdentity> const& usersToAdd,
     std::vector<SPublicIdentity> const& usersToRemove)
 {
-  return runResumable([=]() -> tc::cotask<void> {
+  return runResumable([=, this]() -> tc::cotask<void> {
     TC_AWAIT(
         this->_core.updateGroupMembers(groupId, usersToAdd, usersToRemove));
   });
@@ -301,7 +301,7 @@ tc::future<std::optional<std::string>> AsyncCore::setVerificationMethod(
     Core::VerifyWithToken withToken,
     Core::AllowE2eMethodSwitch allowE2eSwitch)
 {
-  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+  return runResumable([=, this]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(
         this->_core.setVerificationMethod(method, withToken, allowE2eSwitch)));
   });
@@ -311,7 +311,7 @@ tc::future<std::vector<Verification::VerificationMethod>>
 AsyncCore::getVerificationMethods()
 {
   return runResumable(
-      [=]() -> tc::cotask<std::vector<Verification::VerificationMethod>> {
+      [=, this]() -> tc::cotask<std::vector<Verification::VerificationMethod>> {
         TC_RETURN(TC_AWAIT(this->_core.getVerificationMethods()));
       });
 }
@@ -319,7 +319,7 @@ AsyncCore::getVerificationMethods()
 tc::future<AttachResult> AsyncCore::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  return runResumable([=]() -> tc::cotask<AttachResult> {
+  return runResumable([=, this]() -> tc::cotask<AttachResult> {
     TC_RETURN(TC_AWAIT(this->_core.attachProvisionalIdentity(sidentity)));
   });
 }
@@ -327,7 +327,7 @@ tc::future<AttachResult> AsyncCore::attachProvisionalIdentity(
 tc::future<void> AsyncCore::verifyProvisionalIdentity(
     Verification::Verification const& verification)
 {
-  return runResumable([=]() -> tc::cotask<void> {
+  return runResumable([=, this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.verifyProvisionalIdentity(verification));
   });
 }
@@ -378,7 +378,7 @@ AsyncCore::makeEncryptionStream(Streams::InputSource cb,
                                 std::optional<uint32_t> paddingStep)
 {
   return runResumable(
-      [=, cb = std::move(cb)]()
+      [=, this, cb = std::move(cb)]()
           -> tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> {
         TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
             std::move(cb), suserIds, sgroupIds, shareWithSelf, paddingStep)));
@@ -401,7 +401,7 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
     Core::ShareWithSelf shareWithSelf,
     std::optional<uint32_t> paddingStep)
 {
-  return runResumable([=]() -> tc::cotask<EncryptionSession> {
+  return runResumable([=, this]() -> tc::cotask<EncryptionSession> {
     TC_RETURN(TC_AWAIT(this->_core.makeEncryptionSession(
         publicIdentities, groupIds, shareWithSelf, paddingStep)));
   });

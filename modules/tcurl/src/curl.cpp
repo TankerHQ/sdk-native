@@ -26,6 +26,7 @@ struct multi::async_socket
   uint8_t wanted_action = 0;
   uint8_t current_action = 0;
   boost::asio::ip::tcp::socket socket;
+  curl_sockaddr sockaddr;
 
   explicit async_socket(boost::asio::io_context& io_context)
     : socket(io_context)
@@ -45,6 +46,11 @@ curl_socket_t multi::opensocket_c(void* clientp,
 int multi::close_socket_c(void* clientp, curl_socket_t item)
 {
   return static_cast<multi*>(clientp)->close_socket(item);
+}
+
+int multi::sockopt_c(void* clientp, curl_socket_t curlfd, curlsocktype purpose)
+{
+  return static_cast<multi*>(clientp)->sockopt_cb(curlfd);
 }
 
 int multi::multi_timer_cb_c(CURLM* cmulti, long timeout_ms, void* g)
@@ -125,6 +131,8 @@ void multi::process(std::shared_ptr<request> req)
   curl_easy_setopt(
       req->_easy.get(), CURLOPT_CLOSESOCKETFUNCTION, &multi::close_socket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_CLOSESOCKETDATA, this);
+  curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTFUNCTION, &multi::sockopt_c);
+  curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTDATA, this);
 
   auto rc = curl_multi_add_handle(_multi.get(), req->_easy.get());
   if (CURLM_OK != rc)
@@ -187,6 +195,8 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
     boost::system::error_code ec;
     asocket->socket.open(boost::asio::ip::tcp::v4(), ec);
 
+    asocket->sockaddr = *address;
+
     if (ec)
     {
       throw std::runtime_error(std::string("couldn't open socket: ") + ec.message());
@@ -210,6 +220,43 @@ int multi::close_socket(curl_socket_t item)
 
   return 0;
 }
+
+// On windows, we need to do our own blocking connect, otherwise we never get
+// connection refused errors and have to wait for a full connect timeout
+#ifdef _WIN32
+int multi::sockopt_cb(curl_socket_t curlfd)
+{
+  auto it = _sockets.find(curlfd);
+  if (it == _sockets.end())
+  {
+    std::cerr << "sockopt_cb: unknown socket" << std::endl;
+    // we don't know this socket, something went terribly wrong
+    return CURL_SOCKOPT_ERROR;
+  }
+  auto asocket = it->second.get();
+
+  sockaddr_in* sockaddr = (sockaddr_in*)&asocket->sockaddr.addr;
+  uint32_t ip_addr = ntohl(sockaddr->sin_addr.s_addr);
+  boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4(ip_addr),
+                                          ntohs(sockaddr->sin_port));
+
+  boost::system::error_code ec;
+  asocket->socket.connect(endpoint, ec);
+
+  if (ec)
+  {
+    std::cerr << "couldn't connect socket: " << ec.message() << std::endl;
+    return CURL_SOCKOPT_ERROR;
+  }
+
+  return CURL_SOCKOPT_ALREADY_CONNECTED;
+}
+#else
+int multi::sockopt_cb(curl_socket_t)
+{
+  return CURL_SOCKOPT_OK;
+}
+#endif
 
 // Called by asio when there is an action on a socket
 void multi::event_cb(curl_socket_t sock,
