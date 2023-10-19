@@ -707,7 +707,7 @@ TEST_CASE_METHOD(TrustchainFixture, "It fails to share without the key")
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
       TC_AWAIT(aliceSession->share({simple}, {bob.spublicIdentity()}, {})),
       Errc::InvalidArgument,
-      "can't find keys");
+      simple.c_str());
 
   // Composite resource ID
   auto composite = SResourceId{
@@ -717,7 +717,7 @@ TEST_CASE_METHOD(TrustchainFixture, "It fails to share without the key")
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
       TC_AWAIT(aliceSession->share({composite}, {bob.spublicIdentity()}, {})),
       Errc::InvalidArgument,
-      "can't find keys");
+      composite.c_str());
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Sharing a transparent session")
