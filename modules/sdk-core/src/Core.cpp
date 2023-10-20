@@ -54,12 +54,16 @@
 #include <mgs/base64url.hpp>
 
 #include <range/v3/algorithm/count_if.hpp>
+#include <range/v3/view/filter.hpp>
 #include <range/v3/view/transform.hpp>
 
 #include <stdexcept>
 #include <utility>
 
 using namespace Tanker::Errors;
+
+using boost::container::flat_map;
+using boost::container::flat_set;
 
 TLOG_CATEGORY(Core);
 
@@ -104,7 +108,8 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
   }
 
   auto const testNonce = nonceManager.testNonce();
-  auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken.token);
+  auto const nonce =
+      testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken.token);
 
   // Only checking nonce format
   (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(
@@ -767,7 +772,7 @@ tc::cotask<void> Core::share(
       sessionIds.push_back(rid->sessionId());
   }
   auto const localUser = _session->accessors().localUserAccessor.get();
-  auto resourceKeys = TC_AWAIT(
+  std::vector<ResourceKeys::KeyResult> resourceKeys = TC_AWAIT(
       _session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
 
   // If we fail to find the session key for some composites resource IDs, we may
@@ -782,12 +787,35 @@ tc::cotask<void> Core::share(
       if (sessionKeysMap.find(rid->sessionId()) == sessionKeysMap.end())
         resourcesWithoutSession.push_back(rid->individualResourceId());
   }
-  auto individualResourceKeys =
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(
-          resourcesWithoutSession));
-  resourceKeys.insert(resourceKeys.end(),
-                      individualResourceKeys.begin(),
-                      individualResourceKeys.end());
+  flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>
+      individualResourceKeys =
+          TC_AWAIT(_session->accessors().resourceKeyAccessor.tryFindKeys(
+              resourcesWithoutSession));
+
+  if (individualResourceKeys.size() != resourcesWithoutSession.size())
+  {
+    flat_set<Crypto::SimpleResourceId> missingIndividualIDs;
+    std::copy_if(
+        resourcesWithoutSession.begin(),
+        resourcesWithoutSession.end(),
+        std::inserter(missingIndividualIDs, missingIndividualIDs.end()),
+        [&](auto const& k) { return !individualResourceKeys.contains(k); });
+
+    auto missing =
+        resourceIds | ranges::views::filter([&](const auto& ridVariant) {
+          return missingIndividualIDs.contains(
+              ridVariant.individualResourceId());
+        }) |
+        ranges::views::transform([](auto const& ridVariant) {
+          return mgs::base64::encode(
+              boost::variant2::get<Crypto::CompositeResourceId>(ridVariant));
+        });
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "can't find keys for resource IDs: {:s}",
+                   fmt::join(missing, ", "));
+  }
+  for (auto const& [id, key] : individualResourceKeys)
+    resourceKeys.push_back({key, id});
 
   // Derive keys for composite resource IDs for which we know the session key
   for (auto const& ridVariant : resourceIds)
