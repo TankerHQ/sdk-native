@@ -287,12 +287,6 @@ tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
   TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
-{
-  auto req = makeRequest(HttpMethod::Post, target);
-  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
-}
-
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
@@ -311,6 +305,19 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req = makeRequest(HttpMethod::Delete, target);
   TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
+}
+
+tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target)
+{
+  auto req = makeRequest(HttpMethod::Get, target);
+  TC_RETURN(TC_AWAIT(fetch(std::move(req))));
+}
+
+tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target,
+                                                   nlohmann::json data)
+{
+  auto req = makeRequest(HttpMethod::Post, target, std::move(data));
+  TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 
 HttpRequest HttpClient::makeRequest(HttpMethod method,
@@ -339,6 +346,16 @@ HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
 tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 {
   TC_AWAIT(_authenticating);
+  if (req.authorization.empty())
+  {
+    // No access token yet, authenticate before failing the first API call.
+    //
+    // Occurs in offline mode on the first authenticated call. This is also
+    // the recovery process when this API call occurs after a previous
+    // re-authentication failure (because authenticate() clears "_accessToken")
+    TC_AWAIT(authenticate());
+    req.authorization = _accessToken;
+  }
 
   auto response = TC_AWAIT(fetch(req));
   if (!response && response.error().ec == AppdErrc::InvalidToken)
@@ -350,9 +367,7 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
     // 1. Another API call is already trying to re-authenticate
     if (!_authenticating.is_ready())
       TC_AWAIT(_authenticating);
-    // 2. This is the first API call to attempt a re-authentication. This
-    //    is also the recovery process when this API call occurs after a
-    //    previous re-authentication failure (i.e. access token is "")
+    // 2. First re-authentication attempt after access token expiration
     else if (_accessToken == req.authorization)
       TC_AWAIT(authenticate());
     // (else)

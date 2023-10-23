@@ -22,7 +22,7 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
     Trustchain::UserId const& userId)
 {
   using namespace fmt::literals;
-  auto res = TC_AWAIT(_httpClient->asyncGet(_httpClient->makeUrl(
+  auto res = TC_AWAIT(_httpClient->asyncUnauthGet(_httpClient->makeUrl(
       fmt::format("users/{userId:#S}", "userId"_a = userId))));
   if (res.has_error() && res.error().ec == Errors::AppdErrc::UserNotFound)
     TC_RETURN(std::nullopt);
@@ -45,7 +45,7 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
     Trustchain::UserId const& userId, RequestWithVerif const& request)
 {
   using namespace fmt::literals;
-  auto const res = TC_AWAIT(_httpClient->asyncPost(
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(
       _httpClient->makeUrl(fmt::format("users/{userId:#S}/verification-key",
                                        "userId"_a = userId)),
       {{"verification", request}}));
@@ -59,7 +59,7 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchE2eVerificationKey(
     Trustchain::UserId const& userId, RequestWithVerif const& request)
 {
   using namespace fmt::literals;
-  auto const res = TC_AWAIT(_httpClient->asyncPost(
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(
       _httpClient->makeUrl(fmt::format("users/{userId:#S}/verification-key",
                                        "userId"_a = userId)),
       {{"verification", request}}));
@@ -97,7 +97,7 @@ Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
 {
   using namespace fmt::literals;
   auto const res =
-      TC_AWAIT(_httpClient->asyncGet(_httpClient->makeUrl(fmt::format(
+      TC_AWAIT(_httpClient->asyncUnauthGet(_httpClient->makeUrl(fmt::format(
           "users/{userId:#S}/verification-methods", "userId"_a = userId))));
   auto value =
       res.value()
@@ -113,7 +113,7 @@ tc::cotask<Oidc::Challenge> Requester::getOidcChallenge(
 {
   using namespace fmt::literals;
   nlohmann::json body{{"nonce", nonce}};
-  auto const res = TC_AWAIT(_httpClient->asyncPost(
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(
       _httpClient->makeUrl(fmt::format("users/{userId:#S}/oidc/challenges",
                                        "userId"_a = userId)),
       std::move(body)));
@@ -158,7 +158,7 @@ tc::cotask<void> Requester::createUser(
   auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
 
-  auto const res = TC_AWAIT(_httpClient->asyncPost(target, std::move(body)));
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }
@@ -186,7 +186,7 @@ tc::cotask<void> Requester::createUserE2e(
   auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
 
-  auto const res = TC_AWAIT(_httpClient->asyncPost(target, std::move(body)));
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }
@@ -209,7 +209,7 @@ tc::cotask<void> Requester::enrollUser(
   auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}/enroll", fmt::arg("userId", userId)));
 
-  TC_AWAIT(_httpClient->asyncPost(target, std::move(body))).value();
+  TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body))).value();
 }
 
 tc::cotask<void> Requester::createDevice(
@@ -218,7 +218,7 @@ tc::cotask<void> Requester::createDevice(
   nlohmann::json body{{"device_creation", mgs::base64::encode(deviceCreation)}};
 
   auto const res = TC_AWAIT(
-      _httpClient->asyncPost(_httpClient->makeUrl("devices"), std::move(body)));
+      _httpClient->asyncUnauthPost(_httpClient->makeUrl("devices"), std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }
