@@ -58,10 +58,13 @@ public:
   tc::cotask<HttpResult> asyncGet(std::string_view target);
   tc::cotask<HttpResult> asyncPost(std::string_view target,
                                    nlohmann::json data);
-  tc::cotask<HttpResult> asyncPost(std::string_view target);
   tc::cotask<HttpResult> asyncPatch(std::string_view target,
                                     nlohmann::json data);
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
+
+  tc::cotask<HttpResult> asyncUnauthGet(std::string_view target);
+  tc::cotask<HttpResult> asyncUnauthPost(std::string_view target,
+                                         nlohmann::json data);
 
   std::string makeUrl(std::string_view target) const;
   std::string makeUrl(std::string_view target,

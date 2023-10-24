@@ -133,7 +133,7 @@ tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
   auto url = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}/encryption-key", "userId"_a = userId),
       query);
-  auto const res = TC_AWAIT(_httpClient->asyncGet(url)).value();
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthGet(url)).value();
   TC_RETURN((GetEncryptionKeyResult{
       res.at("encrypted_user_private_encryption_key")
           .get<Crypto::SealedPrivateEncryptionKey>(),
