@@ -95,7 +95,7 @@ std::string createInstanceId()
 
 tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
     Verification::IRequester& requester,
-    Oidc::NonceManager const& nonceManager,
+    Oidc::NonceManager& nonceManager,
     Trustchain::UserId const& userId,
     OidcIdToken const& oidcIdToken,
     Crypto::SymmetricKey const& userSecret,
@@ -129,7 +129,7 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
 
 tc::cotask<Verification::RequestWithVerif> formatRequestWithVerif(
     Verification::IRequester& requester,
-    Oidc::NonceManager const& nonceManager,
+    Oidc::NonceManager& nonceManager,
     Trustchain::UserId const& userId,
     Verification::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,

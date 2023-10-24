@@ -68,22 +68,23 @@ std::vector<uint8_t> decodeChallenge(Challenge const& challenge)
 }
 
 SignedChallenge NonceManager::signOidcChallenge(
-    Nonce const& nonce, Challenge const& challenge) const
+    Nonce const& nonce, Challenge const& challenge)
 {
   using b64 = mgs::base64;
 
   auto const challengeData = decodeChallenge(challenge);
 
-  auto const privateKey = nonceMap.find(nonce);
-  if (privateKey == std::end(nonceMap))
+  auto const privateKeyIt = nonceMap.find(nonce);
+  if (privateKeyIt == std::end(nonceMap))
   {
     throw formatEx(Errors::Errc::InvalidArgument,
                    "could not find state for the given nonce: {:s}",
                    nonce);
   }
+  nonceMap.erase(privateKeyIt);
 
   auto const signature =
-      b64::encode(Crypto::sign(challengeData, privateKey->second));
+      b64::encode(Crypto::sign(challengeData, privateKeyIt->second));
   return SignedChallenge{
       Challenge{b64::encode(challengeData)},
       ChallengeSignature{signature},
