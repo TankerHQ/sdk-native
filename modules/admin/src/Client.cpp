@@ -119,9 +119,8 @@ tc::cotask<App> Client::createTrustchain(std::string_view name)
     auto const jresponse =
         nlohmann::json::parse(response.data.begin(), response.data.end());
     auto app = jresponse.at("app").get<App>();
-    TINFO("created trustchain {} {:#S} on environment {}",
+    TINFO("created trustchain {} on environment {}",
           name,
-          app.secret,
           _environmentName);
     TC_RETURN(app);
   }
