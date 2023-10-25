@@ -1112,7 +1112,8 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
 
 void Core::nukeDatabase()
 {
-  _session->storage().db->nuke();
+  if (_session)
+    _session->storage().db->nuke();
 }
 
 Crypto::ResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)

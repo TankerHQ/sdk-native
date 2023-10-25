@@ -174,13 +174,21 @@ void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
 
 Session::Storage const& Session::storage() const
 {
-  assert(_storage);
+  if (!_storage)
+  {
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "session storage not initialized");
+  }
   return *_storage;
 }
 
 Session::Storage& Session::storage()
 {
-  assert(_storage);
+  if (!_storage)
+  {
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "session storage not initialized");
+  }
   return *_storage;
 }
 
