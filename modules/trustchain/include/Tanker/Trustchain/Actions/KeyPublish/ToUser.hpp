@@ -14,7 +14,7 @@ namespace Actions
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_ATTRIBUTES \
   (recipientPublicEncryptionKey, Crypto::PublicEncryptionKey),   \
-      (resourceId, Crypto::SimpleResourceId),                            \
+      (resourceId, Crypto::SimpleResourceId),                    \
       (sealedSymmetricKey, Crypto::SealedSymmetricKey)
 
 class KeyPublishToUser

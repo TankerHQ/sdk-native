@@ -1,3 +1,3 @@
 #!/bin/sh
 
-clang-format-13 -i $(git ls-files | grep -E '\.(c|h)pp$')
+clang-format-17 -i $(git ls-files | grep -E '\.(c|h)pp$')

@@ -128,7 +128,7 @@ tc::cotask<EncryptCacheMetadata> EncryptorV11::encrypt(
     encryptedData = encryptedData.subspan(nbRead);
 
   TC_RETURN((EncryptCacheMetadata{encryptor.resourceId().sessionId(),
-                                encryptor.symmetricKey()}));
+                                  encryptor.symmetricKey()}));
 }
 
 tc::cotask<std::uint64_t> EncryptorV11::decrypt(

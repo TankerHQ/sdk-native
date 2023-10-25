@@ -215,12 +215,12 @@ tc::cotask<KeyRecipients> generateRecipientList(
   spublicIdentities |= Actions::deduplicate;
   sgroupIds |= Actions::deduplicate;
 
-  auto const groupIds = sgroupIds |
-                        ranges::views::transform([](auto&& sgroupId) {
-                          return decodeArgument<mgs::base64, Trustchain::GroupId>(
-                              sgroupId.string(), "group id");
-                        }) |
-                        ranges::to<std::vector>;
+  auto const groupIds =
+      sgroupIds | ranges::views::transform([](auto&& sgroupId) {
+        return decodeArgument<mgs::base64, Trustchain::GroupId>(
+            sgroupId.string(), "group id");
+      }) |
+      ranges::to<std::vector>;
   auto const publicIdentities =
       spublicIdentities | ranges::views::transform(extractPublicIdentity) |
       ranges::to<std::vector>;

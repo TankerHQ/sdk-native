@@ -4,5 +4,6 @@
 
 namespace Tanker
 {
-using EncryptedVerificationKeyForE2ePassphrase = BufferWrapper<struct EncryptedVerificationKeyForE2ePassphraseTag>;
+using EncryptedVerificationKeyForE2ePassphrase =
+    BufferWrapper<struct EncryptedVerificationKeyForE2ePassphraseTag>;
 }

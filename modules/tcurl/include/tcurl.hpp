@@ -138,7 +138,9 @@ private:
                                     curlsocktype purpose,
                                     struct curl_sockaddr* address);
   static int close_socket_c(void* clientp, curl_socket_t item);
-  static int sockopt_c(void* clientp, curl_socket_t curlfd, curlsocktype purpose);
+  static int sockopt_c(void* clientp,
+                       curl_socket_t curlfd,
+                       curlsocktype purpose);
   static int socketfunction_cb_c(
       CURL* easy, curl_socket_t s, int action, void* userp, void* socketp);
   static int multi_timer_cb_c(CURLM* multi, long timeout_ms, void* g);

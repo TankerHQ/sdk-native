@@ -11,22 +11,18 @@ struct OidcIdToken
   std::string provider_display_name;
 };
 
-inline bool operator==(OidcIdToken const& lhs,
-                OidcIdToken const& rhs) noexcept
+inline bool operator==(OidcIdToken const& lhs, OidcIdToken const& rhs) noexcept
 {
-  return lhs.token == rhs.token
-      && lhs.provider_id == rhs.provider_id
-      && lhs.provider_display_name == rhs.provider_display_name;
+  return lhs.token == rhs.token && lhs.provider_id == rhs.provider_id &&
+         lhs.provider_display_name == rhs.provider_display_name;
 }
 
-inline bool operator!=(OidcIdToken const& lhs,
-                OidcIdToken const& rhs) noexcept
+inline bool operator!=(OidcIdToken const& lhs, OidcIdToken const& rhs) noexcept
 {
   return !(lhs == rhs);
 }
 
-inline bool operator<(OidcIdToken const& lhs,
-               OidcIdToken const& rhs) noexcept
+inline bool operator<(OidcIdToken const& lhs, OidcIdToken const& rhs) noexcept
 {
   if (lhs.token < rhs.token)
     return true;

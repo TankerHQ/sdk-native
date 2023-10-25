@@ -78,7 +78,8 @@ tc::cotask<void> TrustchainFactory::enablePSCOidc(
   Admin::OidcConfiguration adminOidcConf{};
   adminOidcConf.displayName = to_string(provider);
   adminOidcConf.clientId = "doctolib-dev";
-  adminOidcConf.issuer = "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
+  adminOidcConf.issuer =
+      "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;

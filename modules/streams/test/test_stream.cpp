@@ -160,13 +160,10 @@ void commonStreamTests()
 
     // This should be the AWAIT() macro, but that breaks Visual,
     // so we have to explicitly give it the tc::cotask type here
-    auto decryptor =
-        tc::async_resumable(
-        [&]() -> tc::cotask<DecStream> {
-              TC_RETURN(TC_AWAIT(
-                  DecStream::create(encryptor, makeKeyFinder(encryptor))));
-            })
-            .get();
+    auto decryptor = tc::async_resumable([&]() -> tc::cotask<DecStream> {
+                       TC_RETURN(TC_AWAIT(DecStream::create(
+                           encryptor, makeKeyFinder(encryptor))));
+                     }).get();
 
     auto const decrypted = AWAIT(readAllStream(decryptor));
 

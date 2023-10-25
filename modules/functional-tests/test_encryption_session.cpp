@@ -15,8 +15,8 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
-using Tanker::Functional::TrustchainFixture;
 using Tanker::Crypto::ResourceId;
+using Tanker::Functional::TrustchainFixture;
 using namespace std::string_literals;
 
 namespace
@@ -109,7 +109,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can session-encrypt a stream")
 }
 
 inline auto const sessionEncryptionOverhead = 57;
-inline auto const paddedSessionEncryptionOverhead = sessionEncryptionOverhead + 1;
+inline auto const paddedSessionEncryptionOverhead =
+    sessionEncryptionOverhead + 1;
 
 TEST_CASE_METHOD(TrustchainFixture,
                  "Alice can use the padding option with an encryption session")

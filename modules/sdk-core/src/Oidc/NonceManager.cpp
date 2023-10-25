@@ -67,8 +67,8 @@ std::vector<uint8_t> decodeChallenge(Challenge const& challenge)
 }
 }
 
-SignedChallenge NonceManager::signOidcChallenge(
-    Nonce const& nonce, Challenge const& challenge)
+SignedChallenge NonceManager::signOidcChallenge(Nonce const& nonce,
+                                                Challenge const& challenge)
 {
   using b64 = mgs::base64;
 

@@ -75,7 +75,8 @@ void tanker_http_handle_response(tanker_http_request_t* pubRequest,
 
   HttpResponse response;
   response.statusCode = cresponse->status_code;
-  response.contentType = cresponse->content_type ? cresponse->content_type : std::string{};
+  response.contentType =
+      cresponse->content_type ? cresponse->content_type : std::string{};
   response.body = std::string(cresponse->body, cresponse->body_size);
   crequest->promise.set_value(std::move(response));
 }
