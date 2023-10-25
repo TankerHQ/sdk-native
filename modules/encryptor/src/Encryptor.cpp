@@ -56,8 +56,7 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
   case EncryptorV11::version():
     return std::forward<Callable>(cb)(EncryptorV11{});
   default:
-    throw Errors::Exception(make_error_code(Errc::InvalidArgument),
-                            "invalid encrypted data");
+    throw Errors::formatEx(Errc::InvalidArgument, "Unhandled format version {} used in encryptedData", version);
   }
 }
 }
