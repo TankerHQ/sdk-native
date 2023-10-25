@@ -635,7 +635,8 @@ TEST_CASE_METHOD(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
-TEST_CASE_METHOD(TrustchainFixture,
+TEST_CASE_METHOD(
+    TrustchainFixture,
     "Alice cannot share with more than 100 `resources * recipients`")
 {
   std::vector<SPublicIdentity> identities;

@@ -18,10 +18,8 @@ using ResourceKeyFinder =
         Crypto::SimpleResourceId const&)>;
 inline ResourceKeyFinder fixedKeyFinder(Crypto::SymmetricKey key)
 {
-  return
-      [key = std::move(key)](Crypto::SimpleResourceId const&) -> ResourceKeyFinder::result_type {
-        TC_RETURN(key);
-      };
+  return [key = std::move(key)](Crypto::SimpleResourceId const&)
+             -> ResourceKeyFinder::result_type { TC_RETURN(key); };
 }
 
 bool isHugeClearData(uint64_t dataSize, std::optional<uint32_t> paddingStep);

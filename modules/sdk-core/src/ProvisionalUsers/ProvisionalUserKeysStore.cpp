@@ -101,8 +101,8 @@ tc::cotask<void> ProvisionalUserKeysStore::putProvisionalUserKeys(
 {
   FUNC_TIMER(DB);
   TDEBUG("Adding provisional user keys for {} {}",
-        appPublicSigKey,
-        tankerPublicSigKey);
+         appPublicSigKey,
+         tankerPublicSigKey);
 
   auto const keyBuffer = serializeStoreKey(appPublicSigKey, tankerPublicSigKey);
   auto const valueBuffer = serializeStoreValue(provisionalUserKeys);

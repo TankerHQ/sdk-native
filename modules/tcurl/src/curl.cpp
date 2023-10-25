@@ -131,7 +131,8 @@ void multi::process(std::shared_ptr<request> req)
   curl_easy_setopt(
       req->_easy.get(), CURLOPT_CLOSESOCKETFUNCTION, &multi::close_socket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_CLOSESOCKETDATA, this);
-  curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTFUNCTION, &multi::sockopt_c);
+  curl_easy_setopt(
+      req->_easy.get(), CURLOPT_SOCKOPTFUNCTION, &multi::sockopt_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTDATA, this);
 
   auto rc = curl_multi_add_handle(_multi.get(), req->_easy.get());
@@ -199,7 +200,8 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
 
     if (ec)
     {
-      throw std::runtime_error(std::string("couldn't open socket: ") + ec.message());
+      throw std::runtime_error(std::string("couldn't open socket: ") +
+                               ec.message());
     }
     else
     {
@@ -391,7 +393,8 @@ int multi::socketfunction_cb(CURL*, curl_socket_t s, int curlaction)
     return 0;
 
   // if we want to stop either reading or writing
-  if ((asocket->current_action & asocket->wanted_action) != asocket->current_action)
+  if ((asocket->current_action & asocket->wanted_action) !=
+      asocket->current_action)
   {
     // cancel all pending asyncs and start over (we can't cancel only read or
     // only write)

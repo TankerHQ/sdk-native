@@ -45,8 +45,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
 
   ra->_req->set_finish_callback([ra](request&, CURLcode code) {
     if (code == CURLE_OK)
-      ra->_promise.set_value(
-          {ra->_req, std::move(ra->_data)});
+      ra->_promise.set_value({ra->_req, std::move(ra->_data)});
     else
       ra->_promise.set_exception(std::make_exception_ptr(exception(code)));
     // break the cycles

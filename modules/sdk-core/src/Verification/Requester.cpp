@@ -158,7 +158,8 @@ tc::cotask<void> Requester::createUser(
   auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
 
-  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
+  auto const res =
+      TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }
@@ -186,7 +187,8 @@ tc::cotask<void> Requester::createUserE2e(
   auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}", fmt::arg("userId", userId)));
 
-  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
+  auto const res =
+      TC_AWAIT(_httpClient->asyncUnauthPost(target, std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }
@@ -217,8 +219,8 @@ tc::cotask<void> Requester::createDevice(
 {
   nlohmann::json body{{"device_creation", mgs::base64::encode(deviceCreation)}};
 
-  auto const res = TC_AWAIT(
-      _httpClient->asyncUnauthPost(_httpClient->makeUrl("devices"), std::move(body)));
+  auto const res = TC_AWAIT(_httpClient->asyncUnauthPost(
+      _httpClient->makeUrl("devices"), std::move(body)));
   auto accessToken = res.value().at("access_token").get<std::string>();
   _httpClient->setAccessToken(std::move(accessToken));
 }

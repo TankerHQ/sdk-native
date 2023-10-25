@@ -44,8 +44,10 @@ std::string oidcProviderId(Tanker::Trustchain::TrustchainId const& appId,
   if (issuer == "accounts.google.com")
     normalizedIssuer = "https://accounts.google.com";
 
-  auto hashedIssuer = Crypto::generichash(gsl::make_span(normalizedIssuer).as_span<std::uint8_t const>());
-  auto hashedClientId = Crypto::generichash(gsl::make_span(clientId).as_span<std::uint8_t const>());
+  auto hashedIssuer = Crypto::generichash(
+      gsl::make_span(normalizedIssuer).as_span<std::uint8_t const>());
+  auto hashedClientId = Crypto::generichash(
+      gsl::make_span(clientId).as_span<std::uint8_t const>());
 
   std::vector<std::uint8_t> toHash;
   toHash.insert(toHash.end(), appId.begin(), appId.end());
@@ -53,7 +55,7 @@ std::string oidcProviderId(Tanker::Trustchain::TrustchainId const& appId,
   toHash.insert(toHash.end(), hashedClientId.begin(), hashedClientId.end());
 
   return mgs::base64url_nopad::encode(Crypto::generichash(
-           gsl::make_span(toHash).as_span<std::uint8_t const>()));
+      gsl::make_span(toHash).as_span<std::uint8_t const>()));
 }
 
 void checkVerificationMethods(
@@ -81,7 +83,9 @@ tc::cotask<Tanker::Status> expectVerification(
     auto const& oidcConf = TestConstants::oidcConfig();
     expected = OidcIdToken{
         {},
-        oidcProviderId(session->sdkInfo().trustchainId, oidcConf.issuer, oidcConf.clientId),
+        oidcProviderId(session->sdkInfo().trustchainId,
+                       oidcConf.issuer,
+                       oidcConf.clientId),
         oidcConf.displayName,
     };
   }
@@ -1107,7 +1111,9 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
         auto const& oidcConf = TestConstants::oidcConfig();
         auto expectedOidc = OidcIdToken{
             {},
-            oidcProviderId(martinePhone->sdkInfo().trustchainId, oidcConf.issuer, oidcConf.clientId),
+            oidcProviderId(martinePhone->sdkInfo().trustchainId,
+                           oidcConf.issuer,
+                           oidcConf.clientId),
             oidcConf.displayName,
         };
         REQUIRE_NOTHROW(checkVerificationMethods(

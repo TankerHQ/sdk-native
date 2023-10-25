@@ -179,7 +179,8 @@ tc::cotask<void> HttpClient::authenticate()
                                .get<std::string>();
     // NOTE: It is MANDATORY to check this prefix is valid, or the server
     // could get us to sign anything!
-    // NOTE: Visual Studio cannot compile a u8 string correctly, so hardcode U+1F512 in hex
+    // NOTE: Visual Studio cannot compile a u8 string correctly, so hardcode
+    // U+1F512 in hex
     if (!boost::algorithm::starts_with(
             challenge, "\xF0\x9F\x94\x92 Auth Challenge. 1234567890."))
     {

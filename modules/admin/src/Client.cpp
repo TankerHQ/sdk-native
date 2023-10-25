@@ -154,15 +154,16 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 {
   TINFO("updating trustchain {:#S}", trustchainId);
   auto body = nlohmann::json{};
-  if (options.oidcProvider) {
+  if (options.oidcProvider)
+  {
     auto const& provider = options.oidcProvider.value();
-    bool ignoreTokenExpiration = provider.displayName == "pro-sante-bas-no-expiry";
-    auto providerJson = nlohmann::json{
-        {"client_id", provider.clientId},
-        {"issuer", provider.issuer},
-        {"display_name", provider.displayName},
-        {"ignore_token_expiration", ignoreTokenExpiration}
-    };
+    bool ignoreTokenExpiration =
+        provider.displayName == "pro-sante-bas-no-expiry";
+    auto providerJson =
+        nlohmann::json{{"client_id", provider.clientId},
+                       {"issuer", provider.issuer},
+                       {"display_name", provider.displayName},
+                       {"ignore_token_expiration", ignoreTokenExpiration}};
     body["oidc_providers"] = nlohmann::json::array({providerJson});
   }
 
