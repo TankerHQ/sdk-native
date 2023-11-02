@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(tanker)
 
-set(CMAKE_CXX_STANDARD 17)
+if(WIN32)
+    # Explicitly capturing =,this on MSVC is a *hard error* for some reason
+    # It's only required in C++20, so MSVC is not wrong, but should be accepted
+    set(CMAKE_CXX_STANDARD 20)
+else()
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
