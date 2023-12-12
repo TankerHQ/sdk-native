@@ -87,7 +87,6 @@ tc::cotask<std::vector<VerificationMethod>> decryptMethods(
           methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
               encryptedPhoneNumber, userSecret)));
         },
-
     }));
   };
 

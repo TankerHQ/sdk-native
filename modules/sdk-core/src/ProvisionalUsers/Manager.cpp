@@ -112,24 +112,16 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
     Crypto::SymmetricKey const& userSecret)
 {
   auto method = getSecretProvisionalVerifMethod(provisionalIdentity);
-  try
-  {
-    auto const& userId = _localUserAccessor->get().userId();
-    auto genericVerificationMethods =
-        TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
-    auto verificationMethods = TC_AWAIT(
-        Verification::decryptMethods(genericVerificationMethods, userSecret));
+  auto const& userId = _localUserAccessor->get().userId();
+  auto genericVerificationMethods =
+      TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
+  auto verificationMethods = TC_AWAIT(
+      Verification::decryptMethods(genericVerificationMethods, userSecret));
 
-    if (findVerificationMethod(verificationMethods, method))
-    {
-      TC_RETURN(TC_AWAIT(claimProvisionalIdentityWithMethod(
-          provisionalIdentity, method, userSecret)));
-    }
-  }
-  catch (Tanker::Errors::Exception const& e)
+  if (findVerificationMethod(verificationMethods, method))
   {
-    if (e.errorCode() != Errors::AppdErrc::VerificationNeeded)
-      throw;
+    TC_RETURN(TC_AWAIT(claimProvisionalIdentityWithMethod(
+        provisionalIdentity, method, userSecret)));
   }
   _provisionalIdentity = provisionalIdentity;
   TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, method}));

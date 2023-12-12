@@ -17,7 +17,8 @@ enum class AppdErrc
   ProvisionalIdentityAlreadyAttached,
   TooManyAttempts,
   InvalidToken,
-  VerificationNeeded,
+  _Deprecated_VerificationNeeded, // don't delete, this would change the next
+                                  // values
   InvalidPassphrase,
   InvalidVerificationCode,
   VerificationCodeExpired,
