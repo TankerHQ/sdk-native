@@ -18,17 +18,13 @@ class IAccessor
 public:
   using PullResult = BasicPullResult<ExternalGroup, Trustchain::GroupId>;
   using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
-  using PublicEncryptionKeyPullResult =
-      BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
-  using EncryptionKeyPairPullResult =
-      BasicPullResult<Crypto::EncryptionKeyPair, Trustchain::GroupId>;
+  using PublicEncryptionKeyPullResult = BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
+  using EncryptionKeyPairPullResult = BasicPullResult<Crypto::EncryptionKeyPair, Trustchain::GroupId>;
 
-  virtual tc::cotask<InternalGroup> getInternalGroup(
-      Trustchain::GroupId const& groupId) = 0;
+  virtual tc::cotask<InternalGroup> getInternalGroup(Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds) = 0;
-  virtual tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-  getEncryptionKeyPair(
+  virtual tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getEncryptionKeyPair(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
 };
 }

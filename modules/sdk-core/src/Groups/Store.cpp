@@ -39,11 +39,10 @@ std::vector<uint8_t> serializeStoreKey(Trustchain::GroupId const& groupId)
 
 std::vector<uint8_t> serializeStoreValue(InternalGroup const& group)
 {
-  std::vector<uint8_t> valueBuffer(
-      sizeof(uint8_t) + group.id.size() +
-      Serialization::serialized_size(group.signatureKeyPair) +
-      Serialization::serialized_size(group.encryptionKeyPair) +
-      group.lastBlockHash.size() + group.lastKeyRotationBlockHash.size());
+  std::vector<uint8_t> valueBuffer(sizeof(uint8_t) + group.id.size() +
+                                   Serialization::serialized_size(group.signatureKeyPair) +
+                                   Serialization::serialized_size(group.encryptionKeyPair) +
+                                   group.lastBlockHash.size() + group.lastKeyRotationBlockHash.size());
   auto it = valueBuffer.data();
   it = Serialization::serialize<uint8_t>(it, TypeInternalGroup);
   it = Serialization::serialize(it, group.id);
@@ -57,11 +56,9 @@ std::vector<uint8_t> serializeStoreValue(InternalGroup const& group)
 
 std::vector<uint8_t> serializeStoreValue(ExternalGroup const& group)
 {
-  std::vector<uint8_t> valueBuffer(
-      sizeof(uint8_t) + group.id.size() + group.publicSignatureKey.size() +
-      group.encryptedPrivateSignatureKey.size() +
-      group.publicEncryptionKey.size() + group.lastBlockHash.size() +
-      group.lastKeyRotationBlockHash.size());
+  std::vector<uint8_t> valueBuffer(sizeof(uint8_t) + group.id.size() + group.publicSignatureKey.size() +
+                                   group.encryptedPrivateSignatureKey.size() + group.publicEncryptionKey.size() +
+                                   group.lastBlockHash.size() + group.lastKeyRotationBlockHash.size());
   auto it = valueBuffer.data();
   it = Serialization::serialize<uint8_t>(it, TypeExternalGroup);
   it = Serialization::serialize(it, group.id);
@@ -76,8 +73,7 @@ std::vector<uint8_t> serializeStoreValue(ExternalGroup const& group)
 
 std::vector<uint8_t> serializeStoreValue(Group const& group)
 {
-  return boost::variant2::visit(
-      [](auto const& group) { return serializeStoreValue(group); }, group);
+  return boost::variant2::visit([](auto const& group) { return serializeStoreValue(group); }, group);
 }
 
 InternalGroup deserializeInternalGroup(Serialization::SerializedSource& ss)
@@ -119,23 +115,18 @@ Group deserializeStoreValue(gsl::span<uint8_t const> serialized)
     group = deserializeExternalGroup(ss);
     break;
   default:
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "failed to deserialize group, unknown type: {}",
-                           int(type));
+    throw Errors::formatEx(Errors::Errc::InternalError, "failed to deserialize group, unknown type: {}", int(type));
   }
 
   if (!ss.eof())
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "failed to deserialize group, the cache is corrupt");
+    throw Errors::formatEx(Errors::Errc::InternalError, "failed to deserialize group, the cache is corrupt");
 
   return group;
 }
 
-std::vector<uint8_t> serializeIndexKey(
-    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey)
+std::vector<uint8_t> serializeIndexKey(Crypto::PublicEncryptionKey const& groupPublicEncryptionKey)
 {
-  std::vector<uint8_t> keyBuffer(IndexPrefix.size() +
-                                 groupPublicEncryptionKey.size());
+  std::vector<uint8_t> keyBuffer(IndexPrefix.size() + groupPublicEncryptionKey.size());
   auto it = keyBuffer.data();
   it = std::copy(IndexPrefix.begin(), IndexPrefix.end(), it);
   it = Serialization::serialize(it, groupPublicEncryptionKey);
@@ -149,8 +140,7 @@ std::vector<uint8_t> serializeIndexValue(Trustchain::GroupId const& groupId)
 }
 }
 
-Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
-  : _userSecret(userSecret), _db(db)
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db) : _userSecret(userSecret), _db(db)
 {
 }
 
@@ -168,9 +158,8 @@ tc::cotask<void> Store::put(Group const& group)
 
   auto const encryptedValue = DataStore::encryptValue(_userSecret, valueBuffer);
 
-  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
-      keyValues{{keyBuffer, encryptedValue},
-                {indexKeyBuffer, indexValueBuffer}};
+  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>> keyValues{
+      {keyBuffer, encryptedValue}, {indexKeyBuffer, indexValueBuffer}};
 
   _db->putCacheValues(keyValues, DataStore::OnConflict::Replace);
   TC_RETURN();
@@ -188,8 +177,7 @@ tc::cotask<std::optional<Group>> Store::findById(GroupId const& groupId) const
     if (!result.at(0))
       TC_RETURN(std::nullopt);
 
-    auto const decryptedValue =
-        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
+    auto const decryptedValue = TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(deserializeStoreValue(decryptedValue));
   }
@@ -199,13 +187,11 @@ tc::cotask<std::optional<Group>> Store::findById(GroupId const& groupId) const
   }
 }
 
-tc::cotask<std::optional<InternalGroup>>
-Store::findInternalByPublicEncryptionKey(
+tc::cotask<std::optional<InternalGroup>> Store::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   auto optGroup = TC_AWAIT(findByPublicEncryptionKey(publicEncryptionKey));
-  if (!optGroup ||
-      !boost::variant2::holds_alternative<InternalGroup>(*optGroup))
+  if (!optGroup || !boost::variant2::holds_alternative<InternalGroup>(*optGroup))
     TC_RETURN(std::nullopt);
   TC_RETURN(boost::variant2::get<InternalGroup>(*optGroup));
 }
@@ -229,8 +215,7 @@ tc::cotask<std::optional<Group>> Store::findByPublicEncryptionKey(
       // There's an index but no entry, weird...
       TC_RETURN(std::nullopt);
 
-    auto const decryptedValue =
-        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
+    auto const decryptedValue = TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(deserializeStoreValue(decryptedValue));
   }

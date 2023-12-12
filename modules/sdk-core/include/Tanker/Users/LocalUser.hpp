@@ -21,8 +21,7 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   DeviceKeys const& deviceKeys() const;
   Crypto::EncryptionKeyPair currentKeyPair() const;
-  std::optional<Crypto::EncryptionKeyPair> findKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey) const;
+  std::optional<Crypto::EncryptionKeyPair> findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const;
   std::vector<Crypto::EncryptionKeyPair> const& userKeys() const;
 
 private:

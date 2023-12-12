@@ -15,8 +15,7 @@ struct Catch::StringMaker<std::vector<unsigned char>>
     if (value.size() > 32)
     {
       auto span = value | ranges::views::take(32);
-      return fmt::format(
-          "{{ {}, <size:{}>... }}", fmt::join(span, ", "), value.size());
+      return fmt::format("{{ {}, <size:{}>... }}", fmt::join(span, ", "), value.size());
     }
     return Catch::Detail::rangeToString(std::begin(value), std::end(value));
   }

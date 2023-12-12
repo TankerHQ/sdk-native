@@ -34,8 +34,7 @@ using namespace Tanker::Trustchain::Actions;
 namespace
 {
 template <typename T>
-bool hasDevice(gsl::span<Users::Device const> devices,
-               Crypto::BasicHash<T> const& hash)
+bool hasDevice(gsl::span<Users::Device const> devices, Crypto::BasicHash<T> const& hash)
 {
   return std::find_if(devices.begin(), devices.end(), [&](auto const& device) {
            return device.id.base() == hash.base();
@@ -53,58 +52,48 @@ void assertEqual(std::vector<T> aa, std::vector<U> bb)
   CHECK(std::equal(aa.begin(), aa.end(), bb.begin(), bb.end()));
 }
 
-void assertKeyPublishToUsersTargetedAt(
-    ResourceKeys::KeysResult::value_type const& resourceKey,
-    std::vector<Trustchain::Actions::KeyPublishToUser> const& keyPublishes,
-    std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
+void assertKeyPublishToUsersTargetedAt(ResourceKeys::KeysResult::value_type const& resourceKey,
+                                       std::vector<Trustchain::Actions::KeyPublishToUser> const& keyPublishes,
+                                       std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
   REQUIRE(keyPublishes.size() == userKeyPairs.size());
 
   for (unsigned int i = 0; i < keyPublishes.size(); ++i)
   {
-    CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
-          userKeyPairs[i].publicKey);
+    CHECK(keyPublishes[i].recipientPublicEncryptionKey() == userKeyPairs[i].publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.id);
-    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
-                              userKeyPairs[i]) == resourceKey.key);
+    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]) == resourceKey.key);
   }
 }
 
-void assertKeyPublishToUsersTargetedAt(
-    ResourceKeys::KeysResult::value_type const& resourceKey,
-    std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
-    std::vector<ProvisionalUsers::SecretUser> const& provisionalUsers)
+void assertKeyPublishToUsersTargetedAt(ResourceKeys::KeysResult::value_type const& resourceKey,
+                                       std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
+                                       std::vector<ProvisionalUsers::SecretUser> const& provisionalUsers)
 {
   REQUIRE(keyPublishes.size() == provisionalUsers.size());
 
   for (unsigned int i = 0; i < keyPublishes.size(); ++i)
   {
-    CHECK(keyPublishes[i].appPublicSignatureKey() ==
-          provisionalUsers[i].appSignatureKeyPair.publicKey);
-    CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
-          provisionalUsers[i].tankerSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].appPublicSignatureKey() == provisionalUsers[i].appSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].tankerPublicSignatureKey() == provisionalUsers[i].tankerSignatureKeyPair.publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.id);
-    CHECK(Crypto::sealDecrypt(
-              Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
-                                  provisionalUsers[i].tankerEncryptionKeyPair),
-              provisionalUsers[i].appEncryptionKeyPair) == resourceKey.key);
+    CHECK(Crypto::sealDecrypt(Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
+                                                  provisionalUsers[i].tankerEncryptionKeyPair),
+                              provisionalUsers[i].appEncryptionKeyPair) == resourceKey.key);
   }
 }
 
-void assertKeyPublishToGroupTargetedAt(
-    ResourceKeys::KeysResult::value_type const& resourceKey,
-    std::vector<Trustchain::Actions::KeyPublishToUserGroup> const& keyPublishes,
-    std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
+void assertKeyPublishToGroupTargetedAt(ResourceKeys::KeysResult::value_type const& resourceKey,
+                                       std::vector<Trustchain::Actions::KeyPublishToUserGroup> const& keyPublishes,
+                                       std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
   REQUIRE(keyPublishes.size() == userKeyPairs.size());
 
   for (unsigned int i = 0; i < keyPublishes.size(); ++i)
   {
-    CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
-          userKeyPairs[i].publicKey);
+    CHECK(keyPublishes[i].recipientPublicEncryptionKey() == userKeyPairs[i].publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.id);
-    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
-                              userKeyPairs[i]) == resourceKey.key);
+    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]) == resourceKey.key);
   }
 }
 }
@@ -123,32 +112,26 @@ TEST_CASE("generateRecipientList")
   SECTION("a new user should return their user key")
   {
 
-    REQUIRE_CALL(
-        userAccessor,
-        pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{newUser}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-        .LR_RETURN(
-            Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
+        .LR_RETURN(Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{}))
-        .LR_RETURN(makeCoTask(
-            Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
+        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
     auto const recipients = AWAIT(Share::generateRecipientList(
         generator.context().id(),
         userAccessor,
         groupAccessor,
-        {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-            generator.context().id(), newUser.id()})}},
+        {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{generator.context().id(), newUser.id()})}},
         {}));
 
     // there should be only user keys
     CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
     CHECK(recipients.recipientGroupKeys.size() == 0);
-    assertEqual<Crypto::PublicEncryptionKey>(
-        recipients.recipientUserKeys, {newUser.userKeys().back().publicKey});
+    assertEqual<Crypto::PublicEncryptionKey>(recipients.recipientUserKeys, {newUser.userKeys().back().publicKey});
   }
 
   SECTION("a new group should return their group key")
@@ -156,58 +139,44 @@ TEST_CASE("generateRecipientList")
 
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor,
-                 pull(std::vector<Trustchain::UserId>{},
-                      Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-        .LR_RETURN(
-            Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
+        .LR_RETURN(Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
-    REQUIRE_CALL(groupAccessor,
-                 getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))
-        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{
-            {newGroup.currentEncKp().publicKey}, {}}));
+    REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))
+        .LR_RETURN(
+            makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{newGroup.currentEncKp().publicKey}, {}}));
 
     auto const recipients = AWAIT(Share::generateRecipientList(
-        generator.context().id(),
-        userAccessor,
-        groupAccessor,
-        {},
-        {mgs::base64::encode<SGroupId>(newGroup.id())}));
+        generator.context().id(), userAccessor, groupAccessor, {}, {mgs::base64::encode<SGroupId>(newGroup.id())}));
 
     // there should be only group keys
     CHECK(recipients.recipientUserKeys.size() == 0);
     CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
-    assertEqual<Crypto::PublicEncryptionKey>(
-        recipients.recipientGroupKeys, {newGroup.currentEncKp().publicKey});
+    assertEqual<Crypto::PublicEncryptionKey>(recipients.recipientGroupKeys, {newGroup.currentEncKp().publicKey});
   }
 
   SECTION("a provisional user should return their provisional keys")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
-    REQUIRE_CALL(userAccessor,
-                 pull(std::vector<Trustchain::UserId>{},
-                      Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-        .LR_RETURN(Tanker::makeCoTask(
-            std::vector<ProvisionalUsers::PublicUser>{provisionalUser}));
+        .LR_RETURN(Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{provisionalUser}));
 
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{}))
-        .LR_RETURN(makeCoTask(
-            Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
+        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
-    auto const recipients = AWAIT(Share::generateRecipientList(
-        generator.context().id(),
-        userAccessor,
-        groupAccessor,
-        {SPublicIdentity{
-            to_string(Identity::getPublicIdentity(provisionalUser))}},
-        {}));
+    auto const recipients =
+        AWAIT(Share::generateRecipientList(generator.context().id(),
+                                           userAccessor,
+                                           groupAccessor,
+                                           {SPublicIdentity{to_string(Identity::getPublicIdentity(provisionalUser))}},
+                                           {}));
 
     CHECK(recipients.recipientUserKeys.size() == 0);
     CHECK(recipients.recipientGroupKeys.size() == 0);
@@ -216,32 +185,26 @@ TEST_CASE("generateRecipientList")
           provisionalUser.appSignatureKeyPair().publicKey);
     CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey() ==
           provisionalUser.appEncryptionKeyPair().publicKey);
-    CHECK(
-        recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey() ==
-        provisionalUser.tankerSignatureKeyPair().publicKey);
-    CHECK(recipients.recipientProvisionalUserKeys[0]
-              .tankerEncryptionPublicKey() ==
+    CHECK(recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey() ==
+          provisionalUser.tankerSignatureKeyPair().publicKey);
+    CHECK(recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey() ==
           provisionalUser.tankerEncryptionKeyPair().publicKey);
   }
 
   SECTION("a not-found user should throw")
   {
-    REQUIRE_CALL(
-        userAccessor,
-        pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {newUser.id()}}));
 
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{}))
-        .LR_RETURN(makeCoTask(
-            Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
+        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Share::generateRecipientList(
             generator.context().id(),
             userAccessor,
             groupAccessor,
-            {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-                generator.context().id(), newUser.id()})}},
+            {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{generator.context().id(), newUser.id()})}},
             {})),
         make_error_code(Errc::InvalidArgument));
   }
@@ -250,23 +213,15 @@ TEST_CASE("generateRecipientList")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor,
-                 pull(std::vector<Trustchain::UserId>{},
-                      Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
-    REQUIRE_CALL(groupAccessor,
-                 getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))
-        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{
-            {}, {newGroup.id()}}));
+    REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))
+        .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {newGroup.id()}}));
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Share::generateRecipientList(
-            generator.context().id(),
-            userAccessor,
-            groupAccessor,
-            {},
-            {mgs::base64::encode<SGroupId>(newGroup.id())})),
+            generator.context().id(), userAccessor, groupAccessor, {}, {mgs::base64::encode<SGroupId>(newGroup.id())})),
         make_error_code(Errc::InvalidArgument));
   }
 }
@@ -281,21 +236,18 @@ TEST_CASE("generateShareBlocks")
   SECTION("for a user should generate one KeyPublishToUser block")
   {
     ResourceKeys::KeysResult resourceKeys = {
-        {make<Crypto::SymmetricKey>("symmkey"),
-         make<Crypto::SimpleResourceId>("resource resourceId")}};
+        {make<Crypto::SymmetricKey>("symmkey"), make<Crypto::SimpleResourceId>("resource resourceId")}};
 
     auto const newUserKeyPair = newUser.userKeys().back();
 
     Share::KeyRecipients keyRecipients{{newUserKeyPair.publicKey}, {}, {}};
-    auto const blocks = Share::generateShareBlocks(
-        generator.context().id(),
-        keySenderDevice.id(),
-        keySenderDevice.keys().signatureKeyPair.privateKey,
-        resourceKeys,
-        keyRecipients);
+    auto const blocks = Share::generateShareBlocks(generator.context().id(),
+                                                   keySenderDevice.id(),
+                                                   keySenderDevice.keys().signatureKeyPair.privateKey,
+                                                   resourceKeys,
+                                                   keyRecipients);
 
-    assertKeyPublishToUsersTargetedAt(
-        resourceKeys[0], blocks.keyPublishesToUsers, {newUserKeyPair});
+    assertKeyPublishToUsersTargetedAt(resourceKeys[0], blocks.keyPublishesToUsers, {newUserKeyPair});
   }
 
   SECTION("for a user should generate one KeyPublishToProvisionalUser block")
@@ -303,20 +255,16 @@ TEST_CASE("generateShareBlocks")
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
     ResourceKeys::KeysResult resourceKeys = {
-        {make<Crypto::SymmetricKey>("symmkey"),
-         make<Crypto::SimpleResourceId>("resource mac")}};
+        {make<Crypto::SymmetricKey>("symmkey"), make<Crypto::SimpleResourceId>("resource mac")}};
 
     Share::KeyRecipients keyRecipients{{}, {provisionalUser}, {}};
-    auto const blocks = Share::generateShareBlocks(
-        generator.context().id(),
-        keySenderDevice.id(),
-        keySenderDevice.keys().signatureKeyPair.privateKey,
-        resourceKeys,
-        keyRecipients);
+    auto const blocks = Share::generateShareBlocks(generator.context().id(),
+                                                   keySenderDevice.id(),
+                                                   keySenderDevice.keys().signatureKeyPair.privateKey,
+                                                   resourceKeys,
+                                                   keyRecipients);
 
-    assertKeyPublishToUsersTargetedAt(resourceKeys[0],
-                                      blocks.keyPublishesToProvisionalUsers,
-                                      {provisionalUser});
+    assertKeyPublishToUsersTargetedAt(resourceKeys[0], blocks.keyPublishesToProvisionalUsers, {provisionalUser});
   }
 
   SECTION("for a group should generate one KeyPublishToGroup block")
@@ -324,20 +272,15 @@ TEST_CASE("generateShareBlocks")
     auto const newGroup = keySender.makeGroup({newUser});
 
     ResourceKeys::KeysResult resourceKeys = {
-        {make<Crypto::SymmetricKey>("symmkey"),
-         make<Crypto::SimpleResourceId>("resource resourceId")}};
+        {make<Crypto::SymmetricKey>("symmkey"), make<Crypto::SimpleResourceId>("resource resourceId")}};
 
-    Share::KeyRecipients keyRecipients{
-        {}, {}, {newGroup.currentEncKp().publicKey}};
-    auto const blocks = Share::generateShareBlocks(
-        generator.context().id(),
-        keySenderDevice.id(),
-        keySenderDevice.keys().signatureKeyPair.privateKey,
-        resourceKeys,
-        keyRecipients);
+    Share::KeyRecipients keyRecipients{{}, {}, {newGroup.currentEncKp().publicKey}};
+    auto const blocks = Share::generateShareBlocks(generator.context().id(),
+                                                   keySenderDevice.id(),
+                                                   keySenderDevice.keys().signatureKeyPair.privateKey,
+                                                   resourceKeys,
+                                                   keyRecipients);
 
-    assertKeyPublishToGroupTargetedAt(resourceKeys[0],
-                                      blocks.keyPublishesToUserGroups,
-                                      {newGroup.currentEncKp()});
+    assertKeyPublishToGroupTargetedAt(resourceKeys[0], blocks.keyPublishesToUserGroups, {newGroup.currentEncKp()});
   }
 }

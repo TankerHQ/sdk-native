@@ -15,10 +15,8 @@
 
 namespace Tanker::Trustchain
 {
-using KeyPublishAction =
-    boost::variant2::variant<Actions::KeyPublishToUser,
-                             Actions::KeyPublishToUserGroup,
-                             Actions::KeyPublishToProvisionalUser>;
+using KeyPublishAction = boost::variant2::
+    variant<Actions::KeyPublishToUser, Actions::KeyPublishToUserGroup, Actions::KeyPublishToProvisionalUser>;
 
 Crypto::Hash getHash(KeyPublishAction const& action);
 Actions::Nature getNature(KeyPublishAction const& action);

@@ -30,15 +30,12 @@ namespace Tanker
  * the results from the previous task for the matching IDs and run the task
  * only with the remaining IDs.
  */
-template <typename Value,
-          typename IdType = decltype(std::declval<Value>().id),
-          IdType Value::*IdMember = &Value::id>
+template <typename Value, typename IdType = decltype(std::declval<Value>().id), IdType Value::*IdMember = &Value::id>
 class TaskCoalescer
 {
 public:
   using value_type = std::optional<Value>;
-  using task_handler_type =
-      fu2::function<tc::cotask<std::vector<Value>>(std::vector<IdType> const&)>;
+  using task_handler_type = fu2::function<tc::cotask<std::vector<Value>>(std::vector<IdType> const&)>;
 
 private:
   using result_type = std::vector<Value>;
@@ -64,8 +61,7 @@ private:
   boost::container::flat_map<IdType, PromiseWrapper> _running;
 
 public:
-  tc::cotask<result_type> run(task_handler_type taskHandler,
-                              gsl::span<IdType const> ids)
+  tc::cotask<result_type> run(task_handler_type taskHandler, gsl::span<IdType const> ids)
   {
     auto idFutures = coalesceTasks(ids);
 
@@ -84,21 +80,16 @@ public:
   TaskCoalescer& operator=(TaskCoalescer&&) = delete;
 
 private:
-  tc::cotask<void> lookup(task_handler_type taskHandler,
-                          std::vector<IdType> const& newTaskIds)
+  tc::cotask<void> lookup(task_handler_type taskHandler, std::vector<IdType> const& newTaskIds)
   {
     try
     {
       auto const result = TC_AWAIT(taskHandler(newTaskIds));
-      ranges::for_each(result, [&](auto const& value) {
-        resolveEntry(value.*IdMember, std::make_optional<Value>(value));
-      });
+      ranges::for_each(result,
+                       [&](auto const& value) { resolveEntry(value.*IdMember, std::make_optional<Value>(value)); });
 
-      auto const requested =
-          newTaskIds | ranges::to<std::vector> | ranges::actions::sort;
-      auto const got = result |
-                       ranges::views::transform(
-                           [&](auto const& value) { return value.*IdMember; }) |
+      auto const requested = newTaskIds | ranges::to<std::vector> | ranges::actions::sort;
+      auto const got = result | ranges::views::transform([&](auto const& value) { return value.*IdMember; }) |
                        ranges::to<std::vector> | ranges::actions::sort;
       ranges::for_each(ranges::views::set_difference(requested, got),
                        [&](auto const& id) { resolveEntry(id, std::nullopt); });
@@ -106,8 +97,7 @@ private:
     catch (...)
     {
       auto error = std::current_exception();
-      ranges::for_each(newTaskIds,
-                       [&](auto const& id) { rejectEntry(id, error); });
+      ranges::for_each(newTaskIds, [&](auto const& id) { rejectEntry(id, error); });
     }
   };
 

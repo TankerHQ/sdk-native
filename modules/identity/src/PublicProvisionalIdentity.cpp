@@ -28,23 +28,18 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
       to_public_target_type(target),
       j.at("value").get<std::string>(),
-      mgs::base64::decode<Crypto::PublicSignatureKey>(
-          j.at("public_signature_key").get<std::string>()),
-      mgs::base64::decode<Crypto::PublicEncryptionKey>(
-          j.at("public_encryption_key").get<std::string>()),
+      mgs::base64::decode<Crypto::PublicSignatureKey>(j.at("public_signature_key").get<std::string>()),
+      mgs::base64::decode<Crypto::PublicEncryptionKey>(j.at("public_encryption_key").get<std::string>()),
   };
 }
 
-void to_json(nlohmann::ordered_json& j,
-             PublicProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = to_string(identity.target);
   j["value"] = identity.value;
-  j["public_encryption_key"] =
-      mgs::base64::encode(identity.appEncryptionPublicKey);
-  j["public_signature_key"] =
-      mgs::base64::encode(identity.appSignaturePublicKey);
+  j["public_encryption_key"] = mgs::base64::encode(identity.appEncryptionPublicKey);
+  j["public_signature_key"] = mgs::base64::encode(identity.appSignaturePublicKey);
 }
 
 std::string to_string(PublicProvisionalIdentity const& identity)
@@ -54,15 +49,12 @@ std::string to_string(PublicProvisionalIdentity const& identity)
 
 HashedEmail hashProvisionalEmail(std::string const& value)
 {
-  return Crypto::generichash<HashedEmail>(
-      gsl::make_span(value).as_span<std::uint8_t const>());
+  return Crypto::generichash<HashedEmail>(gsl::make_span(value).as_span<std::uint8_t const>());
 }
 
-HashedPhoneNumber hashProvisionalPhoneNumber(
-    SecretProvisionalIdentity const& identity)
+HashedPhoneNumber hashProvisionalPhoneNumber(SecretProvisionalIdentity const& identity)
 {
-  auto const salt =
-      Crypto::generichash(identity.appSignatureKeyPair.privateKey);
+  auto const salt = Crypto::generichash(identity.appSignatureKeyPair.privateKey);
 
   std::vector<std::uint8_t> buffer(salt.begin(), salt.end());
   buffer.insert(buffer.end(), identity.value.begin(), identity.value.end());

@@ -56,9 +56,7 @@ void makeExclusive(ConnPtr& db)
 }
 }
 
-ConnPtr createConnection(std::string const& dbPath,
-                         std::optional<Crypto::SymmetricKey> userSecret,
-                         bool exclusive)
+ConnPtr createConnection(std::string const& dbPath, std::optional<Crypto::SymmetricKey> userSecret, bool exclusive)
 {
   TDEBUG("creating database {}", dbPath);
   try
@@ -87,17 +85,14 @@ ConnPtr createConnection(std::string const& dbPath,
   {
     std::string const msg = e.what();
     if (msg.find("database is locked") != std::string::npos)
-      throw Errors::Exception(Errc::DatabaseLocked,
-                              "database is locked by another Tanker instance");
+      throw Errors::Exception(Errc::DatabaseLocked, "database is locked by another Tanker instance");
     else
       throw Errors::Exception(Errc::DatabaseError, e.what());
   }
   catch (std::exception const& e)
   {
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           FMT_STRING("could not open database: {:s}: {:s}"),
-                           dbPath,
-                           e.what());
+    throw Errors::formatEx(
+        Errors::Errc::InternalError, FMT_STRING("could not open database: {:s}: {:s}"), dbPath, e.what());
   }
 }
 }

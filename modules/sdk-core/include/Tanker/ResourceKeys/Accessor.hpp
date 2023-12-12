@@ -30,20 +30,15 @@ public:
   Accessor& operator=(Accessor const&) = delete;
   Accessor& operator=(Accessor&&) = delete;
 
-  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
-      Crypto::SimpleResourceId const& resourceId);
-  tc::cotask<KeysResult> findKeys(
+  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(Crypto::SimpleResourceId const& resourceId);
+  tc::cotask<KeysResult> findKeys(std::vector<Crypto::SimpleResourceId> const& resourceId);
+  tc::cotask<boost::container::flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>> tryFindKeys(
       std::vector<Crypto::SimpleResourceId> const& resourceId);
-  tc::cotask<boost::container::flat_map<Crypto::SimpleResourceId,
-                                        Crypto::SymmetricKey>>
-  tryFindKeys(std::vector<Crypto::SimpleResourceId> const& resourceId);
 
 private:
-  tc::cotask<KeysResult> findOrFetchKeys(
-      gsl::span<Crypto::SimpleResourceId const> resourceIds);
-  [[noreturn]] void throwForMissingKeys(
-      gsl::span<Crypto::SimpleResourceId const> resourceIds,
-      KeysResult const& result);
+  tc::cotask<KeysResult> findOrFetchKeys(gsl::span<Crypto::SimpleResourceId const> resourceIds);
+  [[noreturn]] void throwForMissingKeys(gsl::span<Crypto::SimpleResourceId const> resourceIds,
+                                        KeysResult const& result);
 
   Users::IRequester* _requester;
   Users::ILocalUserAccessor* _localUserAccessor;

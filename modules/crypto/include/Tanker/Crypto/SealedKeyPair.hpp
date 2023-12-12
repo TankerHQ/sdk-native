@@ -19,8 +19,7 @@ struct SealedKeyPair
 template <KeyUsage Usage>
 bool operator==(SealedKeyPair<Usage> const& a, SealedKeyPair<Usage> const& b)
 {
-  return std::tie(a.publicKey, a.sealedPrivateKey) ==
-         std::tie(b.publicKey, b.sealedPrivateKey);
+  return std::tie(a.publicKey, a.sealedPrivateKey) == std::tie(b.publicKey, b.sealedPrivateKey);
 }
 
 template <KeyUsage Usage>

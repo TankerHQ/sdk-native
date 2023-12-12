@@ -17,31 +17,25 @@ namespace Tanker::Trustchain
 {
 Crypto::Hash getHash(KeyPublishAction const& action)
 {
-  return boost::variant2::visit([&](auto const& val) { return val.hash(); },
-                                action);
+  return boost::variant2::visit([&](auto const& val) { return val.hash(); }, action);
 }
 
 Actions::Nature getNature(KeyPublishAction const& action)
 {
-  return boost::variant2::visit([&](auto const& val) { return val.nature(); },
-                                action);
+  return boost::variant2::visit([&](auto const& val) { return val.nature(); }, action);
 }
 
 Crypto::Hash const& getAuthor(KeyPublishAction const& action)
 {
-  return boost::variant2::visit(
-      [&](auto const& val) -> decltype(auto) { return val.author(); }, action);
+  return boost::variant2::visit([&](auto const& val) -> decltype(auto) { return val.author(); }, action);
 }
 
 Crypto::Signature const& getSignature(KeyPublishAction const& action)
 {
-  return boost::variant2::visit(
-      [&](auto const& val) -> decltype(auto) { return val.signature(); },
-      action);
+  return boost::variant2::visit([&](auto const& val) -> decltype(auto) { return val.signature(); }, action);
 }
 
-KeyPublishAction deserializeKeyPublishAction(
-    gsl::span<std::uint8_t const> block)
+KeyPublishAction deserializeKeyPublishAction(gsl::span<std::uint8_t const> block)
 {
   auto const nature = getBlockNature(block);
 

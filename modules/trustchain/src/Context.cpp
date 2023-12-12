@@ -2,8 +2,7 @@
 
 namespace Tanker::Trustchain
 {
-Context::Context(TrustchainId const& id,
-                 Crypto::PublicSignatureKey const& publicSignatureKey)
+Context::Context(TrustchainId const& id, Crypto::PublicSignatureKey const& publicSignatureKey)
   : _id(id), _publicSignatureKey(publicSignatureKey)
 {
 }

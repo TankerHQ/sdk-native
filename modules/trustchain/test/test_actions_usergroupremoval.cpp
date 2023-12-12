@@ -103,20 +103,12 @@ TEST_CASE("UserGroupRemoval serialization test vectors")
         },
     };
     auto const selfSignature = make<Crypto::Signature>("self signature");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "VkTK0ZDfH81L4tG5bWOHVsup2+L+7fwGQN33cdqa/ko=");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("VkTK0ZDfH81L4tG5bWOHVsup2+L+7fwGQN33cdqa/ko=");
 
-    UserGroupRemoval const ugr{trustchainId,
-                               groupId,
-                               membersToRemove,
-                               provisionalMembersToRemove,
-                               selfSignature,
-                               author,
-                               hash,
-                               signature};
+    UserGroupRemoval const ugr{
+        trustchainId, groupId, membersToRemove, provisionalMembersToRemove, selfSignature, author, hash, signature};
 
     CHECK(Serialization::serialize(ugr) == serializedUserGroupRemoval);
-    CHECK(Serialization::deserialize<UserGroupRemoval>(
-              serializedUserGroupRemoval) == ugr);
+    CHECK(Serialization::deserialize<UserGroupRemoval>(serializedUserGroupRemoval) == ugr);
   }
 }

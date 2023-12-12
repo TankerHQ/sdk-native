@@ -14,9 +14,7 @@ namespace Tanker
 namespace Errors
 {
 
-TANKER_WARN_UNUSED_RESULT Exception formatEx(std::error_code ec,
-                                             fmt::string_view format,
-                                             fmt::format_args args)
+TANKER_WARN_UNUSED_RESULT Exception formatEx(std::error_code ec, fmt::string_view format, fmt::format_args args)
 {
   return Exception(ec, fmt::vformat(format, args));
 }
@@ -30,8 +28,7 @@ Exception::Exception(std::error_code ec, std::string const& message)
 {
 }
 
-std::string Exception::formatError(std::error_code ec,
-                                   std::string const& message)
+std::string Exception::formatError(std::error_code ec, std::string const& message)
 {
   return fmt::format(FMT_STRING("{:s}::{:s}({:s}): {:s}"),
                      ec.default_error_condition().category().name(),

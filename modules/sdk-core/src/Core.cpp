@@ -78,9 +78,7 @@ std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
 {
 
   auto client = std::make_unique<Network::HttpClient>(
-      fmt::format("{url}/v2/apps/{appId:#S}/",
-                  fmt::arg("url", url),
-                  fmt::arg("appId", info.trustchainId)),
+      fmt::format("{url}/v2/apps/{appId:#S}/", fmt::arg("url", url), fmt::arg("appId", info.trustchainId)),
       std::move(instanceId),
       backend);
   return client;
@@ -108,12 +106,10 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
   }
 
   auto const testNonce = nonceManager.testNonce();
-  auto const nonce =
-      testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken.token);
+  auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken.token);
 
   // Only checking nonce format
-  (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(
-      nonce, "oidcIdToken.nonce");
+  (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
 
   auto const challenge = TC_AWAIT(requester.getOidcChallenge(userId, nonce));
   auto const verification = Verification::OidcIdTokenWithChallenge{
@@ -122,8 +118,8 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
       testNonce,
   };
 
-  auto const verificationRequest = Verification::makeRequestWithVerif(
-      verification, userSecret, secretProvisionalSigKey, withTokenNonce);
+  auto const verificationRequest =
+      Verification::makeRequestWithVerif(verification, userSecret, secretProvisionalSigKey, withTokenNonce);
   TC_RETURN(verificationRequest);
 }
 
@@ -138,66 +134,52 @@ tc::cotask<Verification::RequestWithVerif> formatRequestWithVerif(
 {
   if (auto const v = boost::variant2::get_if<OidcIdToken>(&verification))
   {
-    auto const res = TC_AWAIT(challengeOidcToken(requester,
-                                                 nonceManager,
-                                                 userId,
-                                                 *v,
-                                                 userSecret,
-                                                 secretProvisionalSigKey,
-                                                 withTokenNonce));
+    auto const res = TC_AWAIT(
+        challengeOidcToken(requester, nonceManager, userId, *v, userSecret, secretProvisionalSigKey, withTokenNonce));
     TC_RETURN(res);
   }
 
-  TC_RETURN(Verification::makeRequestWithVerif(
-      verification, userSecret, secretProvisionalSigKey, withTokenNonce));
+  TC_RETURN(Verification::makeRequestWithVerif(verification, userSecret, secretProvisionalSigKey, withTokenNonce));
 }
 
 // This function is NOT exposed to our users. The key returned by this function
 // is used directly for encryption, so it is important that we never send this
 // hash value to anyone. We use a 'nothing up my sleeve' pepper for this.
-Crypto::SymmetricKey e2ePassphraseKeyDerivation(
-    Tanker::E2ePassphrase const& passphrase)
+Crypto::SymmetricKey e2ePassphraseKeyDerivation(Tanker::E2ePassphrase const& passphrase)
 {
-  static constexpr char pepper[] =
-      "tanker e2e passphrase key derivation pepper";
+  static constexpr char pepper[] = "tanker e2e passphrase key derivation pepper";
   std::vector<std::uint8_t> buffer(passphrase.begin(), passphrase.end());
   buffer.insert(buffer.end(), pepper, pepper + sizeof(pepper) - 1);
   return Tanker::Crypto::generichash<Crypto::SymmetricKey>(
       gsl::make_span(buffer).template as_span<std::uint8_t const>());
 }
 
-std::vector<std::uint8_t> encryptVerificationKeyForE2ePassphrase(
-    Tanker::E2ePassphrase const& e2ePassphrase,
-    VerificationKey const& verificationKey)
+std::vector<std::uint8_t> encryptVerificationKeyForE2ePassphrase(Tanker::E2ePassphrase const& e2ePassphrase,
+                                                                 VerificationKey const& verificationKey)
 {
   auto const passphraseKey = e2ePassphraseKeyDerivation(e2ePassphrase);
   std::vector<std::uint8_t> encryptedVerificationKeyForE2ePassphrase(
       EncryptorV2::encryptedSize(verificationKey.size()));
-  EncryptorV2::encryptSync(
-      encryptedVerificationKeyForE2ePassphrase,
-      gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
-      passphraseKey);
+  EncryptorV2::encryptSync(encryptedVerificationKeyForE2ePassphrase,
+                           gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
+                           passphraseKey);
   return encryptedVerificationKeyForE2ePassphrase;
 }
 
 tc::cotask<std::vector<uint8_t>> decryptVerificationKeyWithUserCreds(
-    boost::variant2::variant<EncryptedVerificationKeyForUserKey,
-                             EncryptedVerificationKeyForUserSecret> const&
+    boost::variant2::variant<EncryptedVerificationKeyForUserKey, EncryptedVerificationKeyForUserSecret> const&
         encVerifKey,
     Users::LocalUser const& localUser,
     Session const& session)
 {
   TC_RETURN(TC_AWAIT(boost::variant2::visit(
       overloaded{
-          [&](EncryptedVerificationKeyForUserKey const& evk)
-              -> tc::cotask<std::vector<uint8_t>> {
+          [&](EncryptedVerificationKeyForUserKey const& evk) -> tc::cotask<std::vector<uint8_t>> {
             TC_RETURN(Crypto::sealDecrypt(evk, localUser.currentKeyPair()));
           },
-          [&](EncryptedVerificationKeyForUserSecret const& evk)
-              -> tc::cotask<std::vector<uint8_t>> {
+          [&](EncryptedVerificationKeyForUserSecret const& evk) -> tc::cotask<std::vector<uint8_t>> {
             std::vector<uint8_t> vk(EncryptorV2::decryptedSize(evk));
-            TC_AWAIT(EncryptorV2::decrypt(
-                vk, Encryptor::fixedKeyFinder(session.userSecret()), evk));
+            TC_AWAIT(EncryptorV2::decrypt(vk, Encryptor::fixedKeyFinder(session.userSecret()), evk));
             TC_RETURN(vk);
           },
       },
@@ -224,34 +206,29 @@ Core::Core(std::string url,
     _info(std::move(info)),
     _dataPath(std::move(dataPath)),
     _cachePath(std::move(cachePath)),
-    _networkBackend(networkBackend ?
-                        std::move(networkBackend) :
+    _networkBackend(networkBackend ? std::move(networkBackend) :
 #if TANKER_WITH_CURL
-                        std::make_unique<Network::CurlBackend>(_info)
+                                     std::make_unique<Network::CurlBackend>(_info)
 #else
-                        nullptr
+                                     nullptr
 #endif
                         ),
-    _datastoreBackend(datastoreBackend ?
-                          std::move(datastoreBackend) :
+    _datastoreBackend(datastoreBackend ? std::move(datastoreBackend) :
 #if TANKER_WITH_SQLITE
-                          std::make_unique<DataStore::SqliteBackend>()
+                                         std::make_unique<DataStore::SqliteBackend>()
 #else
-                          nullptr
+                                         nullptr
 #endif
                           ),
-    _session(std::make_shared<Session>(
-        createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
-        _datastoreBackend.get())),
+    _session(std::make_shared<Session>(createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+                                       _datastoreBackend.get())),
     _oidcManager(std::make_shared<Oidc::NonceManager>())
 {
   TDEBUG("Creating core {}", static_cast<void*>(this));
   if (!_networkBackend)
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "no built-in HTTP backend, please provide one");
+    throw Errors::formatEx(Errors::Errc::InternalError, "no built-in HTTP backend, please provide one");
   if (!_datastoreBackend)
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "no built-in storage backend, please provide one");
+    throw Errors::formatEx(Errors::Errc::InternalError, "no built-in storage backend, please provide one");
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const
@@ -259,18 +236,15 @@ void Core::assertStatus(Status wanted, std::string const& action) const
   assertStatus({wanted}, action);
 }
 
-void Core::assertStatus(std::initializer_list<Status> wanted,
-                        std::string const& action) const
+void Core::assertStatus(std::initializer_list<Status> wanted, std::string const& action) const
 {
   auto const actualStatus = status();
   for (auto s : wanted)
     if (actualStatus == s)
       return;
 
-  throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                         FMT_STRING("invalid session status {:e} for {:s}"),
-                         actualStatus,
-                         action);
+  throw Errors::formatEx(
+      Errors::Errc::PreconditionFailed, FMT_STRING("invalid session status {:e} for {:s}"), actualStatus, action);
 }
 
 Status Core::status() const
@@ -280,21 +254,17 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(
-      createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
-      _datastoreBackend.get());
+  _session = std::make_shared<Session>(createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+                                       _datastoreBackend.get());
 }
 
 template <typename F>
-decltype(std::declval<F>()()) Core::resetOnFailure(
-    F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore)
+decltype(std::declval<F>()()) Core::resetOnFailure(F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore)
 {
   std::exception_ptr exception;
   try
   {
-    if constexpr (std::is_same_v<typename tc::detail::task_return_type<
-                                     std::invoke_result_t<F>>::type,
-                                 void>)
+    if constexpr (std::is_same_v<typename tc::detail::task_return_type<std::invoke_result_t<F>>::type, void>)
     {
       TC_AWAIT(std::forward<F>(f)());
       TC_RETURN();
@@ -366,28 +336,24 @@ void Core::quickStop()
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
   TINFO("Starting core {}", static_cast<void*>(this));
-  auto const identity =
-      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+  auto const identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
   if (identity.trustchainId != _info.trustchainId)
   {
-    throw Errors::formatEx(
-        Errors::Errc::InvalidArgument,
-        "the provided identity was not signed by the private key of the "
-        "current app: expected app ID {} but got {}",
-        _info.trustchainId,
-        identity.trustchainId);
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "the provided identity was not signed by the private key of the "
+                           "current app: expected app ID {} but got {}",
+                           _info.trustchainId,
+                           identity.trustchainId);
   }
   TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
   auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
   if (!optDeviceKeys.has_value())
   {
-    auto const optPubUserEncKey =
-        TC_AWAIT(_session->requesters().userStatus(_session->userId()));
+    auto const optPubUserEncKey = TC_AWAIT(_session->requesters().userStatus(_session->userId()));
     if (!optPubUserEncKey)
       _session->setStatus(Status::IdentityRegistrationNeeded);
-    else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
-             !optDeviceKeys.has_value())
+    else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys()); !optDeviceKeys.has_value())
       _session->setStatus(Status::IdentityVerificationNeeded);
   }
   else
@@ -401,30 +367,25 @@ tc::cotask<Status> Core::start(std::string const& identity)
 {
   SCOPE_TIMER("core_start", Proc);
   assertStatus(Status::Stopped, "start");
-  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
-    TC_RETURN(TC_AWAIT(startImpl(identity)));
-  })));
+  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> { TC_RETURN(TC_AWAIT(startImpl(identity))); })));
 }
 
-tc::cotask<void> Core::enrollUser(
-    std::string const& b64Identity,
-    std::vector<Verification::Verification> const& verifications)
+tc::cotask<void> Core::enrollUser(std::string const& b64Identity,
+                                  std::vector<Verification::Verification> const& verifications)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::Stopped, "enrollUser");
 
   TINFO("Enrolling User {}", static_cast<void*>(this));
-  auto const identity =
-      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+  auto const identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
   if (identity.trustchainId != _info.trustchainId)
   {
-    throw Errors::formatEx(
-        Errors::Errc::InvalidArgument,
-        "the provided identity was not signed by the private key of the "
-        "current app: expected app ID {} but got {}",
-        _info.trustchainId,
-        identity.trustchainId);
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "the provided identity was not signed by the private key of the "
+                           "current app: expected app ID {} but got {}",
+                           _info.trustchainId,
+                           identity.trustchainId);
   }
 
   if (verifications.empty())
@@ -434,9 +395,8 @@ tc::cotask<void> Core::enrollUser(
                    "verification method");
   }
 
-  uint64_t nbEmails = ranges::count_if(verifications, [](auto const& verif) {
-    return boost::variant2::holds_alternative<PreverifiedEmail>(verif);
-  });
+  uint64_t nbEmails = ranges::count_if(
+      verifications, [](auto const& verif) { return boost::variant2::holds_alternative<PreverifiedEmail>(verif); });
   uint64_t nbPhones = ranges::count_if(verifications, [](auto const& verif) {
     return boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verif);
   });
@@ -455,166 +415,140 @@ tc::cotask<void> Core::enrollUser(
                    "verification method ");
   }
 
-  auto const userCreation =
-      generateGhostDevice(identity, generateGhostDeviceKeys(std::nullopt));
+  auto const userCreation = generateGhostDevice(identity, generateGhostDeviceKeys(std::nullopt));
 
-  TC_AWAIT(_session->requesters().enrollUser(
-      identity.trustchainId,
-      identity.delegation.userId,
-      Serialization::serialize(userCreation.entry),
-      Verification::makeRequestWithVerifs(verifications, identity.userSecret),
-      userCreation.verificationKey));
+  TC_AWAIT(_session->requesters().enrollUser(identity.trustchainId,
+                                             identity.delegation.userId,
+                                             Serialization::serialize(userCreation.entry),
+                                             Verification::makeRequestWithVerifs(verifications, identity.userSecret),
+                                             userCreation.verificationKey));
 
   TC_AWAIT(_session->stop());
 }
 
-tc::cotask<void> Core::registerIdentityImpl(
-    Verification::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<void> Core::registerIdentityImpl(Verification::Verification const& verification,
+                                            std::optional<std::string> const& withTokenNonce)
 {
   TINFO("Registering identity {}", static_cast<void*>(this));
-  auto const userCreation = generateGhostDevice(
-      _session->identity(), generateGhostDeviceKeys(verification));
+  auto const userCreation = generateGhostDevice(_session->identity(), generateGhostDeviceKeys(verification));
 
   auto const deviceKeys = DeviceKeys::create();
   auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
       Trustchain::DeviceId{userCreation.entry.hash()},
-      Identity::makeDelegation(_session->userId(),
-                               userCreation.ghostDevice.privateSignatureKey),
+      Identity::makeDelegation(_session->userId(), userCreation.ghostDevice.privateSignatureKey),
       deviceKeys.signatureKeyPair.publicKey,
       deviceKeys.encryptionKeyPair.publicKey,
       userCreation.userKeyPair);
   auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
-  auto const verifRequest =
-      TC_AWAIT(formatRequestWithVerif(_session->requesters(),
-                                      *_oidcManager,
-                                      _session->userId(),
-                                      verification,
-                                      _session->userSecret(),
-                                      std::nullopt,
-                                      withTokenNonce));
+  auto const verifRequest = TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                                            *_oidcManager,
+                                                            _session->userId(),
+                                                            verification,
+                                                            _session->userSecret(),
+                                                            std::nullopt,
+                                                            withTokenNonce));
 
-  if (auto const e2ePassphrase =
-          boost::variant2::get_if<E2ePassphrase>(&verification))
+  if (auto const e2ePassphrase = boost::variant2::get_if<E2ePassphrase>(&verification))
   {
     auto const verificationKey = userCreation.ghostDevice.toVerificationKey();
     auto const encryptedVerificationKeyForUserKey = Crypto::sealEncrypt(
-        gsl::make_span(verificationKey).as_span<std::uint8_t const>(),
-        userCreation.userKeyPair.publicKey);
+        gsl::make_span(verificationKey).as_span<std::uint8_t const>(), userCreation.userKeyPair.publicKey);
     auto const encryptedVerificationKeyForE2ePassphrase =
         encryptVerificationKeyForE2ePassphrase(*e2ePassphrase, verificationKey);
 
-    TC_AWAIT(_session->requesters().createUserE2e(
-        _session->trustchainId(),
-        _session->userId(),
-        Serialization::serialize(userCreation.entry),
-        Serialization::serialize(firstDeviceEntry),
-        verifRequest,
-        encryptedVerificationKeyForE2ePassphrase,
-        encryptedVerificationKeyForUserKey));
+    TC_AWAIT(_session->requesters().createUserE2e(_session->trustchainId(),
+                                                  _session->userId(),
+                                                  Serialization::serialize(userCreation.entry),
+                                                  Serialization::serialize(firstDeviceEntry),
+                                                  verifRequest,
+                                                  encryptedVerificationKeyForE2ePassphrase,
+                                                  encryptedVerificationKeyForUserKey));
   }
   else
   {
-    TC_AWAIT(_session->requesters().createUser(
-        _session->trustchainId(),
-        _session->userId(),
-        Serialization::serialize(userCreation.entry),
-        Serialization::serialize(firstDeviceEntry),
-        verifRequest,
-        userCreation.verificationKey));
+    TC_AWAIT(_session->requesters().createUser(_session->trustchainId(),
+                                               _session->userId(),
+                                               Serialization::serialize(userCreation.entry),
+                                               Serialization::serialize(firstDeviceEntry),
+                                               verifRequest,
+                                               userCreation.verificationKey));
   }
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
-tc::cotask<std::optional<std::string>> Core::registerIdentity(
-    Verification::Verification const& verification, VerifyWithToken withToken)
+tc::cotask<std::optional<std::string>> Core::registerIdentity(Verification::Verification const& verification,
+                                                              VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
-  if (withToken == VerifyWithToken::Yes &&
-      boost::variant2::holds_alternative<VerificationKey>(verification))
+  if (withToken == VerifyWithToken::Yes && boost::variant2::holds_alternative<VerificationKey>(verification))
   {
-    throw formatEx(Errc::InvalidArgument,
-                   "cannot get a session token with a verification key");
+    throw formatEx(Errc::InvalidArgument, "cannot get a session token with a verification key");
   }
   if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
       boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
   {
-    throw formatEx(Errc::InvalidArgument,
-                   "cannot register identity with preverified methods");
+    throw formatEx(Errc::InvalidArgument, "cannot register identity with preverified methods");
   }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
-  TC_AWAIT(resetOnFailure(
-      [&]() -> tc::cotask<void> {
-        TC_AWAIT(registerIdentityImpl(verification, withTokenNonce));
-      },
-      {Errors::Errc::ExpiredVerification,
-       Errors::Errc::InvalidVerification,
-       Errors::Errc::InvalidArgument,
-       Errors::Errc::PreconditionFailed,
-       Errors::Errc::TooManyAttempts}));
+  TC_AWAIT(resetOnFailure([&]() -> tc::cotask<void> { TC_AWAIT(registerIdentityImpl(verification, withTokenNonce)); },
+                          {Errors::Errc::ExpiredVerification,
+                           Errors::Errc::InvalidVerification,
+                           Errors::Errc::InvalidArgument,
+                           Errors::Errc::PreconditionFailed,
+                           Errors::Errc::TooManyAttempts}));
 
   if (withToken == VerifyWithToken::No)
     TC_RETURN(std::nullopt);
   TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
 }
 
-tc::cotask<void> Core::verifyIdentityImpl(
-    Verification::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<void> Core::verifyIdentityImpl(Verification::Verification const& verification,
+                                          std::optional<std::string> const& withTokenNonce)
 {
   TINFO("Verifying identity {}", static_cast<void*>(this));
-  auto const verificationKey =
-      TC_AWAIT(getVerificationKey(verification, withTokenNonce));
+  auto const verificationKey = TC_AWAIT(getVerificationKey(verification, withTokenNonce));
   try
   {
     auto const deviceKeys = DeviceKeys::create();
 
-    auto const ghostDeviceKeys =
-        GhostDevice::create(verificationKey).toDeviceKeys();
-    auto const encryptedUserKey =
-        TC_AWAIT(_session->requesters().getEncryptionKey(
-            _session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const ghostDeviceKeys = GhostDevice::create(verificationKey).toDeviceKeys();
+    auto const encryptedUserKey = TC_AWAIT(
+        _session->requesters().getEncryptionKey(_session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
     auto const privateUserEncryptionKey =
-        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey,
-                            ghostDeviceKeys.encryptionKeyPair);
+        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey, ghostDeviceKeys.encryptionKeyPair);
     auto const action = Users::createNewDeviceAction(
         _session->trustchainId(),
         encryptedUserKey.ghostDeviceId,
-        Identity::makeDelegation(_session->userId(),
-                                 ghostDeviceKeys.signatureKeyPair.privateKey),
+        Identity::makeDelegation(_session->userId(), ghostDeviceKeys.signatureKeyPair.privateKey),
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
 
     auto const deviceId = Trustchain::DeviceId{action.hash()};
 
-    TC_AWAIT(
-        _session->requesters().createDevice(Serialization::serialize(action)));
+    TC_AWAIT(_session->requesters().createDevice(Serialization::serialize(action)));
     TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
   }
   catch (Exception const& e)
   {
-    if (e.errorCode() == AppdErrc::DeviceNotFound ||
-        e.errorCode() == Errc::DecryptionFailed)
+    if (e.errorCode() == AppdErrc::DeviceNotFound || e.errorCode() == Errc::DecryptionFailed)
       throw Exception(make_error_code(Errc::InvalidVerification), e.what());
     throw;
   }
 }
 
-tc::cotask<std::optional<std::string>> Core::verifyIdentity(
-    Verification::Verification const& verification, VerifyWithToken withToken)
+tc::cotask<std::optional<std::string>> Core::verifyIdentity(Verification::Verification const& verification,
+                                                            VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
   if (withToken == VerifyWithToken::Yes)
   {
-    assertStatus({Status::IdentityVerificationNeeded, Status::Ready},
-                 "verifyIdentity");
+    assertStatus({Status::IdentityVerificationNeeded, Status::Ready}, "verifyIdentity");
     if (boost::variant2::holds_alternative<VerificationKey>(verification))
     {
-      throw formatEx(Errc::InvalidArgument,
-                     "cannot get a session token with a verification key");
+      throw formatEx(Errc::InvalidArgument, "cannot get a session token with a verification key");
     }
   }
   else
@@ -625,42 +559,33 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(
   if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
       boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
   {
-    throw formatEx(Errc::InvalidArgument,
-                   "cannot verify identity with preverified methods");
+    throw formatEx(Errc::InvalidArgument, "cannot verify identity with preverified methods");
   }
 
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
-  TC_AWAIT(resetOnFailure(
-      [&]() -> tc::cotask<void> {
-        TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce));
-      },
-      {Errors::Errc::ExpiredVerification,
-       Errors::Errc::InvalidVerification,
-       Errors::Errc::InvalidArgument,
-       Errors::Errc::PreconditionFailed,
-       Errors::Errc::TooManyAttempts}));
+  TC_AWAIT(resetOnFailure([&]() -> tc::cotask<void> { TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce)); },
+                          {Errors::Errc::ExpiredVerification,
+                           Errors::Errc::InvalidVerification,
+                           Errors::Errc::InvalidArgument,
+                           Errors::Errc::PreconditionFailed,
+                           Errors::Errc::TooManyAttempts}));
 
   if (withToken == VerifyWithToken::No)
     TC_RETURN(std::nullopt);
   TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
 }
 
-tc::cotask<std::string> Core::getSessionToken(
-    Verification::Verification const& verification,
-    const std::string& withTokenNonce)
+tc::cotask<std::string> Core::getSessionToken(Verification::Verification const& verification,
+                                              const std::string& withTokenNonce)
 {
   assertStatus(Status::Ready, "getSessionToken");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto sessionCertificate = Users::createSessionCertificate(
-      _session->trustchainId(),
-      localUser.deviceId(),
-      verification,
-      localUser.deviceKeys().signatureKeyPair.privateKey);
+      _session->trustchainId(), localUser.deviceId(), verification, localUser.deviceKeys().signatureKeyPair.privateKey);
   auto const serializedSessCert = Serialization::serialize(sessionCertificate);
 
-  TC_RETURN(TC_AWAIT(_session->requesters().getSessionToken(
-      _session->userId(), serializedSessCert, withTokenNonce)));
+  TC_RETURN(TC_AWAIT(_session->requesters().getSessionToken(_session->userId(), serializedSessCert, withTokenNonce)));
 }
 
 tc::cotask<Oidc::Nonce> Core::createOidcNonce()
@@ -673,66 +598,49 @@ void Core::setOidcTestNonce(Oidc::Nonce const& nonce)
   _oidcManager->setTestNonce(nonce);
 }
 
-tc::cotask<void> Core::encrypt(
-    gsl::span<uint8_t> encryptedData,
-    gsl::span<uint8_t const> clearData,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf,
-    std::optional<uint32_t> paddingStep)
+tc::cotask<void> Core::encrypt(gsl::span<uint8_t> encryptedData,
+                               gsl::span<uint8_t const> clearData,
+                               std::vector<SPublicIdentity> const& spublicIdentities,
+                               std::vector<SGroupId> const& sgroupIds,
+                               ShareWithSelf shareWithSelf,
+                               std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
     spublicIdentitiesWithUs.emplace_back(
-        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
-                                                    _session->userId()}));
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(), _session->userId()}));
   else if (spublicIdentities.empty() && sgroupIds.empty())
-    throw Errors::formatEx(
-        Errors::Errc::InvalidArgument,
-        FMT_STRING("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, FMT_STRING("cannot encrypt without sharing with anybody"));
 
-  auto const session =
-      TC_AWAIT(_session->accessors()
-                   .transparentSessionAccessor.getOrCreateTransparentSession(
-                       spublicIdentitiesWithUs, sgroupIds));
-  TC_AWAIT(Encryptor::encrypt(
-      encryptedData, clearData, paddingStep, session.id, session.key));
+  auto const session = TC_AWAIT(_session->accessors().transparentSessionAccessor.getOrCreateTransparentSession(
+      spublicIdentitiesWithUs, sgroupIds));
+  TC_AWAIT(Encryptor::encrypt(encryptedData, clearData, paddingStep, session.id, session.key));
 }
 
-tc::cotask<std::vector<uint8_t>> Core::encrypt(
-    gsl::span<uint8_t const> clearData,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf,
-    std::optional<uint32_t> paddingStep)
+tc::cotask<std::vector<uint8_t>> Core::encrypt(gsl::span<uint8_t const> clearData,
+                                               std::vector<SPublicIdentity> const& spublicIdentities,
+                                               std::vector<SGroupId> const& sgroupIds,
+                                               ShareWithSelf shareWithSelf,
+                                               std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
-  std::vector<uint8_t> encryptedData(
-      Encryptor::encryptedSize(clearData.size(), paddingStep));
-  TC_AWAIT(encrypt(encryptedData,
-                   clearData,
-                   spublicIdentities,
-                   sgroupIds,
-                   shareWithSelf,
-                   paddingStep));
+  std::vector<uint8_t> encryptedData(Encryptor::encryptedSize(clearData.size(), paddingStep));
+  TC_AWAIT(encrypt(encryptedData, clearData, spublicIdentities, sgroupIds, shareWithSelf, paddingStep));
   TC_RETURN(std::move(encryptedData));
 }
 
-tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
-                                   gsl::span<uint8_t const> encryptedData)
+tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData, gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
-  auto finder = [this](Crypto::SimpleResourceId const& resourceId)
-      -> Encryptor::ResourceKeyFinder::result_type {
+  auto finder = [this](Crypto::SimpleResourceId const& resourceId) -> Encryptor::ResourceKeyFinder::result_type {
     TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, finder, encryptedData)));
 }
 
-tc::cotask<std::vector<uint8_t>> Core::decrypt(
-    gsl::span<uint8_t const> encryptedData)
+tc::cotask<std::vector<uint8_t>> Core::decrypt(gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
@@ -742,77 +650,61 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
   TC_RETURN(std::move(decryptedData));
 }
 
-tc::cotask<void> Core::share(
-    std::vector<SResourceId> const& sresourceIds,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+tc::cotask<void> Core::share(std::vector<SResourceId> const& sresourceIds,
+                             std::vector<SPublicIdentity> const& spublicIdentities,
+                             std::vector<SGroupId> const& sgroupIds)
 {
   assertStatus(Status::Ready, "share");
   if (sresourceIds.empty() || (spublicIdentities.empty() && sgroupIds.empty()))
     TC_RETURN();
 
-  auto const resourceIds =
-      sresourceIds | ranges::views::transform([](auto&& resourceId) {
-        return decodeArgument<mgs::base64, Crypto::ResourceId>(resourceId,
-                                                               "resource id");
-      }) |
-      ranges::to<std::vector> | Actions::deduplicate;
+  auto const resourceIds = sresourceIds | ranges::views::transform([](auto&& resourceId) {
+                             return decodeArgument<mgs::base64, Crypto::ResourceId>(resourceId, "resource id");
+                           }) |
+                           ranges::to<std::vector> | Actions::deduplicate;
 
   // Retrieve keys for simple resource IDs and known session keys for composites
   std::vector<Crypto::SimpleResourceId> simpleResourceIds;
   std::vector<Crypto::SimpleResourceId> sessionIds;
   for (auto const& ridVariant : resourceIds)
   {
-    if (auto const rid =
-            boost::variant2::get_if<Crypto::SimpleResourceId>(&ridVariant))
+    if (auto const rid = boost::variant2::get_if<Crypto::SimpleResourceId>(&ridVariant))
       simpleResourceIds.push_back(*rid);
-    else if (auto const rid =
-                 boost::variant2::get_if<Crypto::CompositeResourceId>(
-                     &ridVariant))
+    else if (auto const rid = boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
       sessionIds.push_back(rid->sessionId());
   }
   auto const localUser = _session->accessors().localUserAccessor.get();
-  std::vector<ResourceKeys::KeyResult> resourceKeys = TC_AWAIT(
-      _session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
+  std::vector<ResourceKeys::KeyResult> resourceKeys =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKeys(simpleResourceIds));
 
   // If we fail to find the session key for some composites resource IDs, we may
   // still have access to the individual resource key
-  auto sessionKeysMap = TC_AWAIT(
-      _session->accessors().resourceKeyAccessor.tryFindKeys(sessionIds));
+  auto sessionKeysMap = TC_AWAIT(_session->accessors().resourceKeyAccessor.tryFindKeys(sessionIds));
   std::vector<Crypto::SimpleResourceId> resourcesWithoutSession;
   for (auto const& ridVariant : resourceIds)
   {
-    if (auto const rid =
-            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+    if (auto const rid = boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
       if (sessionKeysMap.find(rid->sessionId()) == sessionKeysMap.end())
         resourcesWithoutSession.push_back(rid->individualResourceId());
   }
-  flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey>
-      individualResourceKeys =
-          TC_AWAIT(_session->accessors().resourceKeyAccessor.tryFindKeys(
-              resourcesWithoutSession));
+  flat_map<Crypto::SimpleResourceId, Crypto::SymmetricKey> individualResourceKeys =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.tryFindKeys(resourcesWithoutSession));
 
   if (individualResourceKeys.size() != resourcesWithoutSession.size())
   {
     flat_set<Crypto::SimpleResourceId> missingIndividualIDs;
-    std::copy_if(
-        resourcesWithoutSession.begin(),
-        resourcesWithoutSession.end(),
-        std::inserter(missingIndividualIDs, missingIndividualIDs.end()),
-        [&](auto const& k) { return !individualResourceKeys.contains(k); });
+    std::copy_if(resourcesWithoutSession.begin(),
+                 resourcesWithoutSession.end(),
+                 std::inserter(missingIndividualIDs, missingIndividualIDs.end()),
+                 [&](auto const& k) { return !individualResourceKeys.contains(k); });
 
-    auto missing =
-        resourceIds | ranges::views::filter([&](const auto& ridVariant) {
-          return missingIndividualIDs.contains(
-              ridVariant.individualResourceId());
-        }) |
-        ranges::views::transform([](auto const& ridVariant) {
-          return mgs::base64::encode(
-              boost::variant2::get<Crypto::CompositeResourceId>(ridVariant));
-        });
-    throw formatEx(Errors::Errc::InvalidArgument,
-                   "can't find keys for resource IDs: {:s}",
-                   fmt::join(missing, ", "));
+    auto missing = resourceIds | ranges::views::filter([&](const auto& ridVariant) {
+                     return missingIndividualIDs.contains(ridVariant.individualResourceId());
+                   }) |
+                   ranges::views::transform([](auto const& ridVariant) {
+                     return mgs::base64::encode(boost::variant2::get<Crypto::CompositeResourceId>(ridVariant));
+                   });
+    throw formatEx(Errors::Errc::InvalidArgument, "can't find keys for resource IDs: {:s}", fmt::join(missing, ", "));
   }
   for (auto const& [id, key] : individualResourceKeys)
     resourceKeys.push_back({key, id});
@@ -820,8 +712,7 @@ tc::cotask<void> Core::share(
   // Derive keys for composite resource IDs for which we know the session key
   for (auto const& ridVariant : resourceIds)
   {
-    if (auto const rid =
-            boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
+    if (auto const rid = boost::variant2::get_if<Crypto::CompositeResourceId>(&ridVariant))
     {
       auto const sessionKey = sessionKeysMap.find(rid->sessionId());
       if (sessionKey == sessionKeysMap.end())
@@ -836,9 +727,7 @@ tc::cotask<void> Core::share(
       }
       else
       {
-        throw formatEx(Errc::InvalidArgument,
-                       "invalid or unsupported composite resource ID type: {}",
-                       rid->type());
+        throw formatEx(Errc::InvalidArgument, "invalid or unsupported composite resource ID type: {}", rid->type());
       }
     }
   }
@@ -854,76 +743,60 @@ tc::cotask<void> Core::share(
                         sgroupIds));
 }
 
-tc::cotask<SGroupId> Core::createGroup(
-    std::vector<SPublicIdentity> const& spublicIdentities)
+tc::cotask<SGroupId> Core::createGroup(std::vector<SPublicIdentity> const& spublicIdentities)
 {
   assertStatus(Status::Ready, "createGroup");
   auto const& localUser = _session->accessors().localUserAccessor.get();
-  auto const groupId = TC_AWAIT(Groups::Manager::create(
-      _session->accessors().userAccessor,
-      _session->requesters(),
-      spublicIdentities,
-      _session->trustchainId(),
-      localUser.deviceId(),
-      localUser.deviceKeys().signatureKeyPair.privateKey));
+  auto const groupId = TC_AWAIT(Groups::Manager::create(_session->accessors().userAccessor,
+                                                        _session->requesters(),
+                                                        spublicIdentities,
+                                                        _session->trustchainId(),
+                                                        localUser.deviceId(),
+                                                        localUser.deviceKeys().signatureKeyPair.privateKey));
   TC_RETURN(groupId);
 }
 
-tc::cotask<void> Core::updateGroupMembers(
-    SGroupId const& groupIdString,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove)
+tc::cotask<void> Core::updateGroupMembers(SGroupId const& groupIdString,
+                                          std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+                                          std::vector<SPublicIdentity> const& spublicIdentitiesToRemove)
 {
   assertStatus(Status::Ready, "updateGroupMembers");
-  auto const groupId = decodeArgument<mgs::base64, Trustchain::GroupId>(
-      groupIdString, "group id");
+  auto const groupId = decodeArgument<mgs::base64, Trustchain::GroupId>(groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Groups::Manager::updateMembers(
-      _session->accessors().userAccessor,
-      _session->requesters(),
-      _session->accessors().groupAccessor,
-      groupId,
-      spublicIdentitiesToAdd,
-      spublicIdentitiesToRemove,
-      _session->trustchainId(),
-      localUser.deviceId(),
-      localUser.deviceKeys().signatureKeyPair.privateKey));
+  TC_AWAIT(Groups::Manager::updateMembers(_session->accessors().userAccessor,
+                                          _session->requesters(),
+                                          _session->accessors().groupAccessor,
+                                          groupId,
+                                          spublicIdentitiesToAdd,
+                                          spublicIdentitiesToRemove,
+                                          _session->trustchainId(),
+                                          localUser.deviceId(),
+                                          localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
-tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
-    Verification::Verification const& method,
-    VerifyWithToken withToken,
-    AllowE2eMethodSwitch allowE2eSwitch)
+tc::cotask<std::optional<std::string>> Core::setVerificationMethod(Verification::Verification const& method,
+                                                                   VerifyWithToken withToken,
+                                                                   AllowE2eMethodSwitch allowE2eSwitch)
 {
   using boost::variant2::holds_alternative;
 
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
   {
-    throw formatEx(Errc::InvalidArgument,
-                   "cannot call setVerificationMethod with a verification key");
+    throw formatEx(Errc::InvalidArgument, "cannot call setVerificationMethod with a verification key");
   }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
-  auto encVerifKey = TC_AWAIT(
-      _session->requesters().fetchEncryptedVerificationKey(_session->userId()));
+  auto encVerifKey = TC_AWAIT(_session->requesters().fetchEncryptedVerificationKey(_session->userId()));
   bool isE2eMethod = isE2eVerification(method);
-  bool switchingOnE2e =
-      isE2eMethod &&
-      holds_alternative<EncryptedVerificationKeyForUserSecret>(encVerifKey);
-  bool switchingOffE2e =
-      !isE2eMethod &&
-      holds_alternative<EncryptedVerificationKeyForUserKey>(encVerifKey);
+  bool switchingOnE2e = isE2eMethod && holds_alternative<EncryptedVerificationKeyForUserSecret>(encVerifKey);
+  bool switchingOffE2e = !isE2eMethod && holds_alternative<EncryptedVerificationKeyForUserKey>(encVerifKey);
   if (switchingOnE2e && allowE2eSwitch == AllowE2eMethodSwitch::No)
-    throw formatEx(
-        Errc::InvalidArgument,
-        "must set allowE2eMethodSwitch flag to turn on E2E verification");
+    throw formatEx(Errc::InvalidArgument, "must set allowE2eMethodSwitch flag to turn on E2E verification");
   if (switchingOffE2e && allowE2eSwitch == AllowE2eMethodSwitch::No)
-    throw formatEx(
-        Errc::InvalidArgument,
-        "must set allowE2eMethodSwitch flag to turn off E2E verification");
+    throw formatEx(Errc::InvalidArgument, "must set allowE2eMethodSwitch flag to turn off E2E verification");
 
   Tanker::Verification::SetVerifMethodRequest request;
   request.verification = TC_AWAIT(formatRequestWithVerif(_session->requesters(),
@@ -935,41 +808,27 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
                                                          withTokenNonce));
   if (switchingOffE2e)
   {
-    auto verifKey = TC_AWAIT(
-        decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
-    std::vector<uint8_t> encryptedVerificationKey(
-        EncryptorV2::encryptedSize(verifKey.size()));
-    EncryptorV2::encryptSync(encryptedVerificationKey,
-                             gsl::make_span(verifKey).as_span<uint8_t const>(),
-                             _session->userSecret());
-    request.encVkForUserSecret = {
-        EncryptedVerificationKeyForUserSecret{encryptedVerificationKey}};
+    auto verifKey = TC_AWAIT(decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
+    std::vector<uint8_t> encryptedVerificationKey(EncryptorV2::encryptedSize(verifKey.size()));
+    EncryptorV2::encryptSync(
+        encryptedVerificationKey, gsl::make_span(verifKey).as_span<uint8_t const>(), _session->userSecret());
+    request.encVkForUserSecret = {EncryptedVerificationKeyForUserSecret{encryptedVerificationKey}};
   }
   else if (isE2eMethod)
   {
-    auto verifKey = TC_AWAIT(
-        decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
-    request.encVkForUserKey = {
-        EncryptedVerificationKeyForUserKey{Crypto::sealEncrypt(
-            gsl::make_span(verifKey).as_span<std::uint8_t const>(),
-            localUser.currentKeyPair().publicKey)}};
+    auto verifKey = TC_AWAIT(decryptVerificationKeyWithUserCreds(encVerifKey, localUser, *_session));
+    request.encVkForUserKey = {EncryptedVerificationKeyForUserKey{Crypto::sealEncrypt(
+        gsl::make_span(verifKey).as_span<std::uint8_t const>(), localUser.currentKeyPair().publicKey)}};
 
-    auto const passphraseKey =
-        e2ePassphraseKeyDerivation(boost::variant2::get<E2ePassphrase>(method));
-    std::vector<std::uint8_t> encVkForE2ePass(
-        EncryptorV2::encryptedSize(verifKey.size()));
-    EncryptorV2::encryptSync(
-        encVkForE2ePass,
-        gsl::make_span(verifKey).as_span<std::uint8_t const>(),
-        passphraseKey);
-    request.encVkForE2ePass = {
-        EncryptedVerificationKeyForE2ePassphrase{encVkForE2ePass}};
+    auto const passphraseKey = e2ePassphraseKeyDerivation(boost::variant2::get<E2ePassphrase>(method));
+    std::vector<std::uint8_t> encVkForE2ePass(EncryptorV2::encryptedSize(verifKey.size()));
+    EncryptorV2::encryptSync(encVkForE2ePass, gsl::make_span(verifKey).as_span<std::uint8_t const>(), passphraseKey);
+    request.encVkForE2ePass = {EncryptedVerificationKeyForE2ePassphrase{encVkForE2ePass}};
   }
 
   try
   {
-    TC_AWAIT(_session->requesters().setVerificationMethod(_session->userId(),
-                                                          request));
+    TC_AWAIT(_session->requesters().setVerificationMethod(_session->userId(), request));
   }
   catch (Errors::Exception const& e)
   {
@@ -989,73 +848,57 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
   TC_RETURN(TC_AWAIT(getSessionToken(method, *withTokenNonce)));
 }
 
-tc::cotask<std::vector<Verification::VerificationMethod>>
-Core::getVerificationMethods()
+tc::cotask<std::vector<Verification::VerificationMethod>> Core::getVerificationMethods()
 {
-  if (!(status() == Status::Ready ||
-        status() == Status::IdentityVerificationNeeded))
+  if (!(status() == Status::Ready || status() == Status::IdentityVerificationNeeded))
     throw Errors::formatEx(Errors::Errc::PreconditionFailed,
                            FMT_STRING("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
-  auto fetchedMethods = TC_AWAIT(
-      _session->requesters().fetchVerificationMethods(_session->userId()));
+  auto fetchedMethods = TC_AWAIT(_session->requesters().fetchVerificationMethods(_session->userId()));
   if (fetchedMethods.empty())
     fetchedMethods.emplace_back(Tanker::VerificationKey{});
-  auto methods = TC_AWAIT(
-      Verification::decryptMethods(fetchedMethods, _session->userSecret()));
+  auto methods = TC_AWAIT(Verification::decryptMethods(fetchedMethods, _session->userSecret()));
   TC_RETURN(methods);
 }
 
-tc::cotask<VerificationKey> Core::fetchVerificationKey(
-    Verification::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<VerificationKey> Core::fetchVerificationKey(Verification::Verification const& verification,
+                                                       std::optional<std::string> const& withTokenNonce)
 {
   auto const encryptedKey =
-      TC_AWAIT(_session->requesters().fetchVerificationKey(
-          _session->userId(),
-          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
-                                          *_oidcManager,
-                                          _session->userId(),
-                                          verification,
-                                          _session->userSecret(),
-                                          std::nullopt,
-                                          withTokenNonce))));
-  std::vector<uint8_t> verificationKey(
-      EncryptorV2::decryptedSize(encryptedKey));
-  TC_AWAIT(
-      EncryptorV2::decrypt(verificationKey,
-                           Encryptor::fixedKeyFinder(_session->userSecret()),
-                           encryptedKey));
+      TC_AWAIT(_session->requesters().fetchVerificationKey(_session->userId(),
+                                                           TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                                                                           *_oidcManager,
+                                                                                           _session->userId(),
+                                                                                           verification,
+                                                                                           _session->userSecret(),
+                                                                                           std::nullopt,
+                                                                                           withTokenNonce))));
+  std::vector<uint8_t> verificationKey(EncryptorV2::decryptedSize(encryptedKey));
+  TC_AWAIT(EncryptorV2::decrypt(verificationKey, Encryptor::fixedKeyFinder(_session->userSecret()), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
-tc::cotask<VerificationKey> Core::fetchE2eVerificationKey(
-    Verification::Verification const& verification,
-    Crypto::SymmetricKey const& e2eEncryptionKey,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<VerificationKey> Core::fetchE2eVerificationKey(Verification::Verification const& verification,
+                                                          Crypto::SymmetricKey const& e2eEncryptionKey,
+                                                          std::optional<std::string> const& withTokenNonce)
 {
   auto const encryptedKey =
-      TC_AWAIT(_session->requesters().fetchE2eVerificationKey(
-          _session->userId(),
-          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
-                                          *_oidcManager,
-                                          _session->userId(),
-                                          verification,
-                                          _session->userSecret(),
-                                          std::nullopt,
-                                          withTokenNonce))));
-  std::vector<uint8_t> verificationKey(
-      EncryptorV2::decryptedSize(encryptedKey));
-  TC_AWAIT(EncryptorV2::decrypt(verificationKey,
-                                Encryptor::fixedKeyFinder(e2eEncryptionKey),
-                                encryptedKey));
+      TC_AWAIT(_session->requesters().fetchE2eVerificationKey(_session->userId(),
+                                                              TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                                                                              *_oidcManager,
+                                                                                              _session->userId(),
+                                                                                              verification,
+                                                                                              _session->userSecret(),
+                                                                                              std::nullopt,
+                                                                                              withTokenNonce))));
+  std::vector<uint8_t> verificationKey(EncryptorV2::decryptedSize(encryptedKey));
+  TC_AWAIT(EncryptorV2::decrypt(verificationKey, Encryptor::fixedKeyFinder(e2eEncryptionKey), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
-tc::cotask<VerificationKey> Core::getVerificationKey(
-    Verification::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<VerificationKey> Core::getVerificationKey(Verification::Verification const& verification,
+                                                     std::optional<std::string> const& withTokenNonce)
 {
   using boost::variant2::get_if;
 
@@ -1064,8 +907,7 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
   else if (auto const e2ePassphrase = get_if<E2ePassphrase>(&verification))
   {
     auto const passphraseKey = e2ePassphraseKeyDerivation(*e2ePassphrase);
-    TC_RETURN(TC_AWAIT(
-        fetchE2eVerificationKey(verification, passphraseKey, withTokenNonce)));
+    TC_RETURN(TC_AWAIT(fetchE2eVerificationKey(verification, passphraseKey, withTokenNonce)));
   }
   else if (!Verification::isPreverified(verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));
@@ -1078,36 +920,31 @@ tc::cotask<VerificationKey> Core::generateVerificationKey() const
   TC_RETURN(GhostDevice::create().toVerificationKey());
 }
 
-tc::cotask<AttachResult> Core::attachProvisionalIdentity(
-    SSecretProvisionalIdentity const& sidentity)
+tc::cotask<AttachResult> Core::attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity)
 {
   assertStatus(Status::Ready, "attachProvisionalIdentity");
   TC_RETURN(TC_AWAIT(
-      _session->accessors().provisionalUsersManager.attachProvisionalIdentity(
-          sidentity, _session->userSecret())));
+      _session->accessors().provisionalUsersManager.attachProvisionalIdentity(sidentity, _session->userSecret())));
 }
 
-tc::cotask<void> Core::verifyProvisionalIdentity(
-    Verification::Verification const& verification)
+tc::cotask<void> Core::verifyProvisionalIdentity(Verification::Verification const& verification)
 {
   assertStatus(Status::Ready, "verifyProvisionalIdentity");
-  auto const& identity =
-      _session->accessors().provisionalUsersManager.provisionalIdentity();
+  auto const& identity = _session->accessors().provisionalUsersManager.provisionalIdentity();
   if (!identity.has_value())
     throw formatEx(Errors::Errc::PreconditionFailed,
                    "cannot call verifyProvisionalIdentity "
                    "without having called "
                    "attachProvisionalIdentity before");
   Verification::validateVerification(verification, *identity);
-  TC_AWAIT(
-      _session->accessors().provisionalUsersManager.verifyProvisionalIdentity(
-          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
-                                          *_oidcManager,
-                                          _session->userId(),
-                                          verification,
-                                          _session->userSecret(),
-                                          identity->appSignatureKeyPair,
-                                          std::nullopt))));
+  TC_AWAIT(_session->accessors().provisionalUsersManager.verifyProvisionalIdentity(
+      TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                      *_oidcManager,
+                                      _session->userId(),
+                                      verification,
+                                      _session->userSecret(),
+                                      identity->appSignatureKeyPair,
+                                      std::nullopt))));
 }
 
 void Core::nukeDatabase()
@@ -1136,8 +973,7 @@ SdkInfo const& Core::sdkInfo()
   return this->_info;
 }
 
-tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-Core::makeEncryptionStream(
+tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
@@ -1148,47 +984,36 @@ Core::makeEncryptionStream(
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
     spublicIdentitiesWithUs.emplace_back(
-        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
-                                                    _session->userId()}));
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(), _session->userId()}));
   else if (spublicIdentities.empty() && sgroupIds.empty())
-    throw Errors::formatEx(
-        Errors::Errc::InvalidArgument,
-        FMT_STRING("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, FMT_STRING("cannot encrypt without sharing with anybody"));
 
-  auto const session =
-      TC_AWAIT(_session->accessors()
-                   .transparentSessionAccessor.getOrCreateTransparentSession(
-                       spublicIdentitiesWithUs, sgroupIds));
+  auto const session = TC_AWAIT(_session->accessors().transparentSessionAccessor.getOrCreateTransparentSession(
+      spublicIdentitiesWithUs, sgroupIds));
 
-  Streams::EncryptionStreamV11 encryptor(
-      std::move(cb), session.id, session.key, paddingStep);
+  Streams::EncryptionStreamV11 encryptor(std::move(cb), session.id, session.key, paddingStep);
   auto resourceId = encryptor.resourceId();
   Streams::InputSource encryptorStream = std::move(encryptor);
 
   TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
 
-tc::cotask<std::optional<Crypto::SymmetricKey>> Core::tryGetResourceKey(
-    Crypto::SimpleResourceId const& resourceId)
+tc::cotask<std::optional<Crypto::SymmetricKey>> Core::tryGetResourceKey(Crypto::SimpleResourceId const& resourceId)
 {
-  TC_RETURN(
-      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId)));
+  TC_RETURN(TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId)));
 }
 
-tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
-    Crypto::SimpleResourceId const& resourceId)
+tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(Crypto::SimpleResourceId const& resourceId)
 {
   auto const key = TC_AWAIT(tryGetResourceKey(resourceId));
   if (!key)
   {
-    throw formatEx(
-        Errc::InvalidArgument, "key not found for resource: {:s}", resourceId);
+    throw formatEx(Errc::InvalidArgument, "key not found for resource: {:s}", resourceId);
   }
   TC_RETURN(*key);
 }
 
-tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-Core::makeDecryptionStream(Streams::InputSource cb)
+tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> Core::makeDecryptionStream(Streams::InputSource cb)
 {
   assertStatus(Status::Ready, "makeDecryptionStream");
   auto peekableSource = Streams::PeekableInputSource(std::move(cb));
@@ -1196,47 +1021,38 @@ Core::makeDecryptionStream(Streams::InputSource cb)
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, "empty stream");
 
-  auto resourceKeyFinder = [this](Crypto::SimpleResourceId const& resourceId)
-      -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
+  auto resourceKeyFinder =
+      [this](Crypto::SimpleResourceId const& resourceId) -> tc::cotask<std::optional<Crypto::SymmetricKey>> {
     TC_RETURN(TC_AWAIT(this->tryGetResourceKey(resourceId)));
   };
   switch (version[0])
   {
   case 4: {
-    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(
-        std::move(peekableSource), resourceKeyFinder));
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(std::move(peekableSource), resourceKeyFinder));
     auto const resourceId = streamDecryptor.resourceId();
     TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
   }
   case 8: {
-    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(
-        std::move(peekableSource), resourceKeyFinder));
-    TC_RETURN(std::make_tuple(std::move(streamDecryptor),
-                              streamDecryptor.resourceId()));
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(std::move(peekableSource), resourceKeyFinder));
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor), streamDecryptor.resourceId()));
   }
   case 11: {
-    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV11::create(
-        std::move(peekableSource), resourceKeyFinder));
-    TC_RETURN(std::make_tuple(std::move(streamDecryptor),
-                              streamDecryptor.resourceId()));
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV11::create(std::move(peekableSource), resourceKeyFinder));
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor), streamDecryptor.resourceId()));
   }
   default: {
-    auto encryptedData =
-        TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
+    auto encryptedData = TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
-    TC_RETURN(std::make_tuple(
-        Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
-        resourceId));
+    TC_RETURN(std::make_tuple(Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))), resourceId));
   }
   }
   throw AssertionError("makeDecryptionStream: unreachable code");
 }
 
-tc::cotask<EncryptionSession> Core::makeEncryptionSession(
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf,
-    std::optional<uint32_t> paddingStep)
+tc::cotask<EncryptionSession> Core::makeEncryptionSession(std::vector<SPublicIdentity> const& spublicIdentities,
+                                                          std::vector<SGroupId> const& sgroupIds,
+                                                          ShareWithSelf shareWithSelf,
+                                                          std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "makeEncryptionSession");
   EncryptionSession sess{_session, paddingStep};
@@ -1244,16 +1060,12 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
   if (shareWithSelf == ShareWithSelf::Yes)
   {
     spublicIdentitiesWithUs.emplace_back(
-        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
-                                                    _session->userId()}));
-    TC_AWAIT(_session->storage().resourceKeyStore.putKey(sess.resourceId(),
-                                                         sess.sessionKey()));
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(), _session->userId()}));
+    TC_AWAIT(_session->storage().resourceKeyStore.putKey(sess.resourceId(), sess.sessionKey()));
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
-    throw Errors::formatEx(
-        Errors::Errc::InvalidArgument,
-        FMT_STRING("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, FMT_STRING("cannot encrypt without sharing with anybody"));
   }
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
@@ -1269,8 +1081,7 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
   TC_RETURN(sess);
 }
 
-std::optional<std::string> Core::makeWithTokenRandomNonce(
-    VerifyWithToken wanted)
+std::optional<std::string> Core::makeWithTokenRandomNonce(VerifyWithToken wanted)
 {
   if (wanted == VerifyWithToken::No)
     return std::nullopt;

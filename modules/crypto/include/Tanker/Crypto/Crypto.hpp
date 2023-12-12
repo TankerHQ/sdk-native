@@ -124,8 +124,7 @@ template <typename T = BasicHash<void>>
 T generichash(std::string_view data)
 {
   T hash;
-  auto span =
-      gsl::span(reinterpret_cast<uint8_t const*>(data.data()), data.size());
+  auto span = gsl::span(reinterpret_cast<uint8_t const*>(data.data()), data.size());
   detail::generichash_impl(hash, span);
   return hash;
 }
@@ -133,8 +132,7 @@ T generichash(std::string_view data)
 std::vector<uint8_t> generichash16(gsl::span<uint8_t const> data);
 void randomFill(gsl::span<uint8_t> data);
 
-template <typename T,
-          typename = std::enable_if_t<IsCryptographicType<T>::value>>
+template <typename T, typename = std::enable_if_t<IsCryptographicType<T>::value>>
 T getRandom()
 {
   T ret;
@@ -142,11 +140,8 @@ T getRandom()
   return ret;
 }
 
-Signature sign(gsl::span<uint8_t const> data,
-               PrivateSignatureKey const& privateSignatureKey);
-bool verify(gsl::span<uint8_t const> data,
-            Signature const& signature,
-            PublicSignatureKey const& publicSignatureKey);
+Signature sign(gsl::span<uint8_t const> data, PrivateSignatureKey const& privateSignatureKey);
+bool verify(gsl::span<uint8_t const> data, Signature const& signature, PublicSignatureKey const& publicSignatureKey);
 
 EncryptionKeyPair makeEncryptionKeyPair();
 EncryptionKeyPair makeEncryptionKeyPair(PrivateEncryptionKey const&);
@@ -224,8 +219,7 @@ OutputContainer asymEncrypt(gsl::span<uint8_t const> clearData,
 {
   using ContainerResizer = detail::container_resizer<OutputContainer>;
 
-  auto res = ContainerResizer::resize(clearData.size() + crypto_box_MACBYTES +
-                                      crypto_box_NONCEBYTES);
+  auto res = ContainerResizer::resize(clearData.size() + crypto_box_MACBYTES + crypto_box_NONCEBYTES);
   detail::asymEncryptImpl(clearData, res, senderKey, recipientKey);
   return res;
 }
@@ -239,19 +233,16 @@ OutputContainer asymDecrypt(gsl::span<uint8_t const> cipherData,
 
   if (cipherData.size() < crypto_box_MACBYTES + crypto_box_NONCEBYTES)
   {
-    throw Errors::Exception(Errc::InvalidEncryptedDataSize,
-                            "truncated asymmetric encrypted buffer");
+    throw Errors::Exception(Errc::InvalidEncryptedDataSize, "truncated asymmetric encrypted buffer");
   }
 
-  auto res = ContainerResizer::resize(cipherData.size() - crypto_box_MACBYTES -
-                                      crypto_box_NONCEBYTES);
+  auto res = ContainerResizer::resize(cipherData.size() - crypto_box_MACBYTES - crypto_box_NONCEBYTES);
   detail::asymDecryptImpl(cipherData, res, senderKey, recipientKey);
   return res;
 }
 
 template <typename OutputContainer = std::vector<uint8_t>>
-OutputContainer sealEncrypt(gsl::span<uint8_t const> clearData,
-                            PublicEncryptionKey const& recipientKey)
+OutputContainer sealEncrypt(gsl::span<uint8_t const> clearData, PublicEncryptionKey const& recipientKey)
 {
   using ContainerResizer = detail::container_resizer<OutputContainer>;
 
@@ -261,10 +252,8 @@ OutputContainer sealEncrypt(gsl::span<uint8_t const> clearData,
   return res;
 }
 
-template <typename T,
-          typename = std::enable_if_t<IsCryptographicType<T>::value>>
-Sealed<T> sealEncrypt(T const& clearData,
-                      PublicEncryptionKey const& recipientKey)
+template <typename T, typename = std::enable_if_t<IsCryptographicType<T>::value>>
+Sealed<T> sealEncrypt(T const& clearData, PublicEncryptionKey const& recipientKey)
 {
   Sealed<T> res;
   detail::sealEncryptImpl(clearData, res, recipientKey);
@@ -272,15 +261,13 @@ Sealed<T> sealEncrypt(T const& clearData,
 }
 
 template <typename OutputContainer = std::vector<uint8_t>>
-OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData,
-                            EncryptionKeyPair const& recipientKeyPair)
+OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData, EncryptionKeyPair const& recipientKeyPair)
 {
   using ContainerResizer = detail::container_resizer<OutputContainer>;
 
   if (cipherData.size() < crypto_box_SEALBYTES)
   {
-    throw Errors::Exception(Errc::InvalidSealedDataSize,
-                            "truncated sealed buffer");
+    throw Errors::Exception(Errc::InvalidSealedDataSize, "truncated sealed buffer");
   }
 
   auto res = ContainerResizer::resize(cipherData.size() - crypto_box_SEALBYTES);
@@ -289,8 +276,7 @@ OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData,
 }
 
 template <typename T>
-T sealDecrypt(Sealed<T> const& cipherData,
-              EncryptionKeyPair const& recipientKeyPair)
+T sealDecrypt(Sealed<T> const& cipherData, EncryptionKeyPair const& recipientKeyPair)
 {
   T res;
   detail::sealDecryptImpl(cipherData, res, recipientKeyPair);

@@ -14,10 +14,7 @@ inline auto wrapCallback(tanker_stream_input_source_t cb, void* additional_data)
     // We are in a coroutine, capturing a stack variable is ok, because we await
     // until the operation finishes.
     tc::dispatch_on_thread_context([=, &p]() mutable {
-      cb(out.data(),
-         out.size(),
-         reinterpret_cast<tanker_stream_read_operation_t*>(&p),
-         additional_data);
+      cb(out.data(), out.size(), reinterpret_cast<tanker_stream_read_operation_t*>(&p), additional_data);
     });
     TC_RETURN(TC_AWAIT(p.get_future()));
   };

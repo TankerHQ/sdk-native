@@ -8,15 +8,14 @@
 
 namespace Tanker::Trustchain::Actions
 {
-UserGroupAddition3::UserGroupAddition3(
-    TrustchainId const& trustchainId,
-    GroupId const& groupId,
-    Crypto::Hash const& previousGroupBlockHash,
-    std::vector<Member> const& members,
-    std::vector<ProvisionalMember> const& provisionalMembers,
-    Crypto::Hash const& author,
-    Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
-    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+UserGroupAddition3::UserGroupAddition3(TrustchainId const& trustchainId,
+                                       GroupId const& groupId,
+                                       Crypto::Hash const& previousGroupBlockHash,
+                                       std::vector<Member> const& members,
+                                       std::vector<ProvisionalMember> const& provisionalMembers,
+                                       Crypto::Hash const& author,
+                                       Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+                                       Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
   : _trustchainId(trustchainId),
     _groupId(groupId),
     _previousGroupBlockHash(previousGroupBlockHash),
@@ -32,10 +31,8 @@ UserGroupAddition3::UserGroupAddition3(
 std::vector<std::uint8_t> UserGroupAddition3::signatureData() const
 {
   std::vector<std::uint8_t> signatureData(
-      Crypto::Hash::arraySize + GroupId::arraySize +
-      (Serialization::serialized_size(Member{}) * _members.size()) +
-      (Serialization::serialized_size(ProvisionalMember{}) *
-       _provisionalMembers.size()));
+      Crypto::Hash::arraySize + GroupId::arraySize + (Serialization::serialized_size(Member{}) * _members.size()) +
+      (Serialization::serialized_size(ProvisionalMember{}) * _provisionalMembers.size()));
 
   auto it = Serialization::serialize(signatureData.data(), _groupId);
   it = Serialization::serialize(it, _previousGroupBlockHash);
@@ -47,7 +44,5 @@ std::vector<std::uint8_t> UserGroupAddition3::signatureData() const
   return signatureData;
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
-    UserGroupAddition3,
-    TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION3_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(UserGroupAddition3, TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION3_ATTRIBUTES)
 }

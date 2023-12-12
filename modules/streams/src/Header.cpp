@@ -14,10 +14,7 @@ Header::Header(std::uint32_t version,
                std::uint32_t encryptedChunkSize,
                Crypto::SimpleResourceId const& resourceId,
                Crypto::AeadIv const& seed)
-  : _version(version),
-    _encryptedChunkSize(encryptedChunkSize),
-    _resourceId(resourceId),
-    _seed(seed)
+  : _version(version), _encryptedChunkSize(encryptedChunkSize), _resourceId(resourceId), _seed(seed)
 {
 }
 
@@ -48,16 +45,12 @@ void from_serialized(Serialization::SerializedSource& ss, Header& header)
   header._version = Serialization::deserialize<uint8_t>(ss);
   if (!ranges::contains(Header::versions, header._version))
   {
-    throw formatEx(
-        Errc::InvalidArgument, "unsupported version: {}", header._version);
+    throw formatEx(Errc::InvalidArgument, "unsupported version: {}", header._version);
   }
   Serialization::deserialize_to<uint32_t>(ss, header._encryptedChunkSize);
-  if (header._encryptedChunkSize <
-      Header::serializedSize + Crypto::Mac::arraySize)
+  if (header._encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
   {
-    throw formatEx(Errc::InvalidArgument,
-                   "invalid encrypted chunk size in header: {}",
-                   header._encryptedChunkSize);
+    throw formatEx(Errc::InvalidArgument, "invalid encrypted chunk size in header: {}", header._encryptedChunkSize);
   }
   Serialization::deserialize_to(ss, header._resourceId);
   Serialization::deserialize_to(ss, header._seed);

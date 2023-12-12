@@ -38,29 +38,24 @@
   BOOST_PP_IF(idx, +, BOOST_PP_EMPTY())                         \
   Serialization::serialized_size(k.TANKER_DETAIL_PARAMETER_NAME(elem)())
 
-#define TANKER_DETAIL_DEFINE_DATA_SERIALIZATION_SIZE(name, list) \
-  std::size_t serialized_size(name const& k)                     \
-  {                                                              \
-    return BOOST_PP_SEQ_FOR_EACH_I(                              \
-        TANKER_DETAIL_SERIALIZED_SIZE, BOOST_PP_EMPTY(), list);  \
+#define TANKER_DETAIL_DEFINE_DATA_SERIALIZATION_SIZE(name, list)                           \
+  std::size_t serialized_size(name const& k)                                               \
+  {                                                                                        \
+    return BOOST_PP_SEQ_FOR_EACH_I(TANKER_DETAIL_SERIALIZED_SIZE, BOOST_PP_EMPTY(), list); \
   }
 
-#define TANKER_TRUSTCHAIN_DATA_DEFINE_SERIALIZATION(name, ...) \
-  TANKER_DETAIL_DEFINE_DATA_DESERIALIZATION(                   \
-      name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))             \
-  TANKER_DETAIL_DEFINE_DATA_SERIALIZATION(                     \
-      name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))             \
-  TANKER_DETAIL_DEFINE_DATA_SERIALIZATION_SIZE(                \
-      name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+#define TANKER_TRUSTCHAIN_DATA_DEFINE_SERIALIZATION(name, ...)                           \
+  TANKER_DETAIL_DEFINE_DATA_DESERIALIZATION(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+  TANKER_DETAIL_DEFINE_DATA_SERIALIZATION(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))   \
+  TANKER_DETAIL_DEFINE_DATA_SERIALIZATION_SIZE(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-#define TANKER_DETAIL_DEFINE_PAYLOAD_SIZE(name, list)           \
-  namespace                                                     \
-  {                                                             \
-  unsigned int payload_size(name const& k)                      \
-  {                                                             \
-    return BOOST_PP_SEQ_FOR_EACH_I(                             \
-        TANKER_DETAIL_SERIALIZED_SIZE, BOOST_PP_EMPTY(), list); \
-  }                                                             \
+#define TANKER_DETAIL_DEFINE_PAYLOAD_SIZE(name, list)                                      \
+  namespace                                                                                \
+  {                                                                                        \
+  unsigned int payload_size(name const& k)                                                 \
+  {                                                                                        \
+    return BOOST_PP_SEQ_FOR_EACH_I(TANKER_DETAIL_SERIALIZED_SIZE, BOOST_PP_EMPTY(), list); \
+  }                                                                                        \
   }
 
 #define TANKER_DETAIL_DEFINE_ACTION_DESERIALIZATION(name, list)              \
@@ -90,32 +85,23 @@
     return it;                                                             \
   }
 
-#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(name)              \
-  std::size_t serialized_size(name const& k)                              \
-  {                                                                       \
-    auto const payloadSize = payload_size(k);                             \
-    return 1 + /* version */                                              \
-           1 + /* index */                                                \
-           TrustchainId::arraySize +                                      \
-           Serialization::varint_size(static_cast<int>(name::nature())) + \
-           Serialization::varint_size(payloadSize) + payloadSize +        \
-           Crypto::Hash::arraySize + /* author */                         \
-           Crypto::Signature::arraySize;                                  \
+#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(name)                                              \
+  std::size_t serialized_size(name const& k)                                                              \
+  {                                                                                                       \
+    auto const payloadSize = payload_size(k);                                                             \
+    return 1 + /* version */                                                                              \
+           1 + /* index */                                                                                \
+           TrustchainId::arraySize + Serialization::varint_size(static_cast<int>(name::nature())) +       \
+           Serialization::varint_size(payloadSize) + payloadSize + Crypto::Hash::arraySize + /* author */ \
+           Crypto::Signature::arraySize;                                                                  \
   }
 
-#define TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(name, ...)           \
-  TANKER_DETAIL_DEFINE_PAYLOAD_SIZE(name,                                  \
-                                    BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-  TANKER_DETAIL_DEFINE_ACTION_DESERIALIZATION(                             \
-      name,                                                                \
-      BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__,                                \
-                               (author, Crypto::Hash),                     \
-                               (signature, Crypto::Signature)))            \
-  TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION(                               \
-      name,                                                                \
-      BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__,                                \
-                               (author, Crypto::Hash),                     \
-                               (signature, Crypto::Signature)))            \
+#define TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(name, ...)                                           \
+  TANKER_DETAIL_DEFINE_PAYLOAD_SIZE(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))                           \
+  TANKER_DETAIL_DEFINE_ACTION_DESERIALIZATION(                                                             \
+      name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__, (author, Crypto::Hash), (signature, Crypto::Signature))) \
+  TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION(                                                               \
+      name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__, (author, Crypto::Hash), (signature, Crypto::Signature))) \
   TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(name)
 
 #define TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(name)          \

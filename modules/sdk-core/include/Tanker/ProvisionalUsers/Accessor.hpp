@@ -33,11 +33,9 @@ public:
   Accessor& operator=(Accessor&&) = delete;
 
   tc::cotask<std::optional<ProvisionalUserKeys>> pullEncryptionKeys(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+      Crypto::PublicSignatureKey const& appPublicSigKey, Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
   tc::cotask<std::optional<ProvisionalUserKeys>> findEncryptionKeysFromCache(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+      Crypto::PublicSignatureKey const& appPublicSigKey, Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
 
   tc::cotask<void> refreshKeys() override;
 

@@ -30,15 +30,13 @@ T decodeArgument(String const& b64, std::string const& argName)
   }
   catch (mgs::exceptions::exception const&)
   {
-    throw formatEx(
-        Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
+    throw formatEx(Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
   }
   catch (Errors::Exception const& e)
   {
     if (e.errorCode() == Crypto::Errc::InvalidBufferSize)
     {
-      throw formatEx(
-          Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
+      throw formatEx(Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
     }
     throw;
   }

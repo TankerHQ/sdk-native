@@ -20,8 +20,7 @@ struct KeyPair
 template <KeyUsage Usage>
 bool operator==(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
 {
-  return std::tie(a.publicKey, a.privateKey) ==
-         std::tie(b.publicKey, b.privateKey);
+  return std::tie(a.publicKey, a.privateKey) == std::tie(b.publicKey, b.privateKey);
 }
 
 template <KeyUsage Usage>

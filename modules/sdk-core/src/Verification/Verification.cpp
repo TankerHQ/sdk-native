@@ -19,15 +19,12 @@ namespace Tanker::Verification
 namespace
 {
 template <typename Ret, typename T>
-tc::cotask<Ret> decryptMethod(T const& encrypted,
-                              Crypto::SymmetricKey const& userSecret)
+tc::cotask<Ret> decryptMethod(T const& encrypted, Crypto::SymmetricKey const& userSecret)
 {
   Ret decrypted(EncryptorV2::decryptedSize(encrypted), 0);
 
   TC_AWAIT(EncryptorV2::decrypt(
-      gsl::make_span(decrypted).template as_span<uint8_t>(),
-      Encryptor::fixedKeyFinder(userSecret),
-      encrypted));
+      gsl::make_span(decrypted).template as_span<uint8_t>(), Encryptor::fixedKeyFinder(userSecret), encrypted));
   TC_RETURN(decrypted);
 }
 }
@@ -35,78 +32,55 @@ tc::cotask<Ret> decryptMethod(T const& encrypted,
 VerificationMethod VerificationMethod::from(Verification const& v)
 {
   return boost::variant2::visit(
-      overloaded{
-          [](Passphrase const&) -> VerificationMethod { return Passphrase{}; },
-          [](E2ePassphrase const&) -> VerificationMethod {
-            return E2ePassphrase{};
-          },
-          [](VerificationKey const&) -> VerificationMethod {
-            return VerificationKey{};
-          },
-          [](OidcIdToken const& t) -> VerificationMethod { return t; },
-          [](ByEmail const& v) -> VerificationMethod { return v.email; },
-          [](ByPhoneNumber const& v) -> VerificationMethod {
-            return v.phoneNumber;
-          },
-          [](PreverifiedEmail const& v) -> VerificationMethod { return v; },
-          [](PreverifiedPhoneNumber const& v) -> VerificationMethod {
-            return v;
-          }},
+      overloaded{[](Passphrase const&) -> VerificationMethod { return Passphrase{}; },
+                 [](E2ePassphrase const&) -> VerificationMethod { return E2ePassphrase{}; },
+                 [](VerificationKey const&) -> VerificationMethod { return VerificationKey{}; },
+                 [](OidcIdToken const& t) -> VerificationMethod { return t; },
+                 [](ByEmail const& v) -> VerificationMethod { return v.email; },
+                 [](ByPhoneNumber const& v) -> VerificationMethod { return v.phoneNumber; },
+                 [](PreverifiedEmail const& v) -> VerificationMethod { return v; },
+                 [](PreverifiedPhoneNumber const& v) -> VerificationMethod { return v; }},
       v);
 }
 
 tc::cotask<std::vector<VerificationMethod>> decryptMethods(
-    std::vector<boost::variant2::variant<VerificationMethod,
-                                         EncryptedVerificationMethod>>&
-        encryptedMethods,
+    std::vector<boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>>& encryptedMethods,
     Crypto::SymmetricKey const& userSecret)
 {
   std::vector<VerificationMethod> methods;
   methods.reserve(encryptedMethods.size());
 
-  auto const decryptLambda =
-      [&](EncryptedVerificationMethod const& encryptedMethod)
-      -> tc::cotask<void> {
+  auto const decryptLambda = [&](EncryptedVerificationMethod const& encryptedMethod) -> tc::cotask<void> {
     TC_AWAIT(encryptedMethod.visit(overloaded{
         [&](EncryptedEmail const& encryptedEmail) -> tc::cotask<void> {
-          methods.push_back(
-              TC_AWAIT(decryptMethod<Email>(encryptedEmail, userSecret)));
+          methods.push_back(TC_AWAIT(decryptMethod<Email>(encryptedEmail, userSecret)));
         },
-        [&](EncryptedPhoneNumber const& encryptedPhoneNumber)
-            -> tc::cotask<void> {
-          methods.push_back(TC_AWAIT(
-              decryptMethod<PhoneNumber>(encryptedPhoneNumber, userSecret)));
+        [&](EncryptedPhoneNumber const& encryptedPhoneNumber) -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(decryptMethod<PhoneNumber>(encryptedPhoneNumber, userSecret)));
         },
-        [&](EncryptedPreverifiedEmail const& encryptedEmail)
-            -> tc::cotask<void> {
-          methods.push_back(TC_AWAIT(
-              decryptMethod<PreverifiedEmail>(encryptedEmail, userSecret)));
+        [&](EncryptedPreverifiedEmail const& encryptedEmail) -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(decryptMethod<PreverifiedEmail>(encryptedEmail, userSecret)));
         },
-        [&](EncryptedPreverifiedPhoneNumber const& encryptedPhoneNumber)
-            -> tc::cotask<void> {
-          methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
-              encryptedPhoneNumber, userSecret)));
+        [&](EncryptedPreverifiedPhoneNumber const& encryptedPhoneNumber) -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(encryptedPhoneNumber, userSecret)));
         },
     }));
   };
 
   for (auto& method : encryptedMethods)
   {
-    TC_AWAIT(boost::variant2::visit(
-        overloaded{decryptLambda,
-                   [&](VerificationMethod const& method) -> tc::cotask<void> {
-                     methods.push_back(method);
-                     TC_RETURN();
-                   }},
-        method));
+    TC_AWAIT(boost::variant2::visit(overloaded{decryptLambda,
+                                               [&](VerificationMethod const& method) -> tc::cotask<void> {
+                                                 methods.push_back(method);
+                                                 TC_RETURN();
+                                               }},
+                                    method));
   }
 
   TC_RETURN(methods);
 }
 
-void from_json(nlohmann::json const& j,
-               boost::variant2::variant<VerificationMethod,
-                                        EncryptedVerificationMethod>& m)
+void from_json(nlohmann::json const& j, boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>& m)
 {
   auto const value = j.at("type").get<std::string>();
   auto const isPreverified = j.at("is_preverified").get<bool>();
@@ -143,56 +117,45 @@ void from_json(nlohmann::json const& j,
     auto const decodedPhoneNumber = mgs::base64::decode(phoneNumber);
     if (isPreverified)
     {
-      m = EncryptedPreverifiedPhoneNumber{decodedPhoneNumber.begin(),
-                                          decodedPhoneNumber.end()};
+      m = EncryptedPreverifiedPhoneNumber{decodedPhoneNumber.begin(), decodedPhoneNumber.end()};
     }
     else
     {
-      m = EncryptedPhoneNumber{decodedPhoneNumber.begin(),
-                               decodedPhoneNumber.end()};
+      m = EncryptedPhoneNumber{decodedPhoneNumber.begin(), decodedPhoneNumber.end()};
     }
   }
   else
-    throw formatEx(Errors::Errc::UpgradeRequired,
-                   "unsupported verification method");
+    throw formatEx(Errors::Errc::UpgradeRequired, "unsupported verification method");
 }
 
-void validateVerification(
-    Verification const& verification,
-    Identity::SecretProvisionalIdentity const& provisionalIdentity)
+void validateVerification(Verification const& verification,
+                          Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
   namespace bv = boost::variant2;
   namespace ba = boost::algorithm;
 
-  if (!(bv::holds_alternative<ByEmail>(verification) ||
-        bv::holds_alternative<ByPhoneNumber>(verification)))
-    throw Errors::Exception(
-        make_error_code(Errors::Errc::InvalidArgument),
-        "unknown verification method for provisional identity");
+  if (!(bv::holds_alternative<ByEmail>(verification) || bv::holds_alternative<ByPhoneNumber>(verification)))
+    throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+                            "unknown verification method for provisional identity");
 
   if (auto const emailVerification = bv::get_if<ByEmail>(&verification))
   {
     if (emailVerification->email != Email{provisionalIdentity.value})
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::InvalidArgument),
-          "verification email does not match provisional identity");
+      throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+                              "verification email does not match provisional identity");
   }
-  if (auto const phoneNumberVerification =
-          bv::get_if<ByPhoneNumber>(&verification))
+  if (auto const phoneNumberVerification = bv::get_if<ByPhoneNumber>(&verification))
   {
-    if (phoneNumberVerification->phoneNumber !=
-        PhoneNumber{provisionalIdentity.value})
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::InvalidArgument),
-          "verification phone number does not match provisional identity");
+    if (phoneNumberVerification->phoneNumber != PhoneNumber{provisionalIdentity.value})
+      throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+                              "verification phone number does not match provisional identity");
   }
 }
 
 bool isPreverified(Verification const& v)
 {
   using boost::variant2::holds_alternative;
-  return holds_alternative<PreverifiedEmail>(v) ||
-         holds_alternative<PreverifiedPhoneNumber>(v);
+  return holds_alternative<PreverifiedEmail>(v) || holds_alternative<PreverifiedPhoneNumber>(v);
 }
 
 bool isE2eVerification(Verification const& v)

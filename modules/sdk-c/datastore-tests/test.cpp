@@ -19,8 +19,7 @@ TEST_CASE("DataStore")
   runDataStoreTests(backend, writablePath);
 }
 
-int tanker_run_datastore_test(tanker_datastore_options_t* datastore_options,
-                              char const* persistent_path)
+int tanker_run_datastore_test(tanker_datastore_options_t* datastore_options, char const* persistent_path)
 {
   datastoreOptions = datastore_options;
   writablePath = persistent_path;

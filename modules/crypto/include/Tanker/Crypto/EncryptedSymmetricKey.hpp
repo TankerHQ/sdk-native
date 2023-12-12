@@ -16,16 +16,13 @@ namespace Tanker
 {
 namespace Crypto
 {
-extern template class BasicCryptographicType<
-    class EncryptedSymmetricKey,
-    crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_MACBYTES +
-        crypto_box_NONCEBYTES>;
+extern template class BasicCryptographicType<class EncryptedSymmetricKey,
+                                             crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_MACBYTES +
+                                                 crypto_box_NONCEBYTES>;
 
-class EncryptedSymmetricKey
-  : public BasicCryptographicType<EncryptedSymmetricKey,
-                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
-                                      crypto_box_MACBYTES +
-                                      crypto_box_NONCEBYTES>
+class EncryptedSymmetricKey : public BasicCryptographicType<EncryptedSymmetricKey,
+                                                            crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
+                                                                crypto_box_MACBYTES + crypto_box_NONCEBYTES>
 {
   using base_t::base_t;
 };
@@ -35,8 +32,7 @@ void from_serialized(Serialization::SerializedSource&, EncryptedSymmetricKey&);
 
 constexpr std::size_t serialized_size(EncryptedSymmetricKey const&)
 {
-  return Serialization::varint_size(EncryptedSymmetricKey::arraySize) +
-         EncryptedSymmetricKey::arraySize;
+  return Serialization::varint_size(EncryptedSymmetricKey::arraySize) + EncryptedSymmetricKey::arraySize;
 }
 }
 }

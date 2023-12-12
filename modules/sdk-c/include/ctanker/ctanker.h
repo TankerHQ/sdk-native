@@ -55,8 +55,7 @@ enum tanker_log_level
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
-typedef struct tanker_phone_number_verification
-    tanker_phone_number_verification_t;
+typedef struct tanker_phone_number_verification tanker_phone_number_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_verification_list tanker_verification_list_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
@@ -64,8 +63,7 @@ typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
-typedef struct tanker_verification_method_list
-    tanker_verification_method_list_t;
+typedef struct tanker_verification_method_list tanker_verification_method_list_t;
 typedef struct tanker_attach_result tanker_attach_result_t;
 
 /*!
@@ -184,10 +182,9 @@ struct tanker_verification
   char const* preverified_phone_number;
 };
 
-#define TANKER_VERIFICATION_INIT                                  \
-  {                                                               \
-    6, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, \
-        TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL         \
+#define TANKER_VERIFICATION_INIT                                                                                    \
+  {                                                                                                                 \
+    6, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL \
   }
 
 struct tanker_verification_method
@@ -317,11 +314,10 @@ CTANKER_EXPORT tanker_future_t* tanker_destroy(tanker_t* tanker);
  * \warning Do not call this function after the session has been started.
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p event does not exist
  */
-CTANKER_EXPORT tanker_expected_t* tanker_event_connect(
-    tanker_t* tanker,
-    enum tanker_event event,
-    tanker_event_callback_t cb,
-    void* data);
+CTANKER_EXPORT tanker_expected_t* tanker_event_connect(tanker_t* tanker,
+                                                       enum tanker_event event,
+                                                       tanker_event_callback_t cb,
+                                                       void* data);
 
 /*!
  * Disconnect from an event.
@@ -329,8 +325,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_event_connect(
  * \param event The event to disconnect.
  * \return an expected of NULL.
  */
-CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(
-    tanker_t* tanker, enum tanker_event event);
+CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(tanker_t* tanker, enum tanker_event event);
 
 /*!
  * Sign up to Tanker.
@@ -343,8 +338,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
-                                             char const* identity);
+CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
 
 /*!
  * Enrolls a user to Tanker. And assigns its pre-verified verification methods
@@ -358,10 +352,9 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
  * \throws TANKER_ERROR_NETWORK_ERROR could not connect to the Tanker server
  * \throws TANKER_ERROR_CONFLICT the identity is already registered or enrolled
  */
-CTANKER_EXPORT tanker_expected_t* tanker_enroll_user(
-    tanker_t* tanker,
-    char const* identity,
-    tanker_verification_list_t const* verifications);
+CTANKER_EXPORT tanker_expected_t* tanker_enroll_user(tanker_t* tanker,
+                                                     char const* identity,
+                                                     tanker_verification_list_t const* verifications);
 
 /*!
  * Register a verification method associated with an identity.
@@ -378,10 +371,9 @@ CTANKER_EXPORT tanker_expected_t* tanker_enroll_user(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-CTANKER_EXPORT tanker_future_t* tanker_register_identity(
-    tanker_t* tanker,
-    tanker_verification_t const* verification,
-    tanker_verification_options_t const* cverif_opts);
+CTANKER_EXPORT tanker_future_t* tanker_register_identity(tanker_t* tanker,
+                                                         tanker_verification_t const* verification,
+                                                         tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Verify an identity with provided verification.
@@ -398,10 +390,9 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-CTANKER_EXPORT tanker_future_t* tanker_verify_identity(
-    tanker_t* tanker,
-    tanker_verification_t const* verification,
-    tanker_verification_options_t const* cverif_opts);
+CTANKER_EXPORT tanker_future_t* tanker_verify_identity(tanker_t* tanker,
+                                                       tanker_verification_t const* verification,
+                                                       tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Close a tanker session.
@@ -421,8 +412,7 @@ CTANKER_EXPORT tanker_future_t* tanker_create_oidc_nonce(tanker_t* tanker);
 /*!
  * Set the nonce to use while testing oidc verification
  */
-CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker,
-                                                           char const* nonce);
+CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker, char const* nonce);
 
 /*!
  * The current Tanker status.
@@ -440,8 +430,7 @@ CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
-    tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(tanker_t* session);
 
 /*!
  * Registers, or updates, the user's unlock claims,
@@ -452,10 +441,9 @@ CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
  * \return a future of NULL if with_session_token is false, otherwise a
  * session token string that must be freed with tanker_free_buffer.
  */
-CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
-    tanker_t* session,
-    tanker_verification_t const* verification,
-    tanker_verification_options_t const* cverif_opts);
+CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(tanker_t* session,
+                                                               tanker_verification_t const* verification,
+                                                               tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Return all registered verification methods for the current user.
@@ -463,8 +451,7 @@ CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a tanker_verification_method_list_t*
  */
-CTANKER_EXPORT tanker_future_t* tanker_get_verification_methods(
-    tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_get_verification_methods(tanker_t* session);
 
 /*!
  * Get the encrypted size from the clear size.
@@ -473,8 +460,7 @@ CTANKER_EXPORT tanker_future_t* tanker_get_verification_methods(
  * \param padding_step The same padding step that should be provided in the
  * encryption options.
  */
-CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size,
-                                              uint32_t padding_step);
+CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size, uint32_t padding_step);
 
 /*!
  * Get the decrypted size.
@@ -486,16 +472,14 @@ CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size,
  * \throws TANKER_ERROR_DECRYPT_FAILED the
  * buffer is corrupt or truncated
  */
-CTANKER_EXPORT tanker_expected_t* tanker_decrypted_size(
-    uint8_t const* encrypted_data, uint64_t encrypted_size);
+CTANKER_EXPORT tanker_expected_t* tanker_decrypted_size(uint8_t const* encrypted_data, uint64_t encrypted_size);
 
 /*!
  * Get the resource id from an encrypted data.
  * \return an already ready future of a char* that must be freed with
  * tanker_free_buffer.
  */
-CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(
-    uint8_t const* encrypted_data, uint64_t encrypted_size);
+CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypted_data, uint64_t encrypted_size);
 
 /*!
  * Encrypt data.
@@ -513,12 +497,11 @@ CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_encrypt(
-    tanker_t* tanker,
-    uint8_t* encrypted_data,
-    uint8_t const* data,
-    uint64_t data_size,
-    tanker_encrypt_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_encrypt(tanker_t* tanker,
+                                               uint8_t* encrypted_data,
+                                               uint8_t const* data,
+                                               uint64_t data_size,
+                                               tanker_encrypt_options_t const* options);
 
 /*!
  * Decrypt an encrypted data.
@@ -557,11 +540,10 @@ CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_share(
-    tanker_t* session,
-    char const* const* resource_ids,
-    uint64_t nb_resource_ids,
-    tanker_sharing_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_share(tanker_t* session,
+                                             char const* const* resource_ids,
+                                             uint64_t nb_resource_ids,
+                                             tanker_sharing_options_t const* options);
 
 /*!
  * Attach a provisional identity to the current user
@@ -574,8 +556,7 @@ CTANKER_EXPORT tanker_future_t* tanker_share(
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(
-    tanker_t* session, char const* provisional_identity);
+CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(tanker_t* session, char const* provisional_identity);
 
 /*!
  * Verify a provisional identity for the current user
@@ -589,13 +570,12 @@ CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(
-    tanker_t* session, tanker_verification_t const* verification);
+CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(tanker_t* session,
+                                                                   tanker_verification_t const* verification);
 
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
-CTANKER_EXPORT void tanker_free_verification_method_list(
-    tanker_verification_method_list_t* list);
+CTANKER_EXPORT void tanker_free_verification_method_list(tanker_verification_method_list_t* list);
 
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
 

@@ -33,7 +33,6 @@ private:
 #define SCOPE_TIMER_(TEXT, COROTYPE)
 #endif
 
-#define SCOPE_TIMER(TEXT, COROTYPE) \
-  SCOPE_TIMER_(TEXT, ::Tanker::Tracer::COROTYPE)
+#define SCOPE_TIMER(TEXT, COROTYPE) SCOPE_TIMER_(TEXT, ::Tanker::Tracer::COROTYPE)
 
 #define FUNC_TIMER(COROTYPE) SCOPE_TIMER_(__func__, ::Tanker::Tracer::COROTYPE)

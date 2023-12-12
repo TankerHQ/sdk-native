@@ -15,25 +15,21 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES   \
-  (lastReset, Crypto::Hash),                                      \
-      (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey),  \
-      (userId, UserId), (delegationSignature, Crypto::Signature), \
-      (publicSignatureKey, Crypto::PublicSignatureKey),           \
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES                                           \
+  (lastReset, Crypto::Hash), (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey), (userId, UserId), \
+      (delegationSignature, Crypto::Signature), (publicSignatureKey, Crypto::PublicSignatureKey),         \
       (publicEncryptionKey, Crypto::PublicEncryptionKey)
 
 class DeviceCreation2
 {
 public:
-  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
-      DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 
 public:
   DeviceCreation1 asDeviceCreation1() const;
 
 private:
-  friend void from_serialized(Serialization::SerializedSource&,
-                              DeviceCreation2&);
+  friend void from_serialized(Serialization::SerializedSource&, DeviceCreation2&);
 };
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation2)

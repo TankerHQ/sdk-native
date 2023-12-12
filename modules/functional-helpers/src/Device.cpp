@@ -16,9 +16,7 @@ namespace Functional
 Passphrase const Device::STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
 
-Device::Device(std::string trustchainUrl,
-               std::string trustchainId,
-               std::string identity)
+Device::Device(std::string trustchainUrl, std::string trustchainId, std::string identity)
   : _trustchainUrl(std::move(trustchainUrl)),
     _trustchainId(std::move(trustchainId)),
     _identity(std::move(identity)),
@@ -33,16 +31,12 @@ AsyncCorePtr Device::createCore()
 
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
-  return std::make_unique<AsyncCore>(
-      _trustchainUrl, getSdkInfo(), _storage->path, _storage->path);
+  return std::make_unique<AsyncCore>(_trustchainUrl, getSdkInfo(), _storage->path, _storage->path);
 }
 
 SdkInfo Device::getSdkInfo()
 {
-  return SdkInfo{
-      "sdk-native-test",
-      mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
-      "0.0.1"};
+  return SdkInfo{"sdk-native-test", mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId), "0.0.1"};
 }
 
 std::string const& Device::identity() const
@@ -63,11 +57,9 @@ tc::cotask<AsyncCorePtr> Device::open()
 
   auto const status = TC_AWAIT(tanker->start(_identity));
   if (status == Status::IdentityRegistrationNeeded)
-    TC_AWAIT(tanker->registerIdentity(
-        Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
+    TC_AWAIT(tanker->registerIdentity(Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
   else if (status == Status::IdentityVerificationNeeded)
-    TC_AWAIT(tanker->verifyIdentity(
-        Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
+    TC_AWAIT(tanker->verifyIdentity(Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
   TC_RETURN(std::move(tanker));
 }
 }

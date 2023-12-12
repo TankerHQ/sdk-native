@@ -7,8 +7,7 @@ namespace Tanker
 {
 namespace Verif
 {
-Trustchain::Actions::TrustchainCreation verifyTrustchainCreation(
-    Trustchain::Actions::TrustchainCreation const&,
-    Trustchain::TrustchainId const&);
+Trustchain::Actions::TrustchainCreation verifyTrustchainCreation(Trustchain::Actions::TrustchainCreation const&,
+                                                                 Trustchain::TrustchainId const&);
 }
 }

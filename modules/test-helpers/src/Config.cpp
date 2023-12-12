@@ -25,17 +25,13 @@ std::string getSafeEnv(std::string_view key)
 
 OidcConfig const& oidcConfig()
 {
-  static auto const oidc =
-      OidcConfig{getSafeEnv("TANKER_OIDC_CLIENT_SECRET"),
-                 getSafeEnv("TANKER_OIDC_CLIENT_ID"),
-                 getSafeEnv("TANKER_OIDC_PROVIDER"),
-                 getSafeEnv("TANKER_OIDC_ISSUER"),
-                 {{"kevin",
-                   {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"),
-                    getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
-                  {"martine",
-                   {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"),
-                    getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
+  static auto const oidc = OidcConfig{
+      getSafeEnv("TANKER_OIDC_CLIENT_SECRET"),
+      getSafeEnv("TANKER_OIDC_CLIENT_ID"),
+      getSafeEnv("TANKER_OIDC_PROVIDER"),
+      getSafeEnv("TANKER_OIDC_ISSUER"),
+      {{"kevin", {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"), getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
+       {"martine", {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"), getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
   return oidc;
 }
 
@@ -78,8 +74,7 @@ std::string const& appdUrl()
 
 std::string const& environmentName()
 {
-  static auto const value =
-      getSafeEnv("TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME");
+  static auto const value = getSafeEnv("TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME");
   return value;
 }
 

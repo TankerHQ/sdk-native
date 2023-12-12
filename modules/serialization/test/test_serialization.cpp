@@ -99,8 +99,7 @@ TEST_CASE("serialized_size")
   SECTION("vector<VecHolder>")
   {
     std::vector<VecHolder> vhs(3);
-    CHECK(Serialization::serialized_size(vhs) ==
-          1 + 3 * Serialization::serialized_size(vhs.front()));
+    CHECK(Serialization::serialized_size(vhs) == 1 + 3 * Serialization::serialized_size(vhs.front()));
 
     vhs.front().vec.buffer.resize(10);
     CHECK(Serialization::serialized_size(vhs) == 17);
@@ -174,13 +173,11 @@ TEST_CASE("SerializedSource")
     auto sp = ss.read(4);
     CHECK(sp.size() == 4);
     // size is the first byte
-    CHECK(std::equal(
-        sp.begin() + 1, sp.end(), v.buffer.begin(), v.buffer.begin() + 3));
+    CHECK(std::equal(sp.begin() + 1, sp.end(), v.buffer.begin(), v.buffer.begin() + 3));
 
     sp = ss.read(4);
     CHECK(sp.size() == 4);
-    CHECK(
-        std::equal(sp.begin(), sp.end(), v.buffer.begin() + 3, v.buffer.end()));
+    CHECK(std::equal(sp.begin(), sp.end(), v.buffer.begin() + 3, v.buffer.end()));
   }
 
   SECTION("out of bounds")
@@ -191,8 +188,7 @@ TEST_CASE("SerializedSource")
     TANKER_CHECK_THROWS_WITH_CODE(ss.read(6), Errc::TruncatedInput);
 
     SerializedSource emptySource;
-    TANKER_CHECK_THROWS_WITH_CODE(emptySource.read_varint(),
-                                  Errc::TruncatedInput);
+    TANKER_CHECK_THROWS_WITH_CODE(emptySource.read_varint(), Errc::TruncatedInput);
   }
 }
 
@@ -216,28 +212,24 @@ TEST_CASE("deserialize")
 
   SECTION("VecHolder")
   {
-    auto const deserializedVecHolder =
-        deserialize<VecHolder>(serializedVecHolder);
+    auto const deserializedVecHolder = deserialize<VecHolder>(serializedVecHolder);
     CHECK(deserializedVecHolder == vh);
   }
 
   SECTION("vector<VecHolder>")
   {
-    auto const deserializedVecHolders =
-        deserialize<std::vector<VecHolder>>(serializedVecHolders);
+    auto const deserializedVecHolders = deserialize<std::vector<VecHolder>>(serializedVecHolders);
     CHECK(deserializedVecHolders == vhs);
   }
 
   SECTION("pair<Vec, VecHolder>")
   {
-    auto const deserializedPair =
-        deserialize<std::pair<Vec, VecHolder>>(serializedPair);
+    auto const deserializedPair = deserialize<std::pair<Vec, VecHolder>>(serializedPair);
     CHECK(deserializedPair == p);
   }
 
   SECTION("should throw if eof not reached")
   {
-    TANKER_CHECK_THROWS_WITH_CODE(deserialize<Vec>(serializedVecHolders),
-                                  Errc::TrailingInput);
+    TANKER_CHECK_THROWS_WITH_CODE(deserialize<Vec>(serializedVecHolders), Errc::TrailingInput);
   }
 }

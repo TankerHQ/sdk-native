@@ -15,52 +15,43 @@ TEST_CASE("makeRequestWithVerifChecks(Verification)")
 
   SECTION("accepts verifications ByEmail")
   {
-    VVerification const verification =
-        ByEmail{Email{"not empty"}, VerificationCode{"not empty"}};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    VVerification const verification = ByEmail{Email{"not empty"}, VerificationCode{"not empty"}};
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications ByPhoneNumber")
   {
-    VVerification const verification =
-        ByPhoneNumber{PhoneNumber{"not empty"}, VerificationCode{"not empty"}};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    VVerification const verification = ByPhoneNumber{PhoneNumber{"not empty"}, VerificationCode{"not empty"}};
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications PreverifiedEmail")
   {
     VVerification const verification = PreverifiedEmail{"not empty"};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications PreverifiedPhoneNumber")
   {
     VVerification const verification = PreverifiedPhoneNumber{"not empty"};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications Passphrase")
   {
     VVerification const verification = Passphrase{"not empty"};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications OidcIdToken")
   {
     VVerification const verification = OidcIdToken{"not empty", {}, {}};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 
   SECTION("accepts verifications VerificationKey")
   {
     VVerification const verification = VerificationKey{"not empty"};
-    CHECK_NOTHROW(makeRequestWithVerif(
-        verification, userSecret, std::nullopt, std::nullopt));
+    CHECK_NOTHROW(makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt));
   }
 }

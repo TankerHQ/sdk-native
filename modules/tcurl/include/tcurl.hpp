@@ -63,8 +63,7 @@ struct curl_slist_cleanup_t
     curl_slist_free_all(l);
   }
 };
-using curl_slist_unique_ptr =
-    std::unique_ptr<struct curl_slist, curl_slist_cleanup_t>;
+using curl_slist_unique_ptr = std::unique_ptr<struct curl_slist, curl_slist_cleanup_t>;
 }
 
 class request;
@@ -127,22 +126,14 @@ private:
   // CURLMOPT_SOCKETFUNCTION
   int socketfunction_cb(CURL* easy, curl_socket_t s, int action);
   // Called by asio when there is an action on a socket
-  void event_cb(curl_socket_t sock,
-                async_socket* asocket,
-                uint8_t action,
-                boost::system::error_code const& ec);
+  void event_cb(curl_socket_t sock, async_socket* asocket, uint8_t action, boost::system::error_code const& ec);
   // Called by asio when our timeout expires
   void timer_cb();
 
-  static curl_socket_t opensocket_c(void* clientp,
-                                    curlsocktype purpose,
-                                    struct curl_sockaddr* address);
+  static curl_socket_t opensocket_c(void* clientp, curlsocktype purpose, struct curl_sockaddr* address);
   static int close_socket_c(void* clientp, curl_socket_t item);
-  static int sockopt_c(void* clientp,
-                       curl_socket_t curlfd,
-                       curlsocktype purpose);
-  static int socketfunction_cb_c(
-      CURL* easy, curl_socket_t s, int action, void* userp, void* socketp);
+  static int sockopt_c(void* clientp, curl_socket_t curlfd, curlsocktype purpose);
+  static int socketfunction_cb_c(CURL* easy, curl_socket_t s, int action, void* userp, void* socketp);
   static int multi_timer_cb_c(CURLM* multi, long timeout_ms, void* g);
   // Check alive and forward the call to multi
   static void event_cb_c(std::shared_ptr<bool> alive,
@@ -158,8 +149,7 @@ private:
 class request
 {
 public:
-  using read_callback =
-      std::function<std::size_t(request&, void const*, std::size_t)>;
+  using read_callback = std::function<std::size_t(request&, void const*, std::size_t)>;
   using finish_callback = std::function<void(request&, CURLcode)>;
   using abort_callback = std::function<void(request&)>;
 

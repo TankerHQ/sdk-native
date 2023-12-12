@@ -13,9 +13,8 @@ namespace Tanker
 {
 namespace Verif
 {
-TrustchainCreation verifyTrustchainCreation(
-    TrustchainCreation const& rootEntry,
-    TrustchainId const& currentTrustchainId)
+TrustchainCreation verifyTrustchainCreation(TrustchainCreation const& rootEntry,
+                                            TrustchainId const& currentTrustchainId)
 {
   ensures(rootEntry.hash().base() == currentTrustchainId.base(),
           Errc::InvalidHash,

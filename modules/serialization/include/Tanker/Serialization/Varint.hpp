@@ -34,8 +34,7 @@ constexpr std::size_t varint_size(std::uint32_t value)
   return n;
 }
 
-std::pair<std::uint32_t, gsl::span<uint8_t const>> varint_read(
-    gsl::span<uint8_t const> data);
+std::pair<std::uint32_t, gsl::span<uint8_t const>> varint_read(gsl::span<uint8_t const> data);
 
 std::uint8_t* varint_write(std::uint8_t* it, std::uint32_t value);
 }

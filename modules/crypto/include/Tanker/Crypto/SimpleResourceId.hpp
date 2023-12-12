@@ -5,8 +5,7 @@
 
 namespace Tanker::Crypto
 {
-class SimpleResourceId
-  : public BasicCryptographicType<SimpleResourceId, Mac::arraySize>
+class SimpleResourceId : public BasicCryptographicType<SimpleResourceId, Mac::arraySize>
 {
   using base_t::base_t;
 };

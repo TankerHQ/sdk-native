@@ -38,15 +38,13 @@ public:
   Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
   // NOTE: If sharing with self, add self to the users public identities
-  static Crypto::Hash hashRecipients(std::vector<SPublicIdentity> users,
-                                     std::vector<SGroupId> groups);
+  static Crypto::Hash hashRecipients(std::vector<SPublicIdentity> users, std::vector<SGroupId> groups);
 
   tc::cotask<void> put(Crypto::Hash const& recipientsHash,
                        Crypto::SimpleResourceId const& sessionId,
                        Crypto::SymmetricKey const& sessionKey,
                        std::uint64_t creationTimestamp = secondsSinceEpoch());
-  tc::cotask<std::optional<TransparentSessionData>> get(
-      Crypto::Hash const& recipientsHash) const;
+  tc::cotask<std::optional<TransparentSessionData>> get(Crypto::Hash const& recipientsHash) const;
 
 private:
   Crypto::SymmetricKey _userSecret;

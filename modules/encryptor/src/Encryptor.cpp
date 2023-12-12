@@ -56,17 +56,14 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
   case EncryptorV11::version():
     return std::forward<Callable>(cb)(EncryptorV11{});
   default:
-    throw Errors::formatEx(Errc::InvalidArgument,
-                           "Unhandled format version {} used in encryptedData",
-                           version);
+    throw Errors::formatEx(Errc::InvalidArgument, "Unhandled format version {} used in encryptedData", version);
   }
 }
 }
 
 bool isHugeClearData(uint64_t dataSize, std::optional<uint32_t> paddingStep)
 {
-  return Padding::paddedFromClearSize(dataSize, paddingStep) >=
-         STREAM_THRESHOLD;
+  return Padding::paddedFromClearSize(dataSize, paddingStep) >= STREAM_THRESHOLD;
 }
 
 uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
@@ -87,14 +84,11 @@ uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.empty())
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "encrypted data is empty");
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
-  return performEncryptorAction(version, [=](auto encryptor) {
-    return encryptor.decryptedSize(encryptedData);
-  });
+  return performEncryptorAction(version, [=](auto encryptor) { return encryptor.decryptedSize(encryptedData); });
 }
 
 tc::cotask<EncryptCacheMetadata> encrypt(gsl::span<uint8_t> encryptedData,
@@ -106,17 +100,14 @@ tc::cotask<EncryptCacheMetadata> encrypt(gsl::span<uint8_t> encryptedData,
   auto seed = Crypto::getRandom<Crypto::SubkeySeed>();
   if (isHugeClearData(clearData.size(), paddingStep))
   {
-    TC_RETURN(TC_AWAIT(EncryptorV11::encrypt(
-        encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
+    TC_RETURN(TC_AWAIT(EncryptorV11::encrypt(encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
   }
   else
   {
     if (paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV9::encrypt(
-          encryptedData, clearData, sessionId, sessionKey, seed)));
+      TC_RETURN(TC_AWAIT(EncryptorV9::encrypt(encryptedData, clearData, sessionId, sessionKey, seed)));
     else
-      TC_RETURN(TC_AWAIT(EncryptorV10::encrypt(
-          encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
+      TC_RETURN(TC_AWAIT(EncryptorV10::encrypt(encryptedData, clearData, sessionId, sessionKey, seed, paddingStep)));
   }
 }
 
@@ -125,37 +116,31 @@ tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                              gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.empty())
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "encrypted data is empty");
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
-  TC_RETURN(TC_AWAIT(performEncryptorAction(
-      version, [&](auto encryptor) -> tc::cotask<uint64_t> {
-        TC_RETURN(TC_AWAIT(
-            encryptor.decrypt(decryptedData, keyFinder, encryptedData)));
-      })));
+  TC_RETURN(TC_AWAIT(performEncryptorAction(version, [&](auto encryptor) -> tc::cotask<uint64_t> {
+    TC_RETURN(TC_AWAIT(encryptor.decrypt(decryptedData, keyFinder, encryptedData)));
+  })));
 }
 
 tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                              Crypto::SymmetricKey const& key,
                              gsl::span<uint8_t const> encryptedData)
 {
-  TC_RETURN(
-      TC_AWAIT(decrypt(decryptedData, fixedKeyFinder(key), encryptedData)));
+  TC_RETURN(TC_AWAIT(decrypt(decryptedData, fixedKeyFinder(key), encryptedData)));
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.empty())
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "encrypted data is empty");
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "encrypted data is empty");
 
   auto const version = encryptedData[0];
 
-  return performEncryptorAction(version, [&](auto encryptor) {
-    return ResourceId(encryptor.extractResourceId(encryptedData));
-  });
+  return performEncryptorAction(version,
+                                [&](auto encryptor) { return ResourceId(encryptor.extractResourceId(encryptedData)); });
 }
 }
 }

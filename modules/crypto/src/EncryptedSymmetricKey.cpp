@@ -7,14 +7,12 @@ namespace Tanker
 {
 namespace Crypto
 {
-void from_serialized(Serialization::SerializedSource& ss,
-                     EncryptedSymmetricKey& esk)
+void from_serialized(Serialization::SerializedSource& ss, EncryptedSymmetricKey& esk)
 {
   auto const keySize = ss.read_varint();
   if (keySize != EncryptedSymmetricKey::arraySize)
   {
-    throw Errors::Exception(Errc::InvalidBufferSize,
-                            "invalid encrypted symmetric key size");
+    throw Errors::Exception(Errc::InvalidBufferSize, "invalid encrypted symmetric key size");
   }
   auto sp = ss.read(EncryptedSymmetricKey::arraySize);
   std::copy(sp.begin(), sp.end(), esk.begin());

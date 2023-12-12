@@ -8,9 +8,7 @@
 namespace Tanker::Oidc
 {
 Nonce extractNonce(std::string const& idToken);
-class RawNonce
-  : public Crypto::BasicCryptographicType<RawNonce,
-                                          Crypto::PublicSignatureKey::arraySize>
+class RawNonce : public Crypto::BasicCryptographicType<RawNonce, Crypto::PublicSignatureKey::arraySize>
 {
   using base_t::base_t;
 };

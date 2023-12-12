@@ -61,22 +61,13 @@ TEST_CASE("KeyPublishToUser serialization test vectors")
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
 
-    auto const recipientPublicEncryptionKey =
-        make<Crypto::PublicEncryptionKey>("recipient user");
+    auto const recipientPublicEncryptionKey = make<Crypto::PublicEncryptionKey>("recipient user");
     auto const resourceId = make<Crypto::SimpleResourceId>("resource mac");
     auto const key = make<Crypto::SealedSymmetricKey>("encrypted key...");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "lul/hcBQqE1G6HNuKBZyBorI4WAH9K/rgve4mR/cwCw=");
-    KeyPublishToUser const kp(trustchainId,
-                              recipientPublicEncryptionKey,
-                              resourceId,
-                              key,
-                              author,
-                              hash,
-                              signature);
+    auto const hash = mgs::base64::decode<Crypto::Hash>("lul/hcBQqE1G6HNuKBZyBorI4WAH9K/rgve4mR/cwCw=");
+    KeyPublishToUser const kp(trustchainId, recipientPublicEncryptionKey, resourceId, key, author, hash, signature);
 
     CHECK(Serialization::serialize(kp) == serializedKeyPublishToUser);
-    CHECK(Serialization::deserialize<KeyPublishToUser>(
-              serializedKeyPublishToUser) == kp);
+    CHECK(Serialization::deserialize<KeyPublishToUser>(serializedKeyPublishToUser) == kp);
   }
 }

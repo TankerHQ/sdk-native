@@ -15,8 +15,7 @@ class Device;
 
 namespace Tanker::Verif
 {
-Trustchain::GroupAction verifyUserGroupCreation(
-    Trustchain::GroupAction const& action,
-    Users::Device const& author,
-    std::optional<BaseGroup> const& group);
+Trustchain::GroupAction verifyUserGroupCreation(Trustchain::GroupAction const& action,
+                                                Users::Device const& author,
+                                                std::optional<BaseGroup> const& group);
 }

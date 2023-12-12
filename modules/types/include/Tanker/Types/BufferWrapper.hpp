@@ -21,8 +21,7 @@ public:
   {
   }
 
-  BufferWrapper(base_t::size_type count, std::uint8_t value = 0)
-    : base_t(count, value)
+  BufferWrapper(base_t::size_type count, std::uint8_t value = 0) : base_t(count, value)
   {
   }
 
@@ -39,8 +38,7 @@ public:
     return *this;
   }
 
-  void swap(BufferWrapper& other) noexcept(
-      noexcept(std::declval<base_t&>().swap(other)))
+  void swap(BufferWrapper& other) noexcept(noexcept(std::declval<base_t&>().swap(other)))
   {
     this->base_t::swap(other);
   }
@@ -97,43 +95,37 @@ public:
 };
 
 template <typename T>
-bool operator==(BufferWrapper<T> const& lhs,
-                BufferWrapper<T> const& rhs) noexcept
+bool operator==(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return lhs.vector() == rhs.vector();
 }
 
 template <typename T>
-bool operator!=(BufferWrapper<T> const& lhs,
-                BufferWrapper<T> const& rhs) noexcept
+bool operator!=(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return !(lhs == rhs);
 }
 
 template <typename T>
-bool operator<(BufferWrapper<T> const& lhs,
-               BufferWrapper<T> const& rhs) noexcept
+bool operator<(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return lhs.vector() < rhs.vector();
 }
 
 template <typename T>
-bool operator>(BufferWrapper<T> const& lhs,
-               BufferWrapper<T> const& rhs) noexcept
+bool operator>(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return lhs.vector() > rhs.vector();
 }
 
 template <typename T>
-bool operator>=(BufferWrapper<T> const& lhs,
-                BufferWrapper<T> const& rhs) noexcept
+bool operator>=(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return lhs.vector() >= rhs.vector();
 }
 
 template <typename T>
-bool operator<=(BufferWrapper<T> const& lhs,
-                BufferWrapper<T> const& rhs) noexcept
+bool operator<=(BufferWrapper<T> const& lhs, BufferWrapper<T> const& rhs) noexcept
 {
   return lhs.vector() <= rhs.vector();
 }
@@ -165,8 +157,7 @@ struct hash<Tanker::BufferWrapper<T>>
 };
 
 template <typename T>
-void swap(Tanker::BufferWrapper<T>& lhs,
-          Tanker::BufferWrapper<T>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(Tanker::BufferWrapper<T>& lhs, Tanker::BufferWrapper<T>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
   lhs.swap(rhs);
 }

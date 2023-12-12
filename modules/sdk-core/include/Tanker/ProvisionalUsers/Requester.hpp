@@ -21,17 +21,13 @@ class Requester : public IRequester
 public:
   Requester(Network::HttpClient* httpClient);
 
-  tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
-  getClaimBlocks(Trustchain::UserId const& userId) override;
-  tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-  getVerifiedProvisionalIdentityKeys(
-      Trustchain::UserId const& userId,
-      Verification::RequestWithSession const& request) override;
+  tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>> getClaimBlocks(
+      Trustchain::UserId const& userId) override;
+  tc::cotask<std::optional<TankerSecretProvisionalIdentity>> getVerifiedProvisionalIdentityKeys(
+      Trustchain::UserId const& userId, Verification::RequestWithSession const& request) override;
   tc::cotask<TankerSecretProvisionalIdentity> getProvisionalIdentityKeys(
       Verification::RequestWithVerif const& request) override;
-  tc::cotask<void> claimProvisionalIdentity(
-      Trustchain::Actions::ProvisionalIdentityClaim const& claimAction)
-      override;
+  tc::cotask<void> claimProvisionalIdentity(Trustchain::Actions::ProvisionalIdentityClaim const& claimAction) override;
 
 private:
   Network::HttpClient* _httpClient;

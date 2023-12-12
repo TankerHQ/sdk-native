@@ -25,8 +25,7 @@ namespace detail
 {
 void generichash_impl(gsl::span<uint8_t> hash, gsl::span<uint8_t const> data)
 {
-  crypto_generichash(
-      hash.data(), hash.size(), data.data(), data.size(), nullptr, 0);
+  crypto_generichash(hash.data(), hash.size(), data.data(), data.size(), nullptr, 0);
 }
 
 void asymDecryptImpl(gsl::span<uint8_t const> cipherData,
@@ -34,18 +33,15 @@ void asymDecryptImpl(gsl::span<uint8_t const> cipherData,
                      PublicEncryptionKey const& senderKey,
                      PrivateEncryptionKey const& recipientKey)
 {
-  assert(clearData.size() ==
-         cipherData.size() - crypto_box_MACBYTES - crypto_box_NONCEBYTES);
+  assert(clearData.size() == cipherData.size() - crypto_box_MACBYTES - crypto_box_NONCEBYTES);
 
-  auto const nonce = cipherData.subspan(
-      cipherData.size() - crypto_box_NONCEBYTES, crypto_box_NONCEBYTES);
-  auto const error =
-      crypto_box_open_easy(clearData.data(),
-                           cipherData.data(),
-                           cipherData.size() - crypto_box_NONCEBYTES,
-                           nonce.data(),
-                           senderKey.data(),
-                           recipientKey.data());
+  auto const nonce = cipherData.subspan(cipherData.size() - crypto_box_NONCEBYTES, crypto_box_NONCEBYTES);
+  auto const error = crypto_box_open_easy(clearData.data(),
+                                          cipherData.data(),
+                                          cipherData.size() - crypto_box_NONCEBYTES,
+                                          nonce.data(),
+                                          senderKey.data(),
+                                          recipientKey.data());
   if (error != 0)
     throw Exception(Errc::AsymmetricDecryptionFailed);
 }
@@ -69,18 +65,12 @@ void asymEncryptImpl(gsl::span<uint8_t const> clearData,
                      PrivateEncryptionKey const& senderKey,
                      PublicEncryptionKey const& recipientKey)
 {
-  assert(cipherData.size() ==
-         clearData.size() + crypto_box_MACBYTES + crypto_box_NONCEBYTES);
+  assert(cipherData.size() == clearData.size() + crypto_box_MACBYTES + crypto_box_NONCEBYTES);
 
-  auto nonce = cipherData.subspan(clearData.size() + crypto_box_MACBYTES,
-                                  crypto_box_NONCEBYTES);
+  auto nonce = cipherData.subspan(clearData.size() + crypto_box_MACBYTES, crypto_box_NONCEBYTES);
   randomFill(nonce);
-  auto const error = crypto_box_easy(cipherData.data(),
-                                     clearData.data(),
-                                     clearData.size(),
-                                     nonce.data(),
-                                     recipientKey.data(),
-                                     senderKey.data());
+  auto const error = crypto_box_easy(
+      cipherData.data(), clearData.data(), clearData.size(), nonce.data(), recipientKey.data(), senderKey.data());
   if (error != 0)
     throw Exception(Errc::AsymmetricEncryptionFailed);
 }
@@ -90,10 +80,7 @@ void sealEncryptImpl(gsl::span<uint8_t const> clearData,
                      PublicEncryptionKey const& recipientKey)
 {
   assert(cipherData.size() == clearData.size() + crypto_box_SEALBYTES);
-  auto const error = crypto_box_seal(cipherData.data(),
-                                     clearData.data(),
-                                     clearData.size(),
-                                     recipientKey.data());
+  auto const error = crypto_box_seal(cipherData.data(), clearData.data(), clearData.size(), recipientKey.data());
   if (error != 0)
     throw Exception(Errc::SealedEncryptionFailed);
 }
@@ -102,8 +89,7 @@ void sealEncryptImpl(gsl::span<uint8_t const> clearData,
 std::vector<uint8_t> generichash16(gsl::span<uint8_t const> data)
 {
   std::vector<uint8_t> hash(crypto_generichash_BYTES_MIN);
-  crypto_generichash(
-      hash.data(), hash.size(), data.data(), data.size(), nullptr, 0);
+  crypto_generichash(hash.data(), hash.size(), data.data(), data.size(), nullptr, 0);
   return hash;
 }
 
@@ -112,26 +98,16 @@ void randomFill(gsl::span<uint8_t> data)
   randombytes_buf(data.data(), data.size());
 }
 
-Signature sign(gsl::span<uint8_t const> data,
-               PrivateSignatureKey const& privateSignatureKey)
+Signature sign(gsl::span<uint8_t const> data, PrivateSignatureKey const& privateSignatureKey)
 {
   Signature signature;
-  crypto_sign_detached(signature.data(),
-                       NULL,
-                       data.data(),
-                       data.size(),
-                       privateSignatureKey.data());
+  crypto_sign_detached(signature.data(), NULL, data.data(), data.size(), privateSignatureKey.data());
   return signature;
 }
 
-bool verify(gsl::span<uint8_t const> data,
-            Signature const& signature,
-            PublicSignatureKey const& publicSignatureKey)
+bool verify(gsl::span<uint8_t const> data, Signature const& signature, PublicSignatureKey const& publicSignatureKey)
 {
-  return crypto_sign_verify_detached(signature.data(),
-                                     data.data(),
-                                     data.size(),
-                                     publicSignatureKey.data()) == 0;
+  return crypto_sign_verify_detached(signature.data(), data.data(), data.size(), publicSignatureKey.data()) == 0;
 }
 
 EncryptionKeyPair makeEncryptionKeyPair()
@@ -199,8 +175,7 @@ gsl::span<uint8_t const> extractMac(gsl::span<uint8_t const> encryptedData)
 {
   try
   {
-    return encryptedData.subspan(encryptedData.size() - aeadOverhead,
-                                 crypto_aead_xchacha20poly1305_ietf_ABYTES);
+    return encryptedData.subspan(encryptedData.size() - aeadOverhead, crypto_aead_xchacha20poly1305_ietf_ABYTES);
   }
   catch (gsl::fail_fast const&)
   {
@@ -214,10 +189,8 @@ gsl::span<uint8_t const> encryptAead(SymmetricKey const& key,
                                      gsl::span<uint8_t const> clearData,
                                      gsl::span<uint8_t const> associatedData)
 {
-  if (encryptedData.size() <
-      clearData.size() + crypto_aead_xchacha20poly1305_ietf_ABYTES)
-    throw Errors::AssertionError(
-        "encryptAead: encryptedData buffer is too short");
+  if (encryptedData.size() < clearData.size() + crypto_aead_xchacha20poly1305_ietf_ABYTES)
+    throw Errors::AssertionError("encryptAead: encryptedData buffer is too short");
   if (iv.size() != crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
     throw Errors::AssertionError("encryptAead: iv buffer is of the wrong size");
 
@@ -248,8 +221,7 @@ std::vector<uint8_t> encryptAead(SymmetricKey const& key,
                                  gsl::span<uint8_t const> clearData,
                                  gsl::span<uint8_t const> ad)
 {
-  auto ptr = std::vector<uint8_t>(Crypto::AeadIv::arraySize + clearData.size() +
-                                  Crypto::Mac::arraySize);
+  auto ptr = std::vector<uint8_t>(Crypto::AeadIv::arraySize + clearData.size() + Crypto::Mac::arraySize);
   auto aeadBuffer = makeAeadBuffer<uint8_t>(ptr);
   Crypto::randomFill(aeadBuffer.iv);
   encryptAead(key, aeadBuffer.iv, aeadBuffer.encryptedData, clearData, ad);
@@ -262,22 +234,20 @@ void decryptAead(SymmetricKey const& key,
                  gsl::span<uint8_t const> encryptedData,
                  gsl::span<uint8_t const> associatedData)
 {
-  if (clearData.size() <
-      encryptedData.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES)
+  if (clearData.size() < encryptedData.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES)
     throw Errors::AssertionError("decryptAead: clearData buffer is too short");
   if (iv.size() != crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
     throw Errors::AssertionError("decryptAead: iv buffer is of the wrong size");
 
-  auto const error =
-      crypto_aead_xchacha20poly1305_ietf_decrypt(clearData.data(),
-                                                 nullptr,
-                                                 nullptr,
-                                                 encryptedData.data(),
-                                                 encryptedData.size(),
-                                                 associatedData.data(),
-                                                 associatedData.size(),
-                                                 iv.data(),
-                                                 key.data());
+  auto const error = crypto_aead_xchacha20poly1305_ietf_decrypt(clearData.data(),
+                                                                nullptr,
+                                                                nullptr,
+                                                                encryptedData.data(),
+                                                                encryptedData.size(),
+                                                                associatedData.data(),
+                                                                associatedData.size(),
+                                                                iv.data(),
+                                                                key.data());
   if (error != 0)
     throw Exception(Errc::AeadDecryptionFailed, "MAC verification failed");
 }
@@ -301,9 +271,7 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
 {
   if (!key)
   {
-    throw formatEx(Errors::Errc::InvalidArgument,
-                   "key not found for resource: {:s}",
-                   resourceId);
+    throw formatEx(Errors::Errc::InvalidArgument, "key not found for resource: {:s}", resourceId);
   }
   return decryptAead(*key, iv, clearData, encryptedData, associatedData);
 }
@@ -315,12 +283,7 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                     gsl::span<uint8_t const> encryptedData,
                     gsl::span<uint8_t const> associatedData)
 {
-  return tryDecryptAead(key,
-                        ResourceId{resourceId},
-                        iv,
-                        clearData,
-                        encryptedData,
-                        associatedData);
+  return tryDecryptAead(key, ResourceId{resourceId}, iv, clearData, encryptedData, associatedData);
 }
 
 void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
@@ -330,25 +293,18 @@ void tryDecryptAead(std::optional<Crypto::SymmetricKey> const& key,
                     gsl::span<uint8_t const> encryptedData,
                     gsl::span<uint8_t const> associatedData)
 {
-  return tryDecryptAead(key,
-                        ResourceId{resourceId},
-                        iv,
-                        clearData,
-                        encryptedData,
-                        associatedData);
+  return tryDecryptAead(key, ResourceId{resourceId}, iv, clearData, encryptedData, associatedData);
 }
 
 Hash prehashPassword(std::string password)
 {
   if (password.empty())
-    throw Errors::formatEx(Errc::InvalidBufferSize,
-                           "cannot hash an empty password");
+    throw Errors::formatEx(Errc::InvalidBufferSize, "cannot hash an empty password");
 
   static constexpr char PASSWORD_PEPPER[] = "2NsxLuBPL7JanD2SIjb9erBgVHjMFh";
 
   password += PASSWORD_PEPPER;
-  return generichash(gsl::span(
-      reinterpret_cast<uint8_t const*>(password.data()), password.size()));
+  return generichash(gsl::span(reinterpret_cast<uint8_t const*>(password.data()), password.size()));
 }
 }
 }

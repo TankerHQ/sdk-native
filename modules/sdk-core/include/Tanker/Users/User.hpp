@@ -56,8 +56,7 @@ bool operator<(User const& l, User const& r);
 namespace std
 {
 template <>
-class tuple_size<::Tanker::Users::User>
-  : public std::integral_constant<std::size_t, 3>
+class tuple_size<::Tanker::Users::User> : public std::integral_constant<std::size_t, 3>
 {
 };
 

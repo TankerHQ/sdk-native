@@ -45,9 +45,7 @@ class Resource;
 
 struct Group
 {
-  static Group newV1(Trustchain::TrustchainId const& tid,
-                     Device const& author,
-                     std::vector<User> const& users);
+  static Group newV1(Trustchain::TrustchainId const& tid, Device const& author, std::vector<User> const& users);
   static Group newV2(Trustchain::TrustchainId const& tid,
                      Device const& author,
                      std::vector<User> const& users,
@@ -68,16 +66,13 @@ struct Group
 
   std::vector<Trustchain::GroupAction> const& entries() const;
 
-  Trustchain::Actions::UserGroupAddition addUsersV1(
-      Device const& author, std::vector<User> const& users);
-  Trustchain::Actions::UserGroupAddition addUsersV2(
-      Device const& author,
-      std::vector<User> const& newUsers = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {});
-  Trustchain::Actions::UserGroupAddition addUsers(
-      Device const& author,
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {});
+  Trustchain::Actions::UserGroupAddition addUsersV1(Device const& author, std::vector<User> const& users);
+  Trustchain::Actions::UserGroupAddition addUsersV2(Device const& author,
+                                                    std::vector<User> const& newUsers = {},
+                                                    std::vector<ProvisionalUser> const& provisionalUsers = {});
+  Trustchain::Actions::UserGroupAddition addUsers(Device const& author,
+                                                  std::vector<User> const& users = {},
+                                                  std::vector<ProvisionalUser> const& provisionalUsers = {});
 
 private:
   Group(Trustchain::TrustchainId const& tid,
@@ -123,12 +118,9 @@ struct User
   [[nodiscard]] Device makeDeviceV1() const;
   Device& addDeviceV1();
 
-  Group makeGroup(
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
+  Group makeGroup(std::vector<User> const& users = {}, std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
 
-  Trustchain::Actions::ProvisionalIdentityClaim claim(
-      ProvisionalUser const& provisionalUser) const;
+  Trustchain::Actions::ProvisionalIdentityClaim claim(ProvisionalUser const& provisionalUser) const;
 
   Crypto::EncryptionKeyPair const& addUserKey();
   void addUserKey(Crypto::EncryptionKeyPair const& userKp);
@@ -202,35 +194,28 @@ public:
   User makeUserV1(std::string const& suserId) const;
 
   Group makeGroupV1(Device const& author, std::vector<User> const& users) const;
-  Group makeGroupV2(
-      Device const& author,
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
-  Group makeGroup(
-      Device const& author,
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
+  Group makeGroupV2(Device const& author,
+                    std::vector<User> const& users = {},
+                    std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
+  Group makeGroup(Device const& author,
+                  std::vector<User> const& users = {},
+                  std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
 
-  Trustchain::Actions::KeyPublishToUser shareWith(Device const& sender,
-                                                  User const& receiver,
-                                                  Resource const& res);
+  Trustchain::Actions::KeyPublishToUser shareWith(Device const& sender, User const& receiver, Resource const& res);
   Trustchain::Actions::KeyPublishToUserGroup shareWith(Device const& sender,
                                                        Group const& receiver,
                                                        Resource const& res);
-  Trustchain::Actions::KeyPublishToProvisionalUser shareWith(
-      Device const& sender,
-      ProvisionalUser const& receiver,
-      Resource const& res);
+  Trustchain::Actions::KeyPublishToProvisionalUser shareWith(Device const& sender,
+                                                             ProvisionalUser const& receiver,
+                                                             Resource const& res);
 
   Trustchain::Context const& context() const;
   Trustchain::Actions::TrustchainCreation const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
-  static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(
-      std::initializer_list<Device> devices);
-  std::vector<Trustchain::UserAction> makeEntryList(
-      std::initializer_list<User> users) const;
+  static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(std::initializer_list<Device> devices);
+  std::vector<Trustchain::UserAction> makeEntryList(std::initializer_list<User> users) const;
 
 private:
   Crypto::SignatureKeyPair _trustchainKeyPair;

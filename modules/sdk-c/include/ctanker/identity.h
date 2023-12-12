@@ -27,8 +27,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_create_identity(char const* app_id,
  * \return an expected (ready future) of base64-encoded identity (char*)
  * \post the identity must be freed with tanker_free_buffer()
  */
-CTANKER_EXPORT tanker_expected_t* tanker_create_provisional_identity(
-    char const* app_id, char const* email);
+CTANKER_EXPORT tanker_expected_t* tanker_create_provisional_identity(char const* app_id, char const* email);
 
 /*!
  * Get a Public Identity from an Identity
@@ -37,8 +36,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_create_provisional_identity(
  * (char*)
  * \post the public identity must be freed with tanker_free_buffer()
  */
-CTANKER_EXPORT tanker_expected_t* tanker_get_public_identity(
-    char const* identity);
+CTANKER_EXPORT tanker_expected_t* tanker_get_public_identity(char const* identity);
 #ifdef __cplusplus
 }
 #endif

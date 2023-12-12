@@ -16,34 +16,26 @@ namespace Tanker
 {
 namespace Verif
 {
-Trustchain::GroupAction verifyUserGroupAddition(
-    Trustchain::GroupAction const& action,
-    Users::Device const& author,
-    std::optional<BaseGroup> const& group)
+Trustchain::GroupAction verifyUserGroupAddition(Trustchain::GroupAction const& action,
+                                                Users::Device const& author,
+                                                std::optional<BaseGroup> const& group)
 {
-  assert(getNature(action) == Nature::UserGroupAddition1 ||
-         getNature(action) == Nature::UserGroupAddition2 ||
+  assert(getNature(action) == Nature::UserGroupAddition1 || getNature(action) == Nature::UserGroupAddition2 ||
          getNature(action) == Nature::UserGroupAddition3);
 
-  ensures(group.has_value(),
-          Verif::Errc::InvalidGroup,
-          "UserGroupAddition references unknown group");
+  ensures(group.has_value(), Verif::Errc::InvalidGroup, "UserGroupAddition references unknown group");
+
+  ensures(Crypto::verify(getHash(action), getSignature(action), author.publicSignatureKey()),
+          Errc::InvalidSignature,
+          "UserGroupAddition block must be signed by the author device");
+
+  auto const& userGroupAddition = boost::variant2::get<UserGroupAddition>(action);
 
   ensures(
-      Crypto::verify(
-          getHash(action), getSignature(action), author.publicSignatureKey()),
+      Crypto::verify(userGroupAddition.signatureData(), userGroupAddition.selfSignature(), group->publicSignatureKey()),
       Errc::InvalidSignature,
-      "UserGroupAddition block must be signed by the author device");
-
-  auto const& userGroupAddition =
-      boost::variant2::get<UserGroupAddition>(action);
-
-  ensures(Crypto::verify(userGroupAddition.signatureData(),
-                         userGroupAddition.selfSignature(),
-                         group->publicSignatureKey()),
-          Errc::InvalidSignature,
-          "UserGroupAddition signature data must be signed with the group "
-          "public key");
+      "UserGroupAddition signature data must be signed with the group "
+      "public key");
 
   return action;
 }

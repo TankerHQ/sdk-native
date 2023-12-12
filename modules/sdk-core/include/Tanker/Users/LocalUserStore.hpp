@@ -36,21 +36,17 @@ struct DeviceData
 class LocalUserStore
 {
 public:
-  LocalUserStore(Crypto::SymmetricKey const& userSecret,
-                 DataStore::DataStore* db);
+  LocalUserStore(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
-  tc::cotask<void> initializeDevice(
-      Crypto::PublicSignatureKey const& trustchainPublicKey,
-      Trustchain::DeviceId const& deviceId,
-      DeviceKeys const& deviceKeys,
-      std::vector<Crypto::EncryptionKeyPair> const& userKeys);
+  tc::cotask<void> initializeDevice(Crypto::PublicSignatureKey const& trustchainPublicKey,
+                                    Trustchain::DeviceId const& deviceId,
+                                    DeviceKeys const& deviceKeys,
+                                    std::vector<Crypto::EncryptionKeyPair> const& userKeys);
 
   tc::cotask<void> putUserKeys(std::vector<Crypto::EncryptionKeyPair> userKeys);
 
-  tc::cotask<std::optional<Crypto::PublicSignatureKey>>
-  findTrustchainPublicSignatureKey() const;
-  tc::cotask<std::optional<LocalUser>> findLocalUser(
-      Trustchain::UserId const& userId) const;
+  tc::cotask<std::optional<Crypto::PublicSignatureKey>> findTrustchainPublicSignatureKey() const;
+  tc::cotask<std::optional<LocalUser>> findLocalUser(Trustchain::UserId const& userId) const;
   tc::cotask<DeviceKeys> getDeviceKeys() const;
   tc::cotask<Trustchain::DeviceId> getDeviceId() const;
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;

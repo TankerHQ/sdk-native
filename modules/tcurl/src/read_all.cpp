@@ -36,12 +36,11 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
   // creates a cycle, but it will be broken when the request finishes
   ra->_req = std::move(req);
 
-  ra->_req->set_read_callback(
-      [ra](request&, void const* data, std::size_t size) {
-        auto u8data = static_cast<uint8_t const*>(data);
-        ra->_data.insert(ra->_data.end(), u8data, u8data + size);
-        return size;
-      });
+  ra->_req->set_read_callback([ra](request&, void const* data, std::size_t size) {
+    auto u8data = static_cast<uint8_t const*>(data);
+    ra->_data.insert(ra->_data.end(), u8data, u8data + size);
+    return size;
+  });
 
   ra->_req->set_finish_callback([ra](request&, CURLcode code) {
     if (code == CURLE_OK)
@@ -57,8 +56,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
     if (!ra->_req)
       return;
 
-    ra->_promise.set_exception(
-        std::make_exception_ptr(tc::operation_canceled{}));
+    ra->_promise.set_exception(std::make_exception_ptr(tc::operation_canceled{}));
     // break the cycles
     reset_read_all_helper(ra);
   });
@@ -70,8 +68,7 @@ tc::future<read_all_result> read_all(multi& multi, std::shared_ptr<request> req)
         return;
 
       ra->_multi.cancel(*ra->_req);
-      ra->_promise.set_exception(
-          std::make_exception_ptr(tc::operation_canceled{}));
+      ra->_promise.set_exception(std::make_exception_ptr(tc::operation_canceled{}));
       reset_read_all_helper(ra);
     };
     if (tc::get_default_executor().is_in_this_context())

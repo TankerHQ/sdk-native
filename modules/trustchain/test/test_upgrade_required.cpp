@@ -32,12 +32,10 @@ TEST_CASE("UpgradeRequired trustchain tests")
     };
     // clang-format on
 
-    TANKER_CHECK_THROWS_WITH_CODE(getBlockNature(serializedBlock),
-                                  Errors::Errc::UpgradeRequired);
+    TANKER_CHECK_THROWS_WITH_CODE(getBlockNature(serializedBlock), Errors::Errc::UpgradeRequired);
   }
 
-  SECTION(
-      "throw UpgradeRequired when deserializing a key publish with nature 127")
+  SECTION("throw UpgradeRequired when deserializing a key publish with nature 127")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedKeyPublishToUser = {
@@ -55,9 +53,8 @@ TEST_CASE("UpgradeRequired trustchain tests")
     };
     // clang-format on
 
-    TANKER_CHECK_THROWS_WITH_CODE(
-        deserializeKeyPublishAction(serializedKeyPublishToUser),
-        Errors::Errc::UpgradeRequired);
+    TANKER_CHECK_THROWS_WITH_CODE(deserializeKeyPublishAction(serializedKeyPublishToUser),
+                                  Errors::Errc::UpgradeRequired);
   }
 
   SECTION("throw UpgradeRequired when deserializing a device with nature 127")
@@ -78,8 +75,7 @@ TEST_CASE("UpgradeRequired trustchain tests")
     };
     // clang-format on
 
-    TANKER_CHECK_THROWS_WITH_CODE(deserializeUserAction(serializedDevice),
-                                  Errors::Errc::UpgradeRequired);
+    TANKER_CHECK_THROWS_WITH_CODE(deserializeUserAction(serializedDevice), Errors::Errc::UpgradeRequired);
   }
 
   SECTION("throw UpgradeRequired when deserializing a group with nature 127")
@@ -100,8 +96,6 @@ TEST_CASE("UpgradeRequired trustchain tests")
     };
     // clang-format on
 
-    TANKER_CHECK_THROWS_WITH_CODE(
-        deserializeGroupAction(serializedUserGroupCreation),
-        Errors::Errc::UpgradeRequired);
+    TANKER_CHECK_THROWS_WITH_CODE(deserializeGroupAction(serializedUserGroupCreation), Errors::Errc::UpgradeRequired);
   }
 }

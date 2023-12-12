@@ -32,12 +32,10 @@ typedef struct tanker_http_response tanker_http_response_t;
 // Opaque object that represents a request
 typedef void tanker_http_request_handle_t;
 
-typedef tanker_http_request_handle_t* (*tanker_http_send_request_t)(
-    tanker_http_request_t* request, void* data);
-typedef void (*tanker_http_cancel_request_t)(
-    tanker_http_request_t* request,
-    tanker_http_request_handle_t* request_handle,
-    void* data);
+typedef tanker_http_request_handle_t* (*tanker_http_send_request_t)(tanker_http_request_t* request, void* data);
+typedef void (*tanker_http_cancel_request_t)(tanker_http_request_t* request,
+                                             tanker_http_request_handle_t* request_handle,
+                                             void* data);
 
 struct tanker_http_options
 {
@@ -48,8 +46,7 @@ struct tanker_http_options
 
 typedef struct tanker_http_options tanker_http_options_t;
 
-void tanker_http_handle_response(tanker_http_request_t*,
-                                 tanker_http_response_t*);
+void tanker_http_handle_response(tanker_http_request_t*, tanker_http_response_t*);
 
 #ifdef __cplusplus
 }

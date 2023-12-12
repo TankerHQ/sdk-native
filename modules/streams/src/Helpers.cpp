@@ -11,10 +11,9 @@ namespace
 template <typename T>
 InputSource bufferToInputSourceImpl(T&& buffer)
 {
-  return [index = 0llu, buffer = std::forward<T>(buffer)](
-             gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
-    auto const toRead =
-        std::min<std::uint64_t>(out.size(), buffer.size() - index);
+  return [index = 0llu,
+          buffer = std::forward<T>(buffer)](gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
+    auto const toRead = std::min<std::uint64_t>(out.size(), buffer.size() - index);
     std::copy_n(buffer.data() + index, toRead, out.data());
     index += toRead;
     TC_RETURN(toRead);

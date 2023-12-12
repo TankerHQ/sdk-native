@@ -15,8 +15,7 @@
 
 namespace Tanker::Trustchain
 {
-using GroupAction = boost::variant2::variant<Actions::UserGroupAddition,
-                                             Actions::UserGroupCreation>;
+using GroupAction = boost::variant2::variant<Actions::UserGroupAddition, Actions::UserGroupCreation>;
 
 Crypto::Hash getHash(GroupAction const& action);
 Actions::Nature getNature(GroupAction const& action);

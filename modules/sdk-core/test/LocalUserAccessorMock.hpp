@@ -6,8 +6,7 @@
 
 namespace Tanker
 {
-class LocalUserAccessorMock
-  : public trompeloeil::mock_interface<Users::ILocalUserAccessor>
+class LocalUserAccessorMock : public trompeloeil::mock_interface<Users::ILocalUserAccessor>
 {
 public:
   IMPLEMENT_CONST_MOCK0(get);

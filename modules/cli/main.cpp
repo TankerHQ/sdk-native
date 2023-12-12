@@ -90,8 +90,7 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
   if (block.size() < 2)
     throw std::runtime_error("block too small");
   if (block[0] != 1)
-    throw std::runtime_error(
-        fmt::format("unsupported block version: {}", block[0]));
+    throw std::runtime_error(fmt::format("unsupported block version: {}", block[0]));
 
   auto rest = Serialization::varint_read(block.subspan(1)).second;
   auto const nature = static_cast<Nature>(rest[32]);
@@ -133,26 +132,20 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
   case Nature::SessionCertificate:
     return Serialization::deserialize<SessionCertificate>(block);
   }
-  throw std::runtime_error(
-      fmt::format(FMT_STRING("unknown nature: {}"), static_cast<int>(nature)));
+  throw std::runtime_error(fmt::format(FMT_STRING("unknown nature: {}"), static_cast<int>(nature)));
 }
 
 std::vector<uint8_t> constructBlockFromParts(MainArgs const& args)
 {
-  auto const trustchainId =
-      mgs::base16::decode<Tanker::Trustchain::TrustchainId>(
-          args.at("<trustchainId>").asString());
+  auto const trustchainId = mgs::base16::decode<Tanker::Trustchain::TrustchainId>(args.at("<trustchainId>").asString());
   auto const nature = args.at("<nature>").asLong();
   auto const payload = mgs::base16::decode(args.at("<payload>").asString());
-  auto const author =
-      mgs::base16::decode<Tanker::Crypto::Hash>(args.at("<author>").asString());
-  auto const signature = mgs::base16::decode<Tanker::Crypto::Signature>(
-      args.at("<signature>").asString());
+  auto const author = mgs::base16::decode<Tanker::Crypto::Hash>(args.at("<author>").asString());
+  auto const signature = mgs::base16::decode<Tanker::Crypto::Signature>(args.at("<signature>").asString());
 
-  std::vector<uint8_t> buffer(
-      1 + 1 + trustchainId.size() + Serialization::varint_size(nature) +
-      Serialization::varint_size(payload.size()) + payload.size() +
-      author.size() + signature.size());
+  std::vector<uint8_t> buffer(1 + 1 + trustchainId.size() + Serialization::varint_size(nature) +
+                              Serialization::varint_size(payload.size()) + payload.size() + author.size() +
+                              signature.size());
   auto it = buffer.data();
   it = Serialization::varint_write(it, 1); /* block version */
   it = Serialization::varint_write(it, 0); /* block index */
@@ -170,8 +163,7 @@ std::vector<uint8_t> constructBlockFromParts(MainArgs const& args)
 
 std::string formatAction(CliAction const& action)
 {
-  return boost::variant2::visit(
-      [](auto const& e) { return nlohmann::json(e).dump(4); }, action);
+  return boost::variant2::visit([](auto const& e) { return nlohmann::json(e).dump(4); }, action);
 }
 
 std::string readfile(std::string const& file)
@@ -203,22 +195,17 @@ std::string createIdentity(MainArgs const& args)
   auto const trustchainId = args.at("<trustchainid>").asString();
   auto const userId = args.at("<userid>").asString();
   return Tanker::Identity::createIdentity(
-      trustchainId,
-      args.at(TrustchainPrivateKeyOpt).asString(),
-      Tanker::SUserId{userId});
+      trustchainId, args.at(TrustchainPrivateKeyOpt).asString(), Tanker::SUserId{userId});
 }
 
 std::string createProvisionalIdentity(MainArgs const& args)
 {
   auto const trustchainId = args.at("<trustchainid>").asString();
   auto const email = args.at("<email>").asString();
-  return Tanker::Identity::createProvisionalIdentity(trustchainId,
-                                                     Tanker::Email{email});
+  return Tanker::Identity::createProvisionalIdentity(trustchainId, Tanker::Email{email});
 }
 
-std::string loadIdentity(std::string const& trustchainId,
-                         std::string const& userId,
-                         MainArgs const& args)
+std::string loadIdentity(std::string const& trustchainId, std::string const& userId, MainArgs const& args)
 {
   auto const identityFile = userId + ".identity";
 
@@ -231,20 +218,16 @@ std::string loadIdentity(std::string const& trustchainId,
       return savedIdentity;
     else
       return Tanker::Identity::createIdentity(
-          trustchainId,
-          args.at(TrustchainPrivateKeyOpt).asString(),
-          Tanker::SUserId{userId});
+          trustchainId, args.at(TrustchainPrivateKeyOpt).asString(), Tanker::SUserId{userId});
   }();
 
   writefile(identityFile, identity);
   return identity;
 }
 
-SPublicIdentity makePublicIdentity(std::string const& strustchainId,
-                                   std::string const& suserId)
+SPublicIdentity makePublicIdentity(std::string const& strustchainId, std::string const& suserId)
 {
-  auto const trustchainId =
-      mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
+  auto const trustchainId = mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
   auto const userId = Tanker::obfuscateUserId(SUserId{suserId}, trustchainId);
 
   nlohmann::json j{
@@ -266,20 +249,16 @@ AsyncCorePtr signUp(MainArgs const& args)
 
   auto const identity = loadIdentity(trustchainId, userId, args);
 
-  auto core = AsyncCorePtr{new AsyncCore(
-      args.at("<trustchainurl>").asString(),
-      {sdkType,
-       mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
-       sdkVersion},
-      ".",
-      ".")};
+  auto core = AsyncCorePtr{
+      new AsyncCore(args.at("<trustchainurl>").asString(),
+                    {sdkType, mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId), sdkVersion},
+                    ".",
+                    ".")};
 
   auto const status = core->start(identity).get();
   if (status != Tanker::Status::Ready && !args.at(UnlockPasswordOpt))
     throw std::runtime_error("Please provide a password");
-  core->registerIdentity(
-          Tanker::Passphrase{args.at(UnlockPasswordOpt).asString()})
-      .get();
+  core->registerIdentity(Tanker::Passphrase{args.at(UnlockPasswordOpt).asString()}).get();
 
   return core;
 }
@@ -291,13 +270,11 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   auto const identity = loadIdentity(trustchainId, userId, args);
 
-  auto core = AsyncCorePtr{new AsyncCore(
-      args.at("<trustchainurl>").asString(),
-      {sdkType,
-       mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
-       sdkVersion},
-      ".",
-      ".")};
+  auto core = AsyncCorePtr{
+      new AsyncCore(args.at("<trustchainurl>").asString(),
+                    {sdkType, mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId), sdkVersion},
+                    ".",
+                    ".")};
 
   Verification::Verification verification;
   if (args.at(VerificationKeyOpt))
@@ -324,8 +301,7 @@ std::vector<SPublicIdentity> extractIdentityArgs(MainArgs const& args)
   for (auto const& userId : memberUserIds)
     memberIdentities.push_back(makePublicIdentity(trustchainId, userId));
 
-  auto const memberPublicIdentities =
-      args.at("--with-public-identity").asStringList();
+  auto const memberPublicIdentities = args.at("--with-public-identity").asStringList();
   for (auto const& id : memberPublicIdentities)
     memberIdentities.push_back(SPublicIdentity{id});
 
@@ -337,16 +313,14 @@ int main(int argc, char* argv[])
 {
   try
   {
-    std::map<std::string, docopt::value> args =
-        docopt::docopt(USAGE,
-                       {argv + 1, argv + argc},
-                       true,        // show help if requested
-                       "tcli 0.1"); // version string
+    std::map<std::string, docopt::value> args = docopt::docopt(USAGE,
+                                                               {argv + 1, argv + argc},
+                                                               true,        // show help if requested
+                                                               "tcli 0.1"); // version string
 
     if (args.at("deserializeblock").asBool())
     {
-      CliAction action =
-          deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
+      CliAction action = deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
 
       std::cout << formatAction(action) << std::endl;
     }
@@ -381,36 +355,28 @@ int main(int argc, char* argv[])
     else if (args.at("encrypt").asBool())
     {
       auto const trustchainId =
-          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(
-              args.at("<trustchainid>").asString());
+          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(args.at("<trustchainid>").asString());
 
       auto const core = signIn(args);
 
-      Tanker::Core::ShareWithSelf shareWithSelf =
-          args.at("--dont-share-with-self").asBool() ?
-              Tanker::Core::ShareWithSelf::No :
-              Tanker::Core::ShareWithSelf::Yes;
+      Tanker::Core::ShareWithSelf shareWithSelf = args.at("--dont-share-with-self").asBool() ?
+                                                      Tanker::Core::ShareWithSelf::No :
+                                                      Tanker::Core::ShareWithSelf::Yes;
 
       std::vector<Tanker::SGroupId> shareWithGroups;
       if (args.at("--share-with-group"))
-        shareWithGroups.push_back(
-            SGroupId{args.at("--share-with-group").asString()});
+        shareWithGroups.push_back(SGroupId{args.at("--share-with-group").asString()});
 
       std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
       if (args.at("--share"))
-        shareToPublicIdentities.push_back(
-            SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-                trustchainId,
-                obfuscateUserId(SUserId{args.at("--share").asString()},
-                                trustchainId)})});
+        shareToPublicIdentities.push_back(SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+            trustchainId, obfuscateUserId(SUserId{args.at("--share").asString()}, trustchainId)})});
 
       if (args.at("--share-with-identity"))
-        shareToPublicIdentities.push_back(
-            SPublicIdentity{args.at("--share-with-identity").asString()});
+        shareToPublicIdentities.push_back(SPublicIdentity{args.at("--share-with-identity").asString()});
 
       auto const cleartext = args.at("<cleartext>").asString();
-      std::vector<uint8_t> encrypted(
-          AsyncCore::encryptedSize(cleartext.size()));
+      std::vector<uint8_t> encrypted(AsyncCore::encryptedSize(cleartext.size()));
 
       core->encrypt(encrypted,
                     gsl::make_span(cleartext).as_span<uint8_t const>(),
@@ -424,17 +390,11 @@ int main(int argc, char* argv[])
     {
       auto const core = signIn(args);
 
-      auto const encrypteddata =
-          mgs::base64::decode(args.at("<encrypteddata>").asString());
-      std::vector<uint8_t> decrypted(
-          AsyncCore::decryptedSize(encrypteddata).get());
+      auto const encrypteddata = mgs::base64::decode(args.at("<encrypteddata>").asString());
+      std::vector<uint8_t> decrypted(AsyncCore::decryptedSize(encrypteddata).get());
 
-      core->decrypt(decrypted,
-                    gsl::make_span(encrypteddata).as_span<uint8_t const>())
-          .get();
-      fmt::print(
-          "decrypted: {}\n",
-          std::string(decrypted.data(), decrypted.data() + decrypted.size()));
+      core->decrypt(decrypted, gsl::make_span(encrypteddata).as_span<uint8_t const>()).get();
+      fmt::print("decrypted: {}\n", std::string(decrypted.data(), decrypted.data() + decrypted.size()));
     }
     else if (args.at("creategroup").asBool())
     {
@@ -456,14 +416,11 @@ int main(int argc, char* argv[])
     {
       auto const core = signIn(args);
 
-      auto const provisionalIdentity = SSecretProvisionalIdentity{
-          args.at("<provisionalidentity>").asString()};
+      auto const provisionalIdentity = SSecretProvisionalIdentity{args.at("<provisionalidentity>").asString()};
       auto const email = args.at("<email>").asString();
       auto const code = args.at("<code>").asString();
       core->attachProvisionalIdentity(provisionalIdentity).get();
-      core->verifyProvisionalIdentity(
-              Verification::ByEmail{Email{email}, VerificationCode{code}})
-          .get();
+      core->verifyProvisionalIdentity(Verification::ByEmail{Email{email}, VerificationCode{code}}).get();
     }
 
     return 0;

@@ -2,9 +2,7 @@
 
 namespace Tanker::Streams
 {
-DecryptionStreamV4::DecryptionStreamV4(InputSource cb,
-                                       Header header,
-                                       Crypto::SymmetricKey key)
+DecryptionStreamV4::DecryptionStreamV4(InputSource cb, Header header, Crypto::SymmetricKey key)
   : DecryptionStream(std::move(cb), header, key)
 {
 }
@@ -30,8 +28,8 @@ tc::cotask<void> DecryptionStreamV4::decryptChunk()
     endOutputStream();
 }
 
-tc::cotask<std::optional<Crypto::SymmetricKey>> DecryptionStreamV4::tryGetKey(
-    ResourceKeyFinder const& finder, Header const& header)
+tc::cotask<std::optional<Crypto::SymmetricKey>> DecryptionStreamV4::tryGetKey(ResourceKeyFinder const& finder,
+                                                                              Header const& header)
 {
   TC_RETURN(TC_AWAIT(finder(header.resourceId())));
 }

@@ -32,10 +32,7 @@ namespace Tanker
 class Session
 {
 public:
-  struct Requesters : Users::Requester,
-                      Groups::Requester,
-                      ProvisionalUsers::Requester,
-                      Verification::Requester
+  struct Requesters : Users::Requester, Groups::Requester, ProvisionalUsers::Requester, Verification::Requester
 
   {
     Requesters(Network::HttpClient*);
@@ -43,8 +40,7 @@ public:
 
   struct Storage
   {
-    Storage(Crypto::SymmetricKey const& userSecret,
-            std::unique_ptr<DataStore::DataStore> db);
+    Storage(Crypto::SymmetricKey const& userSecret, std::unique_ptr<DataStore::DataStore> db);
 
     std::unique_ptr<DataStore::DataStore> db;
     Users::LocalUserStore localUserStore;
@@ -69,8 +65,7 @@ public:
     TransparentSession::Accessor transparentSessionAccessor;
   };
 
-  Session(std::unique_ptr<Network::HttpClient> client,
-          DataStore::Backend* datastoreBackend);
+  Session(std::unique_ptr<Network::HttpClient> client, DataStore::Backend* datastoreBackend);
   ~Session();
 
   tc::cotask<void> stop();
@@ -101,8 +96,7 @@ public:
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
   tc::cotask<void> finalizeOpening();
-  tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId,
-                                    DeviceKeys const& deviceKeys);
+  tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId, DeviceKeys const& deviceKeys);
 
 private:
   std::unique_ptr<Network::HttpClient> _httpClient;
@@ -113,11 +107,9 @@ private:
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
 
-  tc::cotask<void> transparentSessionShareImpl(
-      TransparentSession::AccessorResult const& session,
-      std::vector<SPublicIdentity> const& users,
-      std::vector<SGroupId> const& groups);
-  void removeOldStorage(Identity::SecretPermanentIdentity const& identity,
-                        std::string const& dataPath);
+  tc::cotask<void> transparentSessionShareImpl(TransparentSession::AccessorResult const& session,
+                                               std::vector<SPublicIdentity> const& users,
+                                               std::vector<SGroupId> const& groups);
+  void removeOldStorage(Identity::SecretPermanentIdentity const& identity, std::string const& dataPath);
 };
 }

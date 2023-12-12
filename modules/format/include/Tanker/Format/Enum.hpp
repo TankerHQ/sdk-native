@@ -18,10 +18,8 @@ struct HasToString : std::false_type
 };
 
 template <typename T>
-struct HasToString<
-    T,
-    std::enable_if_t<std::is_same<decltype(to_string(std::declval<T>())),
-                                  std::string>::value>> : std::true_type
+struct HasToString<T, std::enable_if_t<std::is_same<decltype(to_string(std::declval<T>())), std::string>::value>>
+  : std::true_type
 {
 };
 }
@@ -34,8 +32,7 @@ template <typename EnumType>
 struct formatter<
     EnumType,
     char,
-    std::enable_if_t<std::is_enum<EnumType>::value&& ::Tanker::Format::detail::
-                         HasToString<EnumType>::value>>
+    std::enable_if_t<std::is_enum<EnumType>::value&& ::Tanker::Format::detail::HasToString<EnumType>::value>>
 {
   int flag = 0x3;
 

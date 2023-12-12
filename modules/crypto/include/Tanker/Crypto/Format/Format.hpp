@@ -9,15 +9,10 @@
 
 namespace Tanker::Crypto::Format
 {
-std::string format_crypto_array(bool useSafe,
-                                bool padded,
-                                std::uint8_t const* beg,
-                                std::size_t size);
+std::string format_crypto_array(bool useSafe, bool padded, std::uint8_t const* beg, std::size_t size);
 
 template <typename ParserContext>
-constexpr auto format_crypto_parse(ParserContext& ctx,
-                                   bool& useSafe,
-                                   bool& padded)
+constexpr auto format_crypto_parse(ParserContext& ctx, bool& useSafe, bool& padded)
 {
   auto it = ctx.begin();
   if (it != ctx.end() && *it == ':')
@@ -43,10 +38,7 @@ constexpr auto format_crypto_parse(ParserContext& ctx,
 namespace fmt
 {
 template <typename CryptoType>
-struct formatter<
-    CryptoType,
-    char,
-    std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
+struct formatter<CryptoType, char, std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
 {
   bool useSafe = false;
   bool padded = true;
@@ -60,10 +52,8 @@ struct formatter<
   template <typename FormatContext>
   auto format(CryptoType const& c, FormatContext& ctx)
   {
-    return format_to(ctx.out(),
-                     "{:s}",
-                     Tanker::Crypto::Format::format_crypto_array(
-                         useSafe, padded, c.data(), c.size()));
+    return format_to(
+        ctx.out(), "{:s}", Tanker::Crypto::Format::format_crypto_array(useSafe, padded, c.data(), c.size()));
   }
 };
 
@@ -82,10 +72,8 @@ struct formatter<Tanker::Crypto::ResourceId, char>
   template <typename FormatContext>
   auto format(Tanker::Crypto::ResourceId const& c, FormatContext& ctx)
   {
-    return format_to(ctx.out(),
-                     "{:s}",
-                     Tanker::Crypto::Format::format_crypto_array(
-                         useSafe, padded, c.begin(), c.size()));
+    return format_to(
+        ctx.out(), "{:s}", Tanker::Crypto::Format::format_crypto_array(useSafe, padded, c.begin(), c.size()));
   }
 };
 }

@@ -13,7 +13,6 @@ struct DeviceKeys
   bool operator!=(DeviceKeys const&) const;
 
   static DeviceKeys create();
-  static DeviceKeys create(Crypto::PrivateSignatureKey const&,
-                           Crypto::PrivateEncryptionKey const&);
+  static DeviceKeys create(Crypto::PrivateSignatureKey const&, Crypto::PrivateEncryptionKey const&);
 };
 }

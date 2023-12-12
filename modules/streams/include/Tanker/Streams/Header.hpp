@@ -20,8 +20,7 @@ public:
   static constexpr std::uint32_t versionSize = 1u;
   static constexpr std::uint32_t defaultEncryptedChunkSize = 1024 * 1024;
   static constexpr std::uint32_t serializedSize =
-      versionSize + sizeof(std::uint32_t) +
-      Crypto::SimpleResourceId::arraySize + Crypto::AeadIv::arraySize;
+      versionSize + sizeof(std::uint32_t) + Crypto::SimpleResourceId::arraySize + Crypto::AeadIv::arraySize;
 
   Header() = default;
   Header(std::uint32_t version,

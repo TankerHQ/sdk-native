@@ -74,84 +74,68 @@ public:
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
-  tc::cotask<void> enrollUser(
-      std::string const& identity,
-      std::vector<Verification::Verification> const& verifications);
-  tc::cotask<std::optional<std::string>> registerIdentity(
-      Verification::Verification const& verification,
-      VerifyWithToken withToken);
-  tc::cotask<std::optional<std::string>> verifyIdentity(
-      Verification::Verification const& verification,
-      VerifyWithToken withToken);
+  tc::cotask<void> enrollUser(std::string const& identity,
+                              std::vector<Verification::Verification> const& verifications);
+  tc::cotask<std::optional<std::string>> registerIdentity(Verification::Verification const& verification,
+                                                          VerifyWithToken withToken);
+  tc::cotask<std::optional<std::string>> verifyIdentity(Verification::Verification const& verification,
+                                                        VerifyWithToken withToken);
 
   tc::cotask<Oidc::Nonce> createOidcNonce();
   void setOidcTestNonce(Oidc::Nonce const& nonce);
 
-  tc::cotask<void> encrypt(
-      gsl::span<uint8_t> encryptedData,
-      gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& spublicIdentities,
-      std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf,
-      std::optional<uint32_t> paddingStep);
+  tc::cotask<void> encrypt(gsl::span<uint8_t> encryptedData,
+                           gsl::span<uint8_t const> clearData,
+                           std::vector<SPublicIdentity> const& spublicIdentities,
+                           std::vector<SGroupId> const& sgroupIds,
+                           ShareWithSelf shareWithSelf,
+                           std::optional<uint32_t> paddingStep);
 
-  tc::cotask<std::vector<uint8_t>> encrypt(
-      gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& spublicIdentities,
-      std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf,
-      std::optional<uint32_t> paddingStep);
+  tc::cotask<std::vector<uint8_t>> encrypt(gsl::span<uint8_t const> clearData,
+                                           std::vector<SPublicIdentity> const& spublicIdentities,
+                                           std::vector<SGroupId> const& sgroupIds,
+                                           ShareWithSelf shareWithSelf,
+                                           std::optional<uint32_t> paddingStep);
 
-  tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
-                               gsl::span<uint8_t const> encryptedData);
+  tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData, gsl::span<uint8_t const> encryptedData);
 
-  tc::cotask<std::vector<uint8_t>> decrypt(
-      gsl::span<uint8_t const> encryptedData);
+  tc::cotask<std::vector<uint8_t>> decrypt(gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::cotask<SGroupId> createGroup(
-      std::vector<SPublicIdentity> const& spublicIdentities);
-  tc::cotask<void> updateGroupMembers(
-      SGroupId const& groupIdString,
-      std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
-      std::vector<SPublicIdentity> const& spublicIdentitiesToRemove);
+  tc::cotask<SGroupId> createGroup(std::vector<SPublicIdentity> const& spublicIdentities);
+  tc::cotask<void> updateGroupMembers(SGroupId const& groupIdString,
+                                      std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+                                      std::vector<SPublicIdentity> const& spublicIdentitiesToRemove);
 
-  tc::cotask<std::optional<std::string>> setVerificationMethod(
-      Verification::Verification const& method,
-      VerifyWithToken withToken,
-      AllowE2eMethodSwitch allowE2eSwitch);
-  tc::cotask<std::vector<Verification::VerificationMethod>>
-  getVerificationMethods();
+  tc::cotask<std::optional<std::string>> setVerificationMethod(Verification::Verification const& method,
+                                                               VerifyWithToken withToken,
+                                                               AllowE2eMethodSwitch allowE2eSwitch);
+  tc::cotask<std::vector<Verification::VerificationMethod>> getVerificationMethods();
   tc::cotask<VerificationKey> generateVerificationKey() const;
 
-  tc::cotask<AttachResult> attachProvisionalIdentity(
-      SSecretProvisionalIdentity const& sidentity);
-  tc::cotask<void> verifyProvisionalIdentity(
-      Verification::Verification const& verification);
+  tc::cotask<AttachResult> attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity);
+  tc::cotask<void> verifyProvisionalIdentity(Verification::Verification const& verification);
 
-  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-  makeEncryptionStream(Streams::InputSource,
-                       std::vector<SPublicIdentity> const& suserIds,
-                       std::vector<SGroupId> const& sgroupIds,
-                       ShareWithSelf shareWithSelf,
-                       std::optional<uint32_t> paddingStep);
-
-  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-      makeDecryptionStream(Streams::InputSource);
-
-  tc::cotask<EncryptionSession> makeEncryptionSession(
-      std::vector<SPublicIdentity> const& spublicIdentities,
+  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> makeEncryptionStream(
+      Streams::InputSource,
+      std::vector<SPublicIdentity> const& suserIds,
       std::vector<SGroupId> const& sgroupIds,
       ShareWithSelf shareWithSelf,
       std::optional<uint32_t> paddingStep);
 
+  tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> makeDecryptionStream(Streams::InputSource);
+
+  tc::cotask<EncryptionSession> makeEncryptionSession(std::vector<SPublicIdentity> const& spublicIdentities,
+                                                      std::vector<SGroupId> const& sgroupIds,
+                                                      ShareWithSelf shareWithSelf,
+                                                      std::optional<uint32_t> paddingStep);
+
   Status status() const;
 
-  static Crypto::ResourceId getResourceId(
-      gsl::span<uint8_t const> encryptedData);
+  static Crypto::ResourceId getResourceId(gsl::span<uint8_t const> encryptedData);
 
   SdkInfo const& sdkInfo();
 
@@ -164,40 +148,30 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
-  tc::cotask<void> registerIdentityImpl(
-      Verification::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce);
-  tc::cotask<void> verifyIdentityImpl(
-      Verification::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<void> registerIdentityImpl(Verification::Verification const& verification,
+                                        std::optional<std::string> const& withTokenNonce);
+  tc::cotask<void> verifyIdentityImpl(Verification::Verification const& verification,
+                                      std::optional<std::string> const& withTokenNonce);
 
-  tc::cotask<VerificationKey> fetchVerificationKey(
-      Verification::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce);
-  tc::cotask<VerificationKey> fetchE2eVerificationKey(
-      Verification::Verification const& verification,
-      Crypto::SymmetricKey const& e2eEncryptionKey,
-      std::optional<std::string> const& withTokenNonce);
-  tc::cotask<VerificationKey> getVerificationKey(
-      Verification::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce);
-  tc::cotask<std::optional<Crypto::SymmetricKey>> tryGetResourceKey(
-      Crypto::SimpleResourceId const&);
-  tc::cotask<Crypto::SymmetricKey> getResourceKey(
-      Crypto::SimpleResourceId const&);
+  tc::cotask<VerificationKey> fetchVerificationKey(Verification::Verification const& verification,
+                                                   std::optional<std::string> const& withTokenNonce);
+  tc::cotask<VerificationKey> fetchE2eVerificationKey(Verification::Verification const& verification,
+                                                      Crypto::SymmetricKey const& e2eEncryptionKey,
+                                                      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<VerificationKey> getVerificationKey(Verification::Verification const& verification,
+                                                 std::optional<std::string> const& withTokenNonce);
+  tc::cotask<std::optional<Crypto::SymmetricKey>> tryGetResourceKey(Crypto::SimpleResourceId const&);
+  tc::cotask<Crypto::SymmetricKey> getResourceKey(Crypto::SimpleResourceId const&);
 
   std::optional<std::string> makeWithTokenRandomNonce(VerifyWithToken wanted);
-  tc::cotask<std::string> getSessionToken(
-      Verification::Verification const& verification,
-      std::string const& withTokenNonce);
+  tc::cotask<std::string> getSessionToken(Verification::Verification const& verification,
+                                          std::string const& withTokenNonce);
 
   void assertStatus(Status wanted, std::string const& string) const;
-  void assertStatus(std::initializer_list<Status> wanted,
-                    std::string const& action) const;
+  void assertStatus(std::initializer_list<Status> wanted, std::string const& action) const;
   void reset();
   template <typename F>
-  decltype(std::declval<F>()()) resetOnFailure(
-      F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore = {});
+  decltype(std::declval<F>()()) resetOnFailure(F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore = {});
 
 private:
   std::string _url;

@@ -74,35 +74,28 @@ struct IsCryptographicType<BasicCryptographicType<T, S>> : std::true_type
 template <typename T>
 struct IsCryptographicType<
     T,
-    std::enable_if_t<std::is_base_of<typename T::base_t, T>::value &&
-                     IsCryptographicType<typename T::base_t>::value>>
+    std::enable_if_t<std::is_base_of<typename T::base_t, T>::value && IsCryptographicType<typename T::base_t>::value>>
   : std::true_type
 {
 };
 
 template <typename T, std::size_t S>
-bool operator<(BasicCryptographicType<T, S> const& lhs,
-               BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator<(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 
 template <typename T, std::size_t S>
-bool operator>(BasicCryptographicType<T, S> const& lhs,
-               BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator>(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 
 template <typename T, std::size_t S>
-bool operator<=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator<=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 
 template <typename T, std::size_t S>
-bool operator>=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator>=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 
 template <typename T, std::size_t S>
-bool operator==(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator==(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 
 template <typename T, std::size_t S>
-bool operator!=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept;
+bool operator!=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept;
 }
 }
 

@@ -90,21 +90,14 @@ TEST_CASE("ProvisionalIdentityClaim serialization test vectors")
     auto const signature = make<Crypto::Signature>("sig");
 
     auto const userId = make<UserId>("the user id");
-    auto const appPublicSignatureKey =
-        make<Crypto::PublicSignatureKey>("the app sig pub key");
-    auto const tankerPublicSignatureKey =
-        make<Crypto::PublicSignatureKey>("the tanker sig pub key");
-    auto const signatureByAppKey =
-        make<Crypto::Signature>("the author sig by app key");
-    auto const signatureByTankerKey =
-        make<Crypto::Signature>("the author sig by tanker key");
-    auto const userPublicEncryptionKey =
-        make<Crypto::PublicEncryptionKey>("user pub key");
+    auto const appPublicSignatureKey = make<Crypto::PublicSignatureKey>("the app sig pub key");
+    auto const tankerPublicSignatureKey = make<Crypto::PublicSignatureKey>("the tanker sig pub key");
+    auto const signatureByAppKey = make<Crypto::Signature>("the author sig by app key");
+    auto const signatureByTankerKey = make<Crypto::Signature>("the author sig by tanker key");
+    auto const userPublicEncryptionKey = make<Crypto::PublicEncryptionKey>("user pub key");
     auto const sealedPrivateKeys =
-        make<ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
-            "both encrypted private keys");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "5BRkVAft4f79uIVCQX8D98+wqDEAQqQKdB3gFOw/clQ=");
+        make<ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>("both encrypted private keys");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("5BRkVAft4f79uIVCQX8D98+wqDEAQqQKdB3gFOw/clQ=");
 
     ProvisionalIdentityClaim const pic{trustchainId,
                                        userId,
@@ -118,8 +111,7 @@ TEST_CASE("ProvisionalIdentityClaim serialization test vectors")
                                        hash,
                                        signature};
 
-    CHECK(Serialization::deserialize<ProvisionalIdentityClaim>(
-              serializedProvisionalIdentityClaim) == pic);
+    CHECK(Serialization::deserialize<ProvisionalIdentityClaim>(serializedProvisionalIdentityClaim) == pic);
     CHECK(Serialization::serialize(pic) == serializedProvisionalIdentityClaim);
   }
 }

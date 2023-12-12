@@ -16,14 +16,12 @@ using namespace Tanker::TransparentSession;
 namespace Tanker
 {
 // Do not let doctest pickup variant2's operator<<
-inline std::ostream& operator<<(std::ostream& os,
-                                TransparentSessionData const&) = delete;
+inline std::ostream& operator<<(std::ostream& os, TransparentSessionData const&) = delete;
 }
 
 TEST_CASE("TransparentSessionStore")
 {
-  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
-                                            DataStore::MemoryPath);
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath, DataStore::MemoryPath);
 
   Store store({}, db.get());
 

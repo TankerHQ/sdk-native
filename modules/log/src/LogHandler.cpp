@@ -33,12 +33,8 @@ void consoleHandler(Record const& record)
 {
   if (record.level <= Level::Debug)
     return;
-  fmt::print("{0:s}:{1:s}:{2:d}:{3:s}: {4:s}\n",
-             record.category,
-             record.file,
-             record.line,
-             record.level,
-             record.message);
+  fmt::print(
+      "{0:s}:{1:s}:{2:d}:{3:s}: {4:s}\n", record.category, record.file, record.line, record.level, record.message);
 }
 
 void setLogHandler(LogHandler handler)

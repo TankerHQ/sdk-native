@@ -16,34 +16,27 @@ namespace Tanker
 {
 namespace Verif
 {
-Trustchain::GroupAction verifyUserGroupCreation(
-    Trustchain::GroupAction const& action,
-    Users::Device const& author,
-    std::optional<BaseGroup> const& previousGroup)
+Trustchain::GroupAction verifyUserGroupCreation(Trustchain::GroupAction const& action,
+                                                Users::Device const& author,
+                                                std::optional<BaseGroup> const& previousGroup)
 {
-  assert(getNature(action) == Nature::UserGroupCreation1 ||
-         getNature(action) == Nature::UserGroupCreation2 ||
+  assert(getNature(action) == Nature::UserGroupCreation1 || getNature(action) == Nature::UserGroupCreation2 ||
          getNature(action) == Nature::UserGroupCreation3);
 
-  ensures(!previousGroup,
-          Verif::Errc::InvalidGroup,
-          "UserGroupCreation - group already exist");
+  ensures(!previousGroup, Verif::Errc::InvalidGroup, "UserGroupCreation - group already exist");
+
+  ensures(Crypto::verify(getHash(action), getSignature(action), author.publicSignatureKey()),
+          Errc::InvalidSignature,
+          "UserGroupCreation block must be signed by the author device");
+
+  auto const& userGroupCreation = boost::variant2::get<UserGroupCreation>(action);
 
   ensures(
       Crypto::verify(
-          getHash(action), getSignature(action), author.publicSignatureKey()),
+          userGroupCreation.signatureData(), userGroupCreation.selfSignature(), userGroupCreation.publicSignatureKey()),
       Errc::InvalidSignature,
-      "UserGroupCreation block must be signed by the author device");
-
-  auto const& userGroupCreation =
-      boost::variant2::get<UserGroupCreation>(action);
-
-  ensures(Crypto::verify(userGroupCreation.signatureData(),
-                         userGroupCreation.selfSignature(),
-                         userGroupCreation.publicSignatureKey()),
-          Errc::InvalidSignature,
-          "UserGroupCreation signature data must be signed with the group "
-          "public key");
+      "UserGroupCreation signature data must be signed with the group "
+      "public key");
 
   return action;
 }

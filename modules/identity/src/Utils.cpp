@@ -9,8 +9,7 @@ namespace Tanker
 {
 namespace Identity
 {
-std::vector<uint8_t> userSecretHash(gsl::span<uint8_t const> secretRand,
-                                    UserId const& userId)
+std::vector<uint8_t> userSecretHash(gsl::span<uint8_t const> secretRand, UserId const& userId)
 {
   if (secretRand.size() != USER_SECRET_SIZE - 1)
     throw Errors::AssertionError("invalid secretRand size");

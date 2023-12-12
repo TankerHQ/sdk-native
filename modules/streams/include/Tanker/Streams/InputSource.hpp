@@ -16,7 +16,6 @@ namespace Streams
 // or 0 when EOF is reached.
 //
 // Throws if an error occurred.
-using InputSource =
-    std::function<tc::cotask<std::int64_t>(gsl::span<std::uint8_t> out)>;
+using InputSource = std::function<tc::cotask<std::int64_t>(gsl::span<std::uint8_t> out)>;
 }
 }

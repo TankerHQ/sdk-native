@@ -21,10 +21,9 @@ DeviceCreation1 DeviceCreation2::asDeviceCreation1() const
 {
   if (!_lastReset.is_null())
   {
-    throw Errors::Exception(
-        Errc::InvalidLastResetField,
-        "cannot convert DeviceCreation2 to DeviceCreation1: lastReset field is "
-        "not zero-filled");
+    throw Errors::Exception(Errc::InvalidLastResetField,
+                            "cannot convert DeviceCreation2 to DeviceCreation1: lastReset field is "
+                            "not zero-filled");
   }
   return DeviceCreation1{
       _trustchainId,
@@ -39,8 +38,7 @@ DeviceCreation1 DeviceCreation2::asDeviceCreation1() const
   };
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
-    DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 }
 }
 }

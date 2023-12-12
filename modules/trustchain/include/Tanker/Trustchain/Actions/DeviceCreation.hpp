@@ -29,18 +29,17 @@ namespace Actions
 {
 class DeviceCreation
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
-      DeviceCreation,
-      (DeviceCreation1, DeviceCreation3),
-      (trustchainId, TrustchainId),
-      (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey),
-      (userId, UserId),
-      (delegationSignature, Crypto::Signature),
-      (publicSignatureKey, Crypto::PublicSignatureKey),
-      (publicEncryptionKey, Crypto::PublicEncryptionKey),
-      (author, Crypto::Hash),
-      (hash, Crypto::Hash),
-      (signature, Crypto::Signature))
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(DeviceCreation,
+                                                  (DeviceCreation1, DeviceCreation3),
+                                                  (trustchainId, TrustchainId),
+                                                  (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey),
+                                                  (userId, UserId),
+                                                  (delegationSignature, Crypto::Signature),
+                                                  (publicSignatureKey, Crypto::PublicSignatureKey),
+                                                  (publicEncryptionKey, Crypto::PublicEncryptionKey),
+                                                  (author, Crypto::Hash),
+                                                  (hash, Crypto::Hash),
+                                                  (signature, Crypto::Signature))
 
 public:
   // v2 is missing, it's on purpose. We removed the "reset" feature, and v2 can

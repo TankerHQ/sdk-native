@@ -45,37 +45,31 @@ Accessor::Accessor(Groups::IRequester* requester,
 {
 }
 
-tc::cotask<InternalGroup> Accessor::getInternalGroup(
-    Trustchain::GroupId const& groupId)
+tc::cotask<InternalGroup> Accessor::getInternalGroup(Trustchain::GroupId const& groupId)
 {
   auto groupPullResult = TC_AWAIT(getGroups({groupId}));
 
   if (!groupPullResult.notFound.empty())
-    throw formatEx(
-        Errors::Errc::InvalidArgument, "group not found: {:s}", groupId);
+    throw formatEx(Errors::Errc::InvalidArgument, "group not found: {:s}", groupId);
 
   TC_RETURN(boost::variant2::visit(
       overloaded{
           [&](InternalGroup const& group) { return group; },
           [&](ExternalGroup const& group) -> InternalGroup {
-            throw formatEx(Errors::Errc::InvalidArgument,
-                           "user is not a member of this group {:s}",
-                           groupId);
+            throw formatEx(Errors::Errc::InvalidArgument, "user is not a member of this group {:s}", groupId);
           },
       },
       groupPullResult.found[0]));
 }
 
-tc::cotask<Accessor::PublicEncryptionKeyPullResult>
-Accessor::getPublicEncryptionKeys(
+tc::cotask<Accessor::PublicEncryptionKeyPullResult> Accessor::getPublicEncryptionKeys(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   PublicEncryptionKeyPullResult out;
   boost::container::flat_set<Trustchain::GroupId> found;
 
   auto entries = TC_AWAIT(_getPublicEncryptionKeyCoalescer.run(
-      [&](std::vector<Trustchain::GroupId> const& ids)
-          -> tc::cotask<std::vector<GroupEntry>> {
+      [&](std::vector<Trustchain::GroupId> const& ids) -> tc::cotask<std::vector<GroupEntry>> {
         TC_RETURN(TC_AWAIT(getPublicEncryptionKeysImpl(ids)));
       },
       groupIds));
@@ -93,8 +87,7 @@ Accessor::getPublicEncryptionKeys(
   TC_RETURN(std::move(out));
 }
 
-tc::cotask<std::vector<Accessor::GroupEntry>>
-Accessor::getPublicEncryptionKeysImpl(
+tc::cotask<std::vector<Accessor::GroupEntry>> Accessor::getPublicEncryptionKeysImpl(
     gsl::span<Trustchain::GroupId const> groupIds)
 {
   std::vector<GroupEntry> out;
@@ -119,8 +112,7 @@ Accessor::getPublicEncryptionKeysImpl(
   TC_RETURN(std::move(out));
 }
 
-tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-Accessor::getEncryptionKeyPair(
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   auto const keys = std::vector{publicEncryptionKey};
@@ -137,8 +129,7 @@ Accessor::getEncryptionKeyPair(
   TC_RETURN(std::make_optional(keyPairs[0].keyPair));
 }
 
-tc::cotask<std::vector<Accessor::EncryptionKeyPairEntry>>
-Accessor::getEncryptionKeyPairsImpl(
+tc::cotask<std::vector<Accessor::EncryptionKeyPairEntry>> Accessor::getEncryptionKeyPairsImpl(
     gsl::span<Crypto::PublicEncryptionKey const> publicEncryptionKeys)
 {
   std::vector<EncryptionKeyPairEntry> out;
@@ -146,8 +137,7 @@ Accessor::getEncryptionKeyPairsImpl(
   for (auto const& publicEncryptionKey : publicEncryptionKeys)
   {
     {
-      auto const group = TC_AWAIT(
-          _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
+      auto const group = TC_AWAIT(_groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
       if (group)
       {
         out.push_back({
@@ -158,26 +148,19 @@ Accessor::getEncryptionKeyPairsImpl(
       }
     }
 
-    auto const entries =
-        TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
+    auto const entries = TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
     if (entries.empty())
       continue;
 
-    auto const group =
-        TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
-                                                   *_userAccessor,
-                                                   *_provisionalUserAccessor,
-                                                   std::nullopt,
-                                                   entries));
+    auto const group = TC_AWAIT(GroupUpdater::processGroupEntries(
+        *_localUserAccessor, *_userAccessor, *_provisionalUserAccessor, std::nullopt, entries));
     if (!group)
-      throw Errors::AssertionError(
-          fmt::format("group {} has no blocks", publicEncryptionKey));
+      throw Errors::AssertionError(fmt::format("group {} has no blocks", publicEncryptionKey));
 
     // add the group to cache
     TC_AWAIT(_groupStore->put(*group));
 
-    if (auto const internalGroup =
-            boost::variant2::get_if<InternalGroup>(&group.value()))
+    if (auto const internalGroup = boost::variant2::get_if<InternalGroup>(&group.value()))
       out.push_back({
           internalGroup->encryptionKeyPair.publicKey,
           internalGroup->encryptionKeyPair,
@@ -187,17 +170,12 @@ Accessor::getEncryptionKeyPairsImpl(
   TC_RETURN(std::move(out));
 }
 
-auto Accessor::partitionGroups(std::vector<Trustchain::GroupAction> entries)
-    -> GroupMap
+auto Accessor::partitionGroups(std::vector<Trustchain::GroupAction> entries) -> GroupMap
 {
-  entries |=
-      ranges::actions::stable_sort(ranges::less{}, Trustchain::getGroupId);
-  return entries |
-         ranges::views::group_by(
-             ranges::on(std::equal_to{}, Trustchain::getGroupId)) |
+  entries |= ranges::actions::stable_sort(ranges::less{}, Trustchain::getGroupId);
+  return entries | ranges::views::group_by(ranges::on(std::equal_to{}, Trustchain::getGroupId)) |
          ranges::views::transform([](auto const& entries) {
-           return std::make_pair(Trustchain::getGroupId(entries.front()),
-                                 entries | ranges::to<std::vector>);
+           return std::make_pair(Trustchain::getGroupId(entries.front()), entries | ranges::to<std::vector>);
          }) |
          ranges::to<GroupMap>;
 }
@@ -212,20 +190,15 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Accessor::getGroupEntries(
   TC_RETURN(std::move(batchedEntries) | ranges::actions::join);
 }
 
-tc::cotask<std::vector<Group>> Accessor::processGroupEntries(
-    GroupMap const& groups)
+tc::cotask<std::vector<Group>> Accessor::processGroupEntries(GroupMap const& groups)
 {
   std::vector<Group> ret;
   ret.reserve(groups.size());
 
   for (auto const& [id, entries] : groups)
   {
-    auto group =
-        TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
-                                                   *_userAccessor,
-                                                   *_provisionalUserAccessor,
-                                                   std::nullopt,
-                                                   entries));
+    auto group = TC_AWAIT(GroupUpdater::processGroupEntries(
+        *_localUserAccessor, *_userAccessor, *_provisionalUserAccessor, std::nullopt, entries));
     if (!group)
       throw Errors::AssertionError(fmt::format("group {} has no blocks", id));
     ret.push_back(std::move(*group));
@@ -234,22 +207,18 @@ tc::cotask<std::vector<Group>> Accessor::processGroupEntries(
   TC_RETURN(ret);
 }
 
-tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
-    std::vector<Trustchain::GroupId> groupIds)
+tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(std::vector<Trustchain::GroupId> groupIds)
 {
   groupIds |= Actions::deduplicate;
 
   auto const groupMap = partitionGroups(TC_AWAIT(getGroupEntries(groupIds)));
   auto const processedGroupIds = groupMap | ranges::views::keys;
-  auto const missingIds =
-      ranges::views::set_difference(groupIds, processedGroupIds);
+  auto const missingIds = ranges::views::set_difference(groupIds, processedGroupIds);
 
   // ensure that the server did not return more groups than asked
-  if (ranges::distance(
-          ranges::views::set_difference(processedGroupIds, groupIds)) != 0)
+  if (ranges::distance(ranges::views::set_difference(processedGroupIds, groupIds)) != 0)
     throw Errors::AssertionError{"server returned more groups than asked"};
 
-  TC_RETURN((Accessor::GroupPullResult{TC_AWAIT(processGroupEntries(groupMap)),
-                                       missingIds | ranges::to<std::vector>}));
+  TC_RETURN((Accessor::GroupPullResult{TC_AWAIT(processGroupEntries(groupMap)), missingIds | ranges::to<std::vector>}));
 }
 }

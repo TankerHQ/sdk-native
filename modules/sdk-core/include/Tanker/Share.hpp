@@ -43,10 +43,8 @@ struct KeyRecipients
 struct ShareActions
 {
   std::vector<Trustchain::Actions::KeyPublishToUser> keyPublishesToUsers;
-  std::vector<Trustchain::Actions::KeyPublishToUserGroup>
-      keyPublishesToUserGroups;
-  std::vector<Trustchain::Actions::KeyPublishToProvisionalUser>
-      keyPublishesToProvisionalUsers;
+  std::vector<Trustchain::Actions::KeyPublishToUserGroup> keyPublishesToUserGroups;
+  std::vector<Trustchain::Actions::KeyPublishToProvisionalUser> keyPublishesToProvisionalUsers;
 };
 
 Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
@@ -65,8 +63,7 @@ Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
     Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-Trustchain::Actions::KeyPublishToProvisionalUser
-makeKeyPublishToProvisionalUser(
+Trustchain::Actions::KeyPublishToProvisionalUser makeKeyPublishToProvisionalUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -74,19 +71,17 @@ makeKeyPublishToProvisionalUser(
     Crypto::SimpleResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-tc::cotask<KeyRecipients> generateRecipientList(
-    Trustchain::TrustchainId const& trustchainId,
-    Users::IUserAccessor& userAccessor,
-    Groups::IAccessor& groupAccessor,
-    std::vector<SPublicIdentity> publicIdentities,
-    std::vector<SGroupId> groupIds);
+tc::cotask<KeyRecipients> generateRecipientList(Trustchain::TrustchainId const& trustchainId,
+                                                Users::IUserAccessor& userAccessor,
+                                                Groups::IAccessor& groupAccessor,
+                                                std::vector<SPublicIdentity> publicIdentities,
+                                                std::vector<SGroupId> groupIds);
 
-ShareActions generateShareBlocks(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeys::KeysResult const& resourceKeys,
-    KeyRecipients const& keyRecipients);
+ShareActions generateShareBlocks(Trustchain::TrustchainId const& trustchainId,
+                                 Trustchain::DeviceId const& deviceId,
+                                 Crypto::PrivateSignatureKey const& signatureKey,
+                                 ResourceKeys::KeysResult const& resourceKeys,
+                                 KeyRecipients const& keyRecipients);
 
 tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,

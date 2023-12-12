@@ -31,28 +31,21 @@ public:
   UserAccessor& operator=(UserAccessor const&) = delete;
   UserAccessor& operator=(UserAccessor&&) = delete;
 
-  tc::cotask<UserPullResult> pull(
-      std::vector<Trustchain::UserId> userIds,
-      IRequester::IsLight isLight = IRequester::IsLight::No) override;
-  tc::cotask<DevicePullResult> pull(
-      std::vector<Trustchain::DeviceId> deviceIds,
-      IRequester::IsLight isLight = IRequester::IsLight::No) override;
+  tc::cotask<UserPullResult> pull(std::vector<Trustchain::UserId> userIds,
+                                  IRequester::IsLight isLight = IRequester::IsLight::No) override;
+  tc::cotask<DevicePullResult> pull(std::vector<Trustchain::DeviceId> deviceIds,
+                                    IRequester::IsLight isLight = IRequester::IsLight::No) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
-      std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
-      override;
+      std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities) override;
 
 private:
-  auto fetch(gsl::span<Trustchain::UserId const> userIds,
-             IRequester::IsLight isLight) -> tc::cotask<UsersMap>;
-  auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds,
-             IRequester::IsLight isLight) -> tc::cotask<DevicesMap>;
+  auto fetch(gsl::span<Trustchain::UserId const> userIds, IRequester::IsLight isLight) -> tc::cotask<UsersMap>;
+  auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds, IRequester::IsLight isLight) -> tc::cotask<DevicesMap>;
   template <typename Result, typename Id>
-  auto fetchImpl(gsl::span<Id const> ids, IRequester::IsLight isLight)
-      -> tc::cotask<Result>;
+  auto fetchImpl(gsl::span<Id const> ids, IRequester::IsLight isLight) -> tc::cotask<Result>;
 
   template <typename Result, typename Id>
-  auto pullImpl(std::vector<Id> ids, IRequester::IsLight isLight)
-      -> tc::cotask<Result>;
+  auto pullImpl(std::vector<Id> ids, IRequester::IsLight isLight) -> tc::cotask<Result>;
 
 private:
   Trustchain::Context _context;

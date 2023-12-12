@@ -23,8 +23,7 @@ TEST_CASE("curl simple request")
     dataread = true;
     return size;
   });
-  req->set_finish_callback(
-      [=](request&, CURLcode c) mutable { finished.set_value(c); });
+  req->set_finish_callback([=](request&, CURLcode c) mutable { finished.set_value(c); });
 
   SECTION("http")
   {
@@ -50,8 +49,7 @@ TEST_CASE("curl simple request")
     req->set_url("http://httpbingo.org/post");
     static char const buf[] = "Test test test";
     curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1l);
-    curl_easy_setopt(
-        req->get_curl(), CURLOPT_POSTFIELDSIZE, long(sizeof(buf) - 1));
+    curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDSIZE, long(sizeof(buf) - 1));
     curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDS, buf);
   }
 
@@ -69,8 +67,7 @@ TEST_CASE("curl cancel request")
   multi mul;
 
   auto req = std::make_shared<request>();
-  req->set_read_callback(
-      [](request&, void const*, std::size_t size) { return size; });
+  req->set_read_callback([](request&, void const*, std::size_t size) { return size; });
   req->set_finish_callback([](request&, CURLcode c) { CHECK(false); });
   req->set_url("http://httpbingo.org/delay/10");
 
@@ -87,16 +84,13 @@ TEST_CASE("curl destroy multi during request")
   auto mul = new multi;
 
   auto req = std::make_shared<request>();
-  req->set_read_callback(
-      [](request&, void const*, std::size_t size) { return size; });
+  req->set_read_callback([](request&, void const*, std::size_t size) { return size; });
   req->set_finish_callback([](request&, CURLcode c) { CHECK(false); });
   req->set_url("http://httpbingo.org/delay/5");
 
   mul->process(req);
 
-  tc::async_wait(std::chrono::milliseconds(100))
-      .then([&](tc::future<void> const&) { delete mul; })
-      .get();
+  tc::async_wait(std::chrono::milliseconds(100)).then([&](tc::future<void> const&) { delete mul; }).get();
 }
 
 TEST_CASE("curl multiple requests")
@@ -113,14 +107,12 @@ TEST_CASE("curl multiple requests")
 
   for (int i = 0; i < NB; ++i)
   {
-    reqs[i]->set_read_callback(
-        [&dataread, i](request&, void const*, std::size_t size) {
-          dataread[i] = true;
-          return size;
-        });
+    reqs[i]->set_read_callback([&dataread, i](request&, void const*, std::size_t size) {
+      dataread[i] = true;
+      return size;
+    });
     promise<void> finish = finished[i];
-    reqs[i]->set_finish_callback(
-        [finish](request&, CURLcode) mutable { finish.set_value({}); });
+    reqs[i]->set_finish_callback([finish](request&, CURLcode) mutable { finish.set_value({}); });
     reqs[i]->set_url("http://httpbingo.org/drip?numbytes=100&duration=1");
   }
 
@@ -172,8 +164,7 @@ TEST_CASE("curl read_all")
     req->set_url("http://httpbingo.org/post");
     static char const buf[] = "Test test test";
     curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1l);
-    curl_easy_setopt(
-        req->get_curl(), CURLOPT_POSTFIELDSIZE, long(sizeof(buf) - 1));
+    curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDSIZE, long(sizeof(buf) - 1));
     curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDS, buf);
     req->add_header("Expect: 100-continue");
     CHECK_READALL()

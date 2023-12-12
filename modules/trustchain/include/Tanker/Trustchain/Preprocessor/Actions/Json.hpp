@@ -16,9 +16,8 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-#define TANKER_DETAIL_FIELD_TO_JSON(unused1, unused2, elem)   \
-  j[BOOST_PP_STRINGIZE(TANKER_DETAIL_PARAMETER_NAME(elem))] = \
-        k.TANKER_DETAIL_PARAMETER_NAME(elem)();
+#define TANKER_DETAIL_FIELD_TO_JSON(unused1, unused2, elem) \
+  j[BOOST_PP_STRINGIZE(TANKER_DETAIL_PARAMETER_NAME(elem))] = k.TANKER_DETAIL_PARAMETER_NAME(elem)();
 
 #define TANKER_DETAIL_DEFINE_ACTION_TO_JSON(name, list)                        \
   void to_json(nlohmann::json& j, name const& k)                               \
@@ -27,8 +26,6 @@
   }
 
 #define TANKER_TRUSTCHAIN_DATA_DEFINE_TO_JSON(name, ...) \
-  TANKER_DETAIL_DEFINE_ACTION_TO_JSON(name,              \
-                                      BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+  TANKER_DETAIL_DEFINE_ACTION_TO_JSON(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-#define TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(name) \
-  void to_json(nlohmann::json& j, name const& k);
+#define TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(name) void to_json(nlohmann::json& j, name const& k);

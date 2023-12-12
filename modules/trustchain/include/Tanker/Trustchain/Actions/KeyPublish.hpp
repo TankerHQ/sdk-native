@@ -19,15 +19,15 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES \
-  (resourceId, Crypto::SimpleResourceId)
+#define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES (resourceId, Crypto::SimpleResourceId)
 
 class KeyPublish
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
-      KeyPublish,
-      (KeyPublishToUser, KeyPublishToUserGroup, KeyPublishToProvisionalUser),
-      TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES)
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(KeyPublish,
+                                                  (KeyPublishToUser,
+                                                   KeyPublishToUserGroup,
+                                                   KeyPublishToProvisionalUser),
+                                                  TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES)
 
 public:
   using ToUser = KeyPublishToUser;

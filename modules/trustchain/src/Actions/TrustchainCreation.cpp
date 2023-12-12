@@ -13,19 +13,13 @@ namespace Trustchain
 {
 namespace Actions
 {
-TrustchainCreation::TrustchainCreation(
-    Crypto::PublicSignatureKey const& publicSignatureKey)
-  : _publicSignatureKey(publicSignatureKey),
-    _author(),
-    _hash(computeHash()),
-    _signature()
+TrustchainCreation::TrustchainCreation(Crypto::PublicSignatureKey const& publicSignatureKey)
+  : _publicSignatureKey(publicSignatureKey), _author(), _hash(computeHash()), _signature()
 {
   std::copy(_hash.begin(), _hash.end(), _trustchainId.begin());
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
-    TrustchainCreation,
-    TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(TrustchainCreation, TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
 }
 }
 }

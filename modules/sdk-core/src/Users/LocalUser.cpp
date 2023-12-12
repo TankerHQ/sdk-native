@@ -13,10 +13,7 @@ LocalUser::LocalUser(Trustchain::UserId const& userId,
                      Trustchain::DeviceId const& deviceId,
                      DeviceKeys const& deviceKeys,
                      gsl::span<Crypto::EncryptionKeyPair const> userKeys)
-  : _userId(userId),
-    _deviceId(deviceId),
-    _deviceKeys(deviceKeys),
-    _userKeys(userKeys.begin(), userKeys.end())
+  : _userId(userId), _deviceId(deviceId), _deviceKeys(deviceKeys), _userKeys(userKeys.begin(), userKeys.end())
 {
 }
 
@@ -40,13 +37,10 @@ std::vector<Crypto::EncryptionKeyPair> const& LocalUser::userKeys() const
   return _userKeys;
 }
 
-std::optional<Crypto::EncryptionKeyPair> LocalUser::findKeyPair(
-    Crypto::PublicEncryptionKey const& publicKey) const
+std::optional<Crypto::EncryptionKeyPair> LocalUser::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
 {
 
-  if (auto it = ranges::find(
-          _userKeys, publicKey, &Crypto::EncryptionKeyPair::publicKey);
-      it != _userKeys.end())
+  if (auto it = ranges::find(_userKeys, publicKey, &Crypto::EncryptionKeyPair::publicKey); it != _userKeys.end())
     return *it;
   else
     return std::nullopt;

@@ -25,45 +25,33 @@ Accessor::Accessor(IRequester* requester,
 {
 }
 
-tc::cotask<std::optional<ProvisionalUserKeys>>
-Accessor::findEncryptionKeysFromCache(
-    Crypto::PublicSignatureKey const& appPublicSigKey,
-    Crypto::PublicSignatureKey const& tankerPublicSigKey)
+tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::findEncryptionKeysFromCache(
+    Crypto::PublicSignatureKey const& appPublicSigKey, Crypto::PublicSignatureKey const& tankerPublicSigKey)
 {
-  TC_RETURN(TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(
-      appPublicSigKey, tankerPublicSigKey)));
+  TC_RETURN(TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
 }
 
 tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::pullEncryptionKeys(
-    Crypto::PublicSignatureKey const& appPublicSigKey,
-    Crypto::PublicSignatureKey const& tankerPublicSigKey)
+    Crypto::PublicSignatureKey const& appPublicSigKey, Crypto::PublicSignatureKey const& tankerPublicSigKey)
 {
-  auto const keys = TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(
-      appPublicSigKey, tankerPublicSigKey));
+  auto const keys = TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey));
 
   if (keys)
     TC_RETURN(*keys);
 
   TC_AWAIT(refreshKeys());
 
-  TC_RETURN(TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(
-      appPublicSigKey, tankerPublicSigKey)));
+  TC_RETURN(TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
 }
 
 tc::cotask<void> Accessor::refreshKeys()
 {
-  auto const blocks =
-      TC_AWAIT(_requester->getClaimBlocks(_localUserAccessor->get().userId()));
-  auto const toStore = TC_AWAIT(Updater::processClaimEntries(
-      *_localUserAccessor, *_userAccessor, blocks));
+  auto const blocks = TC_AWAIT(_requester->getClaimBlocks(_localUserAccessor->get().userId()));
+  auto const toStore = TC_AWAIT(Updater::processClaimEntries(*_localUserAccessor, *_userAccessor, blocks));
 
-  for (auto const& [appSignaturePublicKey,
-                    tankerSignaturePublicKey,
-                    appEncryptionKeyPair,
-                    tankerEncryptionKeyPair] : toStore)
+  for (auto const& [appSignaturePublicKey, tankerSignaturePublicKey, appEncryptionKeyPair, tankerEncryptionKeyPair] :
+       toStore)
     TC_AWAIT(_provisionalUserKeysStore->putProvisionalUserKeys(
-        appSignaturePublicKey,
-        tankerSignaturePublicKey,
-        {appEncryptionKeyPair, tankerEncryptionKeyPair}));
+        appSignaturePublicKey, tankerSignaturePublicKey, {appEncryptionKeyPair, tankerEncryptionKeyPair}));
 }
 }

@@ -13,22 +13,16 @@ using Trustchain::Actions::DeviceCreation3;
 
 namespace
 {
-Crypto::Hash verificationTargetHash(
-    Verification::Verification const& verification, DeviceId const& deviceId)
+Crypto::Hash verificationTargetHash(Verification::Verification const& verification, DeviceId const& deviceId)
 {
   Crypto::Hash target;
-  if (auto const emailVerif =
-          boost::variant2::get_if<Verification::ByEmail>(&verification))
+  if (auto const emailVerif = boost::variant2::get_if<Verification::ByEmail>(&verification))
   {
-    target = Crypto::generichash(
-        gsl::make_span(emailVerif->email).as_span<uint8_t const>());
+    target = Crypto::generichash(gsl::make_span(emailVerif->email).as_span<uint8_t const>());
   }
-  else if (auto const phoneNumberVerif =
-               boost::variant2::get_if<Verification::ByPhoneNumber>(
-                   &verification))
+  else if (auto const phoneNumberVerif = boost::variant2::get_if<Verification::ByPhoneNumber>(&verification))
   {
-    target = Crypto::generichash(
-        gsl::make_span(phoneNumberVerif->phoneNumber).as_span<uint8_t const>());
+    target = Crypto::generichash(gsl::make_span(phoneNumberVerif->phoneNumber).as_span<uint8_t const>());
   }
   else
   {
@@ -37,37 +31,24 @@ Crypto::Hash verificationTargetHash(
   return target;
 }
 
-Trustchain::Actions::VerificationMethodType verificationMethodType(
-    Verification::Verification const& verification)
+Trustchain::Actions::VerificationMethodType verificationMethodType(Verification::Verification const& verification)
 {
   using Trustchain::Actions::VerificationMethodType;
   return boost::variant2::visit(
       overloaded{
-          [](Verification::ByEmail const& v) -> VerificationMethodType {
-            return VerificationMethodType::Email;
-          },
+          [](Verification::ByEmail const& v) -> VerificationMethodType { return VerificationMethodType::Email; },
           [](Verification::ByPhoneNumber const& v) -> VerificationMethodType {
             return VerificationMethodType::PhoneNumber;
           },
-          [](Passphrase const& p) -> VerificationMethodType {
-            return VerificationMethodType::Passphrase;
-          },
-          [](E2ePassphrase const& p) -> VerificationMethodType {
-            return VerificationMethodType::E2ePassphrase;
-          },
-          [](VerificationKey const& v) -> VerificationMethodType {
-            return VerificationMethodType::VerificationKey;
-          },
-          [](OidcIdToken const& v) -> VerificationMethodType {
-            return VerificationMethodType::OidcIdToken;
-          },
+          [](Passphrase const& p) -> VerificationMethodType { return VerificationMethodType::Passphrase; },
+          [](E2ePassphrase const& p) -> VerificationMethodType { return VerificationMethodType::E2ePassphrase; },
+          [](VerificationKey const& v) -> VerificationMethodType { return VerificationMethodType::VerificationKey; },
+          [](OidcIdToken const& v) -> VerificationMethodType { return VerificationMethodType::OidcIdToken; },
           [](PreverifiedEmail const& v) -> VerificationMethodType {
-            throw Errors::AssertionError(
-                "No verification method type for preverified email");
+            throw Errors::AssertionError("No verification method type for preverified email");
           },
           [](PreverifiedPhoneNumber const& v) -> VerificationMethodType {
-            throw Errors::AssertionError(
-                "No verification method type for preverified phone number");
+            throw Errors::AssertionError("No verification method type for preverified phone number");
           },
       },
       verification);
@@ -76,17 +57,15 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
 
 namespace
 {
-DeviceCreation3 createDeviceAction(
-    TrustchainId const& trustchainId,
-    Crypto::Hash const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys,
-    DeviceCreation::DeviceType deviceType)
+DeviceCreation3 createDeviceAction(TrustchainId const& trustchainId,
+                                   Crypto::Hash const& author,
+                                   Identity::Delegation const& delegation,
+                                   Crypto::PublicSignatureKey const& signatureKey,
+                                   Crypto::PublicEncryptionKey const& encryptionKey,
+                                   Crypto::EncryptionKeyPair const& userEncryptionKeys,
+                                   DeviceCreation::DeviceType deviceType)
 {
-  auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
+  auto const sealedPrivateEncryptionKey = Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
 
   return DeviceCreation::v3{
       trustchainId,
@@ -104,12 +83,11 @@ DeviceCreation3 createDeviceAction(
 }
 }
 
-DeviceCreation1 createDeviceV1Action(
-    TrustchainId const& trustchainId,
-    Crypto::Hash const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey)
+DeviceCreation1 createDeviceV1Action(TrustchainId const& trustchainId,
+                                     Crypto::Hash const& author,
+                                     Identity::Delegation const& delegation,
+                                     Crypto::PublicSignatureKey const& signatureKey,
+                                     Crypto::PublicEncryptionKey const& encryptionKey)
 {
   return DeviceCreation::v1{trustchainId,
                             delegation.ephemeralKeyPair.publicKey,
@@ -121,12 +99,11 @@ DeviceCreation1 createDeviceV1Action(
                             delegation.ephemeralKeyPair.privateKey};
 }
 
-DeviceCreation3 createNewUserAction(
-    TrustchainId const& trustchainId,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys)
+DeviceCreation3 createNewUserAction(TrustchainId const& trustchainId,
+                                    Identity::Delegation const& delegation,
+                                    Crypto::PublicSignatureKey const& signatureKey,
+                                    Crypto::PublicEncryptionKey const& encryptionKey,
+                                    Crypto::EncryptionKeyPair const& userEncryptionKeys)
 {
   return createDeviceAction(trustchainId,
                             static_cast<Crypto::Hash>(trustchainId),
@@ -137,13 +114,12 @@ DeviceCreation3 createNewUserAction(
                             DeviceCreation::DeviceType::GhostDevice);
 }
 
-DeviceCreation3 createNewDeviceAction(
-    TrustchainId const& trustchainId,
-    DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys)
+DeviceCreation3 createNewDeviceAction(TrustchainId const& trustchainId,
+                                      DeviceId const& author,
+                                      Identity::Delegation const& delegation,
+                                      Crypto::PublicSignatureKey const& signatureKey,
+                                      Crypto::PublicEncryptionKey const& encryptionKey,
+                                      Crypto::EncryptionKeyPair const& userEncryptionKeys)
 {
   return createDeviceAction(trustchainId,
                             static_cast<Crypto::Hash>(author),
@@ -154,13 +130,12 @@ DeviceCreation3 createNewDeviceAction(
                             DeviceCreation::DeviceType::Device);
 }
 
-DeviceCreation3 createNewGhostDeviceAction(
-    TrustchainId const& trustchainId,
-    DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys)
+DeviceCreation3 createNewGhostDeviceAction(TrustchainId const& trustchainId,
+                                           DeviceId const& author,
+                                           Identity::Delegation const& delegation,
+                                           Crypto::PublicSignatureKey const& signatureKey,
+                                           Crypto::PublicEncryptionKey const& encryptionKey,
+                                           Crypto::EncryptionKeyPair const& userEncryptionKeys)
 {
   return createDeviceAction(trustchainId,
                             static_cast<Crypto::Hash>(author),
@@ -171,11 +146,10 @@ DeviceCreation3 createNewGhostDeviceAction(
                             DeviceCreation::DeviceType::GhostDevice);
 }
 
-Actions::SessionCertificate createSessionCertificate(
-    TrustchainId const& trustchainId,
-    DeviceId const& deviceId,
-    Verification::Verification const& verification,
-    Crypto::PrivateSignatureKey const& signatureKey)
+Actions::SessionCertificate createSessionCertificate(TrustchainId const& trustchainId,
+                                                     DeviceId const& deviceId,
+                                                     Verification::Verification const& verification,
+                                                     Crypto::PrivateSignatureKey const& signatureKey)
 {
   auto verifTarget = verificationTargetHash(verification, deviceId);
   auto methodType = verificationMethodType(verification);
@@ -198,8 +172,7 @@ Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimAction(
     ProvisionalUsers::SecretUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair)
 {
-  std::vector<std::uint8_t> keysToEncrypt(
-      Crypto::PrivateEncryptionKey::arraySize * 2);
+  std::vector<std::uint8_t> keysToEncrypt(Crypto::PrivateEncryptionKey::arraySize * 2);
 
   auto it = std::copy(provisionalUser.appEncryptionKeyPair.privateKey.begin(),
                       provisionalUser.appEncryptionKeyPair.privateKey.end(),
@@ -214,16 +187,14 @@ Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimAction(
       provisionalUser.appSignatureKeyPair,
       provisionalUser.tankerSignatureKeyPair,
       userKeyPair.publicKey,
-      Crypto::sealEncrypt<
-          Actions::ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
-          keysToEncrypt, userKeyPair.publicKey),
+      Crypto::sealEncrypt<Actions::ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(keysToEncrypt,
+                                                                                          userKeyPair.publicKey),
       deviceId,
       deviceSignatureKey,
   };
 }
 
-Trustchain::Actions::KeyPublishToProvisionalUser
-createKeyPublishToProvisionalUserAction(
+Trustchain::Actions::KeyPublishToProvisionalUser createKeyPublishToProvisionalUserAction(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -251,12 +222,11 @@ Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
     Crypto::SimpleResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey)
 {
-  return Trustchain::Actions::KeyPublishToUser{
-      trustchainId,
-      recipientPublicEncryptionKey,
-      resourceId,
-      symKey,
-      static_cast<Crypto::Hash>(deviceId),
-      deviceSignatureKey};
+  return Trustchain::Actions::KeyPublishToUser{trustchainId,
+                                               recipientPublicEncryptionKey,
+                                               resourceId,
+                                               symKey,
+                                               static_cast<Crypto::Hash>(deviceId),
+                                               deviceSignatureKey};
 }
 }

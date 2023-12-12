@@ -28,8 +28,7 @@ TEST_CASE("Connection")
   SECTION("I cannot have two connections on the same exclusive database")
   {
     auto dbPtr = createConnection(dbfile);
-    TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile),
-                                  Errc::DatabaseLocked);
+    TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile), Errc::DatabaseLocked);
   }
 
   SECTION("I can have multiple connections on a non-exclusive database")

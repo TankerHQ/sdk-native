@@ -13,8 +13,7 @@ template class BasicHash<struct Trustchain::detail::DeviceIdImpl>;
 template class BasicHash<struct Trustchain::detail::UserIdImpl>;
 template class BasicHash<struct Trustchain::detail::TrustchainIdImpl>;
 template class BasicHash<struct Trustchain::detail::HashedPassphraseImpl>;
-template class BasicCryptographicType<Trustchain::GroupId,
-                                      PublicSignatureKey::arraySize>;
+template class BasicCryptographicType<Trustchain::GroupId, PublicSignatureKey::arraySize>;
 template class BasicCryptographicType<Crypto::ResourceId, Mac::arraySize>;
 }
 }

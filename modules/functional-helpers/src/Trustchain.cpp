@@ -37,22 +37,18 @@ void from_json(nlohmann::json const& j, TrustchainConfig& config)
 Trustchain::Trustchain(std::string url,
                        Tanker::Trustchain::TrustchainId id,
                        Crypto::PrivateSignatureKey privateSignatureKey)
-  : url(std::move(url)),
-    id(std::move(id)),
-    keyPair(Crypto::makeSignatureKeyPair(privateSignatureKey))
+  : url(std::move(url)), id(std::move(id)), keyPair(Crypto::makeSignatureKeyPair(privateSignatureKey))
 {
 }
 
-Trustchain::Trustchain(TrustchainConfig const& config)
-  : Trustchain(config.url, config.id, config.privateKey)
+Trustchain::Trustchain(TrustchainConfig const& config) : Trustchain(config.url, config.id, config.privateKey)
 {
 }
 
 User Trustchain::makeUser()
 {
   auto const trustchainIdString = mgs::base64::encode(id);
-  auto const trustchainPrivateKeyString =
-      mgs::base64::encode(keyPair.privateKey);
+  auto const trustchainPrivateKeyString = mgs::base64::encode(keyPair.privateKey);
 
   return User(url, trustchainIdString, trustchainPrivateKeyString);
 }
@@ -74,51 +70,43 @@ AppProvisionalUser Trustchain::makeEmailProvisionalUser()
 {
   auto const email = makeEmail();
   auto const secretProvisionalIdentity =
-      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
-          mgs::base64::encode(this->id), email));
-  auto const publicProvisionalIdentity = SPublicIdentity(
-      Identity::getPublicIdentity(secretProvisionalIdentity.string()));
-  return AppProvisionalUser{
-      email, secretProvisionalIdentity, publicProvisionalIdentity};
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(mgs::base64::encode(this->id), email));
+  auto const publicProvisionalIdentity =
+      SPublicIdentity(Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+  return AppProvisionalUser{email, secretProvisionalIdentity, publicProvisionalIdentity};
 }
 
 AppProvisionalUser Trustchain::makePhoneNumberProvisionalUser()
 {
   auto const phoneNumber = makePhoneNumber();
   auto const secretProvisionalIdentity =
-      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
-          mgs::base64::encode(this->id), phoneNumber));
-  auto const publicProvisionalIdentity = SPublicIdentity(
-      Identity::getPublicIdentity(secretProvisionalIdentity.string()));
-  return AppProvisionalUser{
-      phoneNumber, secretProvisionalIdentity, publicProvisionalIdentity};
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(mgs::base64::encode(this->id), phoneNumber));
+  auto const publicProvisionalIdentity =
+      SPublicIdentity(Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+  return AppProvisionalUser{phoneNumber, secretProvisionalIdentity, publicProvisionalIdentity};
 }
 
-tc::cotask<void> Trustchain::attachProvisionalIdentity(
-    AsyncCore& session, AppProvisionalUser const& prov)
+tc::cotask<void> Trustchain::attachProvisionalIdentity(AsyncCore& session, AppProvisionalUser const& prov)
 {
-  auto const result =
-      TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
+  auto const result = TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
   if (result.status == Status::Ready)
     TC_RETURN();
 
   if (result.status != Status::IdentityVerificationNeeded)
     throw std::runtime_error("attachProvisionalIdentity: unexpected status!");
 
-  auto const verif = TC_AWAIT(boost::variant2::visit(
-      overloaded{
-          [&](Email const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN(
-                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
-          },
-          [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Verification::ByPhoneNumber{
-                v, VerificationCode{verificationCode}}));
-          },
-      },
-      prov.value));
+  auto const verif = TC_AWAIT(
+      boost::variant2::visit(overloaded{
+                                 [&](Email const& v) -> tc::cotask<Verification::Verification> {
+                                   auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+                                   TC_RETURN((Verification::ByEmail{v, VerificationCode{verificationCode}}));
+                                 },
+                                 [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
+                                   auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+                                   TC_RETURN((Verification::ByPhoneNumber{v, VerificationCode{verificationCode}}));
+                                 },
+                             },
+                             prov.value));
   TC_AWAIT(session.verifyProvisionalIdentity(verif));
 }
 
@@ -132,13 +120,11 @@ Trustchain::Ptr Trustchain::make(TrustchainConfig const& config)
   return std::make_unique<Trustchain>(config);
 }
 
-Trustchain::Ptr Trustchain::make(
-    std::string url,
-    Tanker::Trustchain::TrustchainId id,
-    Crypto::PrivateSignatureKey privateSignatureKey)
+Trustchain::Ptr Trustchain::make(std::string url,
+                                 Tanker::Trustchain::TrustchainId id,
+                                 Crypto::PrivateSignatureKey privateSignatureKey)
 {
-  return std::make_unique<Trustchain>(
-      std::move(url), std::move(id), std::move(privateSignatureKey));
+  return std::make_unique<Trustchain>(std::move(url), std::move(id), std::move(privateSignatureKey));
 }
 }
 }

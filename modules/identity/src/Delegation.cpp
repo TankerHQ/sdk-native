@@ -11,9 +11,7 @@ namespace Tanker
 {
 namespace Identity
 {
-Delegation makeDelegation(
-    UserId const& userId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
+Delegation makeDelegation(UserId const& userId, Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
   Delegation delegation{};
 
@@ -21,11 +19,9 @@ Delegation makeDelegation(
   delegation.userId = userId;
 
   std::vector<uint8_t> toSign;
-  toSign.insert(toSign.end(),
-                delegation.ephemeralKeyPair.publicKey.begin(),
-                delegation.ephemeralKeyPair.publicKey.end());
   toSign.insert(
-      toSign.end(), delegation.userId.begin(), delegation.userId.end());
+      toSign.end(), delegation.ephemeralKeyPair.publicKey.begin(), delegation.ephemeralKeyPair.publicKey.end());
+  toSign.insert(toSign.end(), delegation.userId.begin(), delegation.userId.end());
   delegation.signature = Crypto::sign(toSign, privateSignatureKey);
 
   return delegation;

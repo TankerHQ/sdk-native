@@ -45,8 +45,7 @@ tc::cotask<std::vector<uint8_t>> readAllStream(T&& source)
       out.resize(pos + blockSize);
       availableRoom = blockSize;
     }
-    auto const nbRead =
-        TC_AWAIT(std::forward<T>(source)(gsl::make_span(out).subspan(pos)));
+    auto const nbRead = TC_AWAIT(std::forward<T>(source)(gsl::make_span(out).subspan(pos)));
     if (nbRead == 0)
     {
       out.resize(pos + nbRead);

@@ -11,23 +11,19 @@ namespace Tanker
 {
 namespace Crypto
 {
-extern template class BasicCryptographicType<
-    AsymmetricKey<KeyType::Private, KeyUsage::Encryption>,
-    crypto_box_SECRETKEYBYTES>;
+extern template class BasicCryptographicType<AsymmetricKey<KeyType::Private, KeyUsage::Encryption>,
+                                             crypto_box_SECRETKEYBYTES>;
 
 template <>
 class AsymmetricKey<KeyType::Private, KeyUsage::Encryption>
-  : public BasicCryptographicType<
-        AsymmetricKey<KeyType::Private, KeyUsage::Encryption>,
-        crypto_box_SECRETKEYBYTES>
+  : public BasicCryptographicType<AsymmetricKey<KeyType::Private, KeyUsage::Encryption>, crypto_box_SECRETKEYBYTES>
 {
   using base_t::base_t;
 };
 
 extern template class AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
 
-using PrivateEncryptionKey =
-    AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
+using PrivateEncryptionKey = AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
 }
 }
 

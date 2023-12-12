@@ -11,9 +11,7 @@
 namespace nlohmann
 {
 template <typename CryptoType>
-struct adl_serializer<
-    CryptoType,
-    std::enable_if_t<::Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
+struct adl_serializer<CryptoType, std::enable_if_t<::Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
 {
   template <typename Json>
   static void to_json(Json& j, CryptoType const& value)

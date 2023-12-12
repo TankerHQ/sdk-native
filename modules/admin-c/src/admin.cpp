@@ -21,23 +21,19 @@ tanker_future_t* tanker_admin_connect(char const* app_management_url,
                                       char const* app_management_token,
                                       char const* environment_name)
 {
-  return makeFuture(tc::async_resumable(
-      [appManagementUrl = std::string(app_management_url),
-       appManagementToken = std::string(app_management_token),
-       environmentName = std::string(environment_name)]() -> tc::cotask<void*> {
-        Crypto::init();
-        const auto admin = new Admin::Client(
-            appManagementUrl, appManagementToken, environmentName);
-        TC_RETURN(static_cast<void*>(admin));
-      }));
+  return makeFuture(tc::async_resumable([appManagementUrl = std::string(app_management_url),
+                                         appManagementToken = std::string(app_management_token),
+                                         environmentName = std::string(environment_name)]() -> tc::cotask<void*> {
+    Crypto::init();
+    const auto admin = new Admin::Client(appManagementUrl, appManagementToken, environmentName);
+    TC_RETURN(static_cast<void*>(admin));
+  }));
 }
 
-tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
-                                         char const* name)
+tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin, char const* name)
 {
-  return makeFuture(
-      tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
-                           name = std::string(name)]() -> tc::cotask<void*> {
+  return makeFuture(tc::async_resumable(
+      [admin = reinterpret_cast<Admin::Client*>(admin), name = std::string(name)]() -> tc::cotask<void*> {
         const auto app = TC_AWAIT(admin->createTrustchain(name));
         using fmt::to_string;
         TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
@@ -48,14 +44,11 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
       }));
 }
 
-tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
-                                         char const* app_id)
+tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin, char const* app_id)
 {
-  return makeFuture(
-      tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
-                           appId = std::string(app_id)]() -> tc::cotask<void> {
-        TC_AWAIT(admin->deleteTrustchain(
-            mgs::base64::decode<Trustchain::TrustchainId>(appId)));
+  return makeFuture(tc::async_resumable(
+      [admin = reinterpret_cast<Admin::Client*>(admin), appId = std::string(app_id)]() -> tc::cotask<void> {
+        TC_AWAIT(admin->deleteTrustchain(mgs::base64::decode<Trustchain::TrustchainId>(appId)));
       }));
 }
 
@@ -69,6 +62,5 @@ void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
 
 tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
 {
-  return makeFuture(tc::async(
-      [admin = reinterpret_cast<Admin::Client*>(admin)] { delete admin; }));
+  return makeFuture(tc::async([admin = reinterpret_cast<Admin::Client*>(admin)] { delete admin; }));
 }

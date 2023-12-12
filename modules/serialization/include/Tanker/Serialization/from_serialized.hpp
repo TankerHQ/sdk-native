@@ -78,8 +78,7 @@ void deserialize_impl(SerializedSource& ss, T& val)
 struct from_serialized_fn
 {
   template <typename T>
-  void operator()(SerializedSource& ss, T& val) const
-      noexcept(noexcept(from_serialized(ss, val)))
+  void operator()(SerializedSource& ss, T& val) const noexcept(noexcept(from_serialized(ss, val)))
   {
     return from_serialized(ss, val);
   }
@@ -88,8 +87,7 @@ struct from_serialized_fn
 
 namespace
 {
-constexpr auto const& from_serialized =
-    detail::static_const<detail::from_serialized_fn>::value;
+constexpr auto const& from_serialized = detail::static_const<detail::from_serialized_fn>::value;
 }
 }
 }

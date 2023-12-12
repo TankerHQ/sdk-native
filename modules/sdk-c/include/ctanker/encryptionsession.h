@@ -23,16 +23,15 @@ typedef struct tanker_encryption_session tanker_encryption_session_t;
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
-    tanker_t* tanker, tanker_encrypt_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(tanker_t* tanker,
+                                                               tanker_encrypt_options_t const* options);
 
 /*!
  * Closes an encryption session instance
  * \param session an encryption session to be deleted
  * \return an async future
  */
-CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
-    tanker_encryption_session_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(tanker_encryption_session_t* session);
 
 /*!
  * Get the encrypted size from the clear size.
@@ -45,16 +44,15 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
  * \param clear_size the length of the clear data
  *
  */
-CTANKER_EXPORT uint64_t tanker_encryption_session_encrypted_size(
-    tanker_encryption_session_t* session, uint64_t clear_size);
+CTANKER_EXPORT uint64_t tanker_encryption_session_encrypted_size(tanker_encryption_session_t* session,
+                                                                 uint64_t clear_size);
 /*!
  * Get the session's permanent resource id
  * \param session an encryption session
  * \return an already ready future of a char* that must be freed with
  * tanker_free_buffer.
  */
-CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(
-    tanker_encryption_session_t* session);
+CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(tanker_encryption_session_t* session);
 
 /*!
  * Encrypt data with the session, that can be decrypted with tanker_decrypt
@@ -67,11 +65,10 @@ CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(
  *
  * \return An empty future.
  */
-CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
-    tanker_encryption_session_t* session,
-    uint8_t* encrypted_data,
-    uint8_t const* data,
-    uint64_t data_size);
+CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(tanker_encryption_session_t* session,
+                                                                  uint8_t* encrypted_data,
+                                                                  uint8_t const* data,
+                                                                  uint64_t data_size);
 
 /*!
  * Create an encryption stream for an encryption session
@@ -85,10 +82,9 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
  *
  * \return A new stream encryptor, to be closed with tanker_stream_close
  */
-CTANKER_EXPORT tanker_future_t* tanker_encryption_session_stream_encrypt(
-    tanker_encryption_session_t* session,
-    tanker_stream_input_source_t cb,
-    void* additional_data);
+CTANKER_EXPORT tanker_future_t* tanker_encryption_session_stream_encrypt(tanker_encryption_session_t* session,
+                                                                         tanker_stream_input_source_t cb,
+                                                                         void* additional_data);
 
 #ifdef __cplusplus
 }

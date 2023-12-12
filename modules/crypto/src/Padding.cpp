@@ -31,8 +31,7 @@ uint64_t padme(uint64_t clearSize)
   return (clearSize + bitMask) & ~bitMask;
 }
 
-uint64_t paddedFromClearSize(uint64_t clearSize,
-                             std::optional<uint32_t> paddingStep)
+uint64_t paddedFromClearSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 {
   if (!paddingStep)
     return std::max(padme(clearSize), minimalPadding()) + 1;
@@ -47,8 +46,7 @@ uint64_t paddedFromClearSize(uint64_t clearSize,
   return computeNextMultiple(*paddingStep, clearSize) + 1;
 }
 
-std::vector<uint8_t> padClearData(gsl::span<uint8_t const> clearData,
-                                  std::optional<uint32_t> paddingStep)
+std::vector<uint8_t> padClearData(gsl::span<uint8_t const> clearData, std::optional<uint32_t> paddingStep)
 {
   auto const paddedSize = paddedFromClearSize(clearData.size(), paddingStep);
   if (paddedSize < clearData.size() + 1)
@@ -65,13 +63,10 @@ std::vector<uint8_t> padClearData(gsl::span<uint8_t const> clearData,
 
 uint64_t unpaddedSize(gsl::span<const uint8_t> paddedData)
 {
-  auto const it = std::find_if(paddedData.crbegin(),
-                               paddedData.crend(),
-                               [](auto const& c) { return c != 0x00; });
+  auto const it = std::find_if(paddedData.crbegin(), paddedData.crend(), [](auto const& c) { return c != 0x00; });
 
   if (it == paddedData.crend() || *it != 0x80)
-    throw Errors::formatEx(Errors::Errc::DecryptionFailed,
-                           "unable to remove padding");
+    throw Errors::formatEx(Errors::Errc::DecryptionFailed, "unable to remove padding");
 
   return std::distance(it + 1, paddedData.crend());
 }

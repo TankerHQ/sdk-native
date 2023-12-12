@@ -25,17 +25,14 @@ namespace ReceiveKey
 {
 namespace
 {
-tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
-    ResourceKeys::Store& resourceKeyStore,
-    Users::ILocalUserAccessor& localUserAccessor,
-    Groups::IAccessor&,
-    ProvisionalUsers::IAccessor&,
-    Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(ResourceKeys::Store& resourceKeyStore,
+                                                       Users::ILocalUserAccessor& localUserAccessor,
+                                                       Groups::IAccessor&,
+                                                       ProvisionalUsers::IAccessor&,
+                                                       Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
-  auto const& recipientPublicKey =
-      keyPublishToUser.recipientPublicEncryptionKey();
-  auto const userKeyPair =
-      TC_AWAIT(localUserAccessor.pullUserKeyPair(recipientPublicKey));
+  auto const& recipientPublicKey = keyPublishToUser.recipientPublicEncryptionKey();
+  auto const userKeyPair = TC_AWAIT(localUserAccessor.pullUserKeyPair(recipientPublicKey));
 
   if (!userKeyPair)
     throw formatEx(Errc::InternalError,
@@ -43,8 +40,7 @@ tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
                    "(public encryption key: {})",
                    recipientPublicKey);
 
-  auto const key =
-      Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), *userKeyPair);
+  auto const key = Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), *userKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
 
@@ -58,10 +54,8 @@ tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
 {
-  auto const& recipientPublicKey =
-      keyPublishToUserGroup.recipientPublicEncryptionKey();
-  auto const encryptionKeyPair =
-      TC_AWAIT(groupAccessor.getEncryptionKeyPair(recipientPublicKey));
+  auto const& recipientPublicKey = keyPublishToUserGroup.recipientPublicEncryptionKey();
+  auto const encryptionKeyPair = TC_AWAIT(groupAccessor.getEncryptionKeyPair(recipientPublicKey));
 
   if (!encryptionKeyPair)
   {
@@ -71,25 +65,21 @@ tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
                    recipientPublicKey);
   }
 
-  auto const key = Crypto::sealDecrypt(
-      keyPublishToUserGroup.sealedSymmetricKey(), *encryptionKeyPair);
+  auto const key = Crypto::sealDecrypt(keyPublishToUserGroup.sealedSymmetricKey(), *encryptionKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
 
   TC_RETURN((ResourceKeys::KeyResult{key, keyPublishToUserGroup.resourceId()}));
 }
 
-tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
-    ResourceKeys::Store& resourceKeyStore,
-    Users::ILocalUserAccessor&,
-    Groups::IAccessor&,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(ResourceKeys::Store& resourceKeyStore,
+                                                       Users::ILocalUserAccessor&,
+                                                       Groups::IAccessor&,
+                                                       ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                                       KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
 {
-  auto const provisionalUserKeys =
-      TC_AWAIT(provisionalUsersAccessor.pullEncryptionKeys(
-          keyPublishToProvisionalUser.appPublicSignatureKey(),
-          keyPublishToProvisionalUser.tankerPublicSignatureKey()));
+  auto const provisionalUserKeys = TC_AWAIT(provisionalUsersAccessor.pullEncryptionKeys(
+      keyPublishToProvisionalUser.appPublicSignatureKey(), keyPublishToProvisionalUser.tankerPublicSignatureKey()));
 
   if (!provisionalUserKeys)
   {
@@ -100,35 +90,26 @@ tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
                    keyPublishToProvisionalUser.tankerPublicSignatureKey());
   }
 
-  auto const encryptedKey = Crypto::sealDecrypt(
-      keyPublishToProvisionalUser.twoTimesSealedSymmetricKey(),
-      provisionalUserKeys->tankerKeys);
-  auto const key =
-      Crypto::sealDecrypt(encryptedKey, provisionalUserKeys->appKeys);
+  auto const encryptedKey =
+      Crypto::sealDecrypt(keyPublishToProvisionalUser.twoTimesSealedSymmetricKey(), provisionalUserKeys->tankerKeys);
+  auto const key = Crypto::sealDecrypt(encryptedKey, provisionalUserKeys->appKeys);
 
-  TC_AWAIT(
-      resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
 
-  TC_RETURN(
-      (ResourceKeys::KeyResult{key, keyPublishToProvisionalUser.resourceId()}));
+  TC_RETURN((ResourceKeys::KeyResult{key, keyPublishToProvisionalUser.resourceId()}));
 }
 }
 
-tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
-    ResourceKeys::Store& resourceKeyStore,
-    Users::ILocalUserAccessor& localUserAccessor,
-    Groups::IAccessor& groupAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    KeyPublish const& kp)
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(ResourceKeys::Store& resourceKeyStore,
+                                                       Users::ILocalUserAccessor& localUserAccessor,
+                                                       Groups::IAccessor& groupAccessor,
+                                                       ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                                       KeyPublish const& kp)
 {
-  TC_RETURN(TC_AWAIT(
-      kp.visit([&](auto const& val) -> tc::cotask<ResourceKeys::KeyResult> {
-        TC_RETURN(TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
-                                              localUserAccessor,
-                                              groupAccessor,
-                                              provisionalUsersAccessor,
-                                              val)));
-      })));
+  TC_RETURN(TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<ResourceKeys::KeyResult> {
+    TC_RETURN(TC_AWAIT(
+        decryptAndStoreKey(resourceKeyStore, localUserAccessor, groupAccessor, provisionalUsersAccessor, val)));
+  })));
 }
 }
 }

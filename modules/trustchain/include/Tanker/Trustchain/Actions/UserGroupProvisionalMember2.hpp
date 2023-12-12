@@ -12,20 +12,16 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V2_ATTRIBUTES \
-  (appPublicSignatureKey, Crypto::PublicSignatureKey),                        \
-      (tankerPublicSignatureKey, Crypto::PublicSignatureKey),                 \
-      (encryptedPrivateEncryptionKey,                                         \
-       Crypto::TwoTimesSealedPrivateEncryptionKey)
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V2_ATTRIBUTES                                  \
+  (appPublicSignatureKey, Crypto::PublicSignatureKey), (tankerPublicSignatureKey, Crypto::PublicSignatureKey), \
+      (encryptedPrivateEncryptionKey, Crypto::TwoTimesSealedPrivateEncryptionKey)
 
 class UserGroupProvisionalMember2
 {
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
-      UserGroupProvisionalMember2,
-      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V2_ATTRIBUTES)
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(UserGroupProvisionalMember2,
+                                            TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V2_ATTRIBUTES)
 
-  friend void from_serialized(Serialization::SerializedSource&,
-                              UserGroupProvisionalMember2&);
+  friend void from_serialized(Serialization::SerializedSource&, UserGroupProvisionalMember2&);
 };
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupProvisionalMember2)
