@@ -28,8 +28,6 @@ std::string AppdErrcCategory::message(int c) const
     return "provisional identity already attached";
   case AppdErrc::TooManyAttempts:
     return "too many attempts";
-  case AppdErrc::VerificationNeeded:
-    return "verification needed";
   case AppdErrc::InvalidPassphrase:
     return "invalid passphrase";
   case AppdErrc::InvalidVerificationCode:
@@ -91,7 +89,6 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::InvalidToken:
   case AppdErrc::InvalidChallengeSignature:
   case AppdErrc::InvalidChallengePublicKey:
-  case AppdErrc::VerificationNeeded: // Handled internally
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
   case AppdErrc::ProvisionalIdentityAlreadyAttached:

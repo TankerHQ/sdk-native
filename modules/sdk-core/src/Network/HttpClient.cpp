@@ -34,7 +34,6 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"provisional_identity_already_attached",
      AppdErrc::ProvisionalIdentityAlreadyAttached},
     {"too_many_attempts", AppdErrc::TooManyAttempts},
-    {"verification_needed", AppdErrc::VerificationNeeded},
     {"invalid_passphrase", AppdErrc::InvalidPassphrase},
     {"invalid_verification_code", AppdErrc::InvalidVerificationCode},
     {"verification_code_expired", AppdErrc::VerificationCodeExpired},
