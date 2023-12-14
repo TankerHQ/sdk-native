@@ -104,23 +104,16 @@ TEST_CASE("UserGroupCreation serialization test vectors")
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
 
-    auto const publicSignatureKey =
-        make<Crypto::PublicSignatureKey>("pub sig key");
-    auto const publicEncryptionKey =
-        make<Crypto::PublicEncryptionKey>("pub enc key");
-    auto const sealedPrivateSignatureKey =
-        make<Crypto::SealedPrivateSignatureKey>("encrypted priv sig key");
-    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const
-        sealedPrivateEncryptionKeysForUsers{
-            {make<Crypto::PublicEncryptionKey>("pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "encrypted group priv key")},
-            {make<Crypto::PublicEncryptionKey>("second pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "second encrypted group priv key")}};
+    auto const publicSignatureKey = make<Crypto::PublicSignatureKey>("pub sig key");
+    auto const publicEncryptionKey = make<Crypto::PublicEncryptionKey>("pub enc key");
+    auto const sealedPrivateSignatureKey = make<Crypto::SealedPrivateSignatureKey>("encrypted priv sig key");
+    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const sealedPrivateEncryptionKeysForUsers{
+        {make<Crypto::PublicEncryptionKey>("pub user key"),
+         make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
+        {make<Crypto::PublicEncryptionKey>("second pub user key"),
+         make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "SKeSWc4BdOBuGY31q5IzhIBEzUy7veyLTbtNyHK8twE=");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("SKeSWc4BdOBuGY31q5IzhIBEzUy7veyLTbtNyHK8twE=");
 
     UserGroupCreation1 const ugc{trustchainId,
                                  publicSignatureKey,
@@ -133,8 +126,7 @@ TEST_CASE("UserGroupCreation serialization test vectors")
                                  signature};
 
     CHECK(Serialization::serialize(ugc) == serializedUserGroupCreation);
-    CHECK(Serialization::deserialize<UserGroupCreation1>(
-              serializedUserGroupCreation) == ugc);
+    CHECK(Serialization::deserialize<UserGroupCreation1>(serializedUserGroupCreation) == ugc);
   }
 
   SECTION("it should serialize/deserialize a UserGroupCreation2")
@@ -147,32 +139,26 @@ TEST_CASE("UserGroupCreation serialization test vectors")
         {
             {make<UserId>("user id"),
              make<Crypto::PublicEncryptionKey>("pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "encrypted group priv key")},
+             make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
             {make<UserId>("second user id"),
              make<Crypto::PublicEncryptionKey>("second pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "second encrypted group priv key")},
+             make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")},
         },
         {
             {
                 make<Crypto::PublicSignatureKey>("app provisional sig key"),
                 make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
-                make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                    "provisional user encrypted group priv key"),
+                make<Crypto::TwoTimesSealedPrivateEncryptionKey>("provisional user encrypted group priv key"),
             },
             {
                 make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
-                make<Crypto::PublicSignatureKey>(
-                    "2nd tanker provisional sig key"),
-                make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                    "2nd provisional user encrypted group priv key"),
+                make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
+                make<Crypto::TwoTimesSealedPrivateEncryptionKey>("2nd provisional user encrypted group priv key"),
             },
         },
         make<Crypto::Signature>("self signature"),
         make<Crypto::Hash>("author"),
-        mgs::base64::decode<Crypto::Hash>(
-            "PfsSjw7Sy5pcRIHZUAlSgE3aHrkd/ZIn3ZCX+5uvSAk="),
+        mgs::base64::decode<Crypto::Hash>("PfsSjw7Sy5pcRIHZUAlSgE3aHrkd/ZIn3ZCX+5uvSAk="),
         make<Crypto::Signature>("sig"),
     };
 
@@ -307,8 +293,7 @@ TEST_CASE("UserGroupCreation serialization test vectors")
     };
 
     CHECK(Serialization::serialize(userGroupCreation) == payload);
-    CHECK(Serialization::deserialize<UserGroupCreation2>(payload) ==
-          userGroupCreation);
+    CHECK(Serialization::deserialize<UserGroupCreation2>(payload) == userGroupCreation);
   }
 
   SECTION("it should serialize/deserialize a UserGroupCreation3")
@@ -321,12 +306,10 @@ TEST_CASE("UserGroupCreation serialization test vectors")
         {
             {make<UserId>("user id"),
              make<Crypto::PublicEncryptionKey>("pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "encrypted group priv key")},
+             make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
             {make<UserId>("second user id"),
              make<Crypto::PublicEncryptionKey>("second pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "second encrypted group priv key")},
+             make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")},
         },
         {
             {
@@ -334,25 +317,19 @@ TEST_CASE("UserGroupCreation serialization test vectors")
                 make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
                 make<Crypto::PublicEncryptionKey>("app provisional enc key"),
                 make<Crypto::PublicEncryptionKey>("tanker provisional enc key"),
-                make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                    "provisional user encrypted group priv key"),
+                make<Crypto::TwoTimesSealedPrivateEncryptionKey>("provisional user encrypted group priv key"),
             },
             {
                 make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
-                make<Crypto::PublicSignatureKey>(
-                    "2nd tanker provisional sig key"),
-                make<Crypto::PublicEncryptionKey>(
-                    "2nd app provisional enc key"),
-                make<Crypto::PublicEncryptionKey>(
-                    "2nd tanker provisional enc key"),
-                make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                    "2nd provisional user encrypted group priv key"),
+                make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
+                make<Crypto::PublicEncryptionKey>("2nd app provisional enc key"),
+                make<Crypto::PublicEncryptionKey>("2nd tanker provisional enc key"),
+                make<Crypto::TwoTimesSealedPrivateEncryptionKey>("2nd provisional user encrypted group priv key"),
             },
         },
         make<Crypto::Signature>("self signature"),
         make<Crypto::Hash>("author"),
-        mgs::base64::decode<Crypto::Hash>(
-            "LKF4FeNTpFhfalGxL+j2QgdlM76JD8ZKb/1uLmuhWaw="),
+        mgs::base64::decode<Crypto::Hash>("LKF4FeNTpFhfalGxL+j2QgdlM76JD8ZKb/1uLmuhWaw="),
         make<Crypto::Signature>("sig"),
     };
 
@@ -503,7 +480,6 @@ TEST_CASE("UserGroupCreation serialization test vectors")
     };
 
     CHECK(Serialization::serialize(userGroupCreation) == payload);
-    CHECK(Serialization::deserialize<UserGroupCreation3>(payload) ==
-          userGroupCreation);
+    CHECK(Serialization::deserialize<UserGroupCreation3>(payload) == userGroupCreation);
   }
 }

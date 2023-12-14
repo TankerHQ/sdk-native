@@ -27,31 +27,25 @@ class ContactStore;
 namespace Updater
 {
 
-Crypto::PublicSignatureKey extractTrustchainSignature(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::Actions::TrustchainCreation const& action);
+Crypto::PublicSignatureKey extractTrustchainSignature(Trustchain::TrustchainId const& trustchainId,
+                                                      Trustchain::Actions::TrustchainCreation const& action);
 
 std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
 
-std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
-processUserSealedKeys(Trustchain::DeviceId const& deviceId,
-                      DeviceKeys const& deviceKeys,
-                      Trustchain::Context const& trustchainContext,
-                      gsl::span<Trustchain::UserAction const> entries);
+std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>> processUserSealedKeys(
+    Trustchain::DeviceId const& deviceId,
+    DeviceKeys const& deviceKeys,
+    Trustchain::Context const& trustchainContext,
+    gsl::span<Trustchain::UserAction const> entries);
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
-    Crypto::EncryptionKeyPair const& devEncKP,
-    gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
+    Crypto::EncryptionKeyPair const& devEncKP, gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
 
-Users::User applyDeviceCreationToUser(
-    Trustchain::Actions::DeviceCreation const& action,
-    std::optional<Users::User> previousUser);
+Users::User applyDeviceCreationToUser(Trustchain::Actions::DeviceCreation const& action,
+                                      std::optional<Users::User> previousUser);
 
-std::tuple<Trustchain::Context,
-           Users::User,
-           std::vector<Crypto::EncryptionKeyPair>>
-processUserEntries(
+std::tuple<Trustchain::Context, Users::User, std::vector<Crypto::EncryptionKeyPair>> processUserEntries(
     Trustchain::DeviceId const& deviceId,
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& trustchainId,

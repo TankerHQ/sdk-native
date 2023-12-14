@@ -31,8 +31,7 @@ struct AsyncCoreDeleter
 template <typename... T>
 std::unique_ptr<AsyncCore, AsyncCoreDeleter> makeAsyncCore(T&&... args)
 {
-  return std::unique_ptr<AsyncCore, AsyncCoreDeleter>(
-      new AsyncCore(std::forward<T>(args)...));
+  return std::unique_ptr<AsyncCore, AsyncCoreDeleter>(new AsyncCore(std::forward<T>(args)...));
 }
 
 class Device
@@ -40,9 +39,7 @@ class Device
 public:
   static Passphrase const STRONG_PASSWORD_DO_NOT_LEAK;
 
-  Device(std::string trustchainUrl,
-         std::string trustchainId,
-         std::string identity);
+  Device(std::string trustchainUrl, std::string trustchainId, std::string identity);
 
   AsyncCorePtr createCore();
   std::unique_ptr<AsyncCore> createAsyncCore();

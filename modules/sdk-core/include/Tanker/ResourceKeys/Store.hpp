@@ -31,14 +31,11 @@ public:
 
   Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
-  tc::cotask<void> putKey(Crypto::SimpleResourceId const& resourceId,
-                          Crypto::SymmetricKey const& key);
+  tc::cotask<void> putKey(Crypto::SimpleResourceId const& resourceId, Crypto::SymmetricKey const& key);
 
-  tc::cotask<Crypto::SymmetricKey> getKey(
-      Crypto::SimpleResourceId const& resourceId) const;
+  tc::cotask<Crypto::SymmetricKey> getKey(Crypto::SimpleResourceId const& resourceId) const;
 
-  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
-      Crypto::SimpleResourceId const& resourceId) const;
+  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(Crypto::SimpleResourceId const& resourceId) const;
 
 private:
   Crypto::SymmetricKey _userSecret;

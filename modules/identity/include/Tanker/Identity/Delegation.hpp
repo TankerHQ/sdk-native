@@ -15,9 +15,7 @@ struct Delegation
   Crypto::Signature signature;
 };
 
-Delegation makeDelegation(
-    Trustchain::UserId const& userId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
+Delegation makeDelegation(Trustchain::UserId const& userId, Crypto::PrivateSignatureKey const& privateSignatureKey);
 
 bool operator==(Delegation const&, Delegation const&) noexcept;
 bool operator!=(Delegation const&, Delegation const&) noexcept;

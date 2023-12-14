@@ -9,13 +9,10 @@
 
 namespace Tanker::Trustchain::Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES \
-  (appPublicSignatureKey, Crypto::PublicSignatureKey),                        \
-      (tankerPublicSignatureKey, Crypto::PublicSignatureKey),                 \
-      (appPublicEncryptionKey, Crypto::PublicEncryptionKey),                  \
-      (tankerPublicEncryptionKey, Crypto::PublicEncryptionKey),               \
-      (encryptedPrivateEncryptionKey,                                         \
-       Crypto::TwoTimesSealedPrivateEncryptionKey)
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES                                          \
+  (appPublicSignatureKey, Crypto::PublicSignatureKey), (tankerPublicSignatureKey, Crypto::PublicSignatureKey),         \
+      (appPublicEncryptionKey, Crypto::PublicEncryptionKey), (tankerPublicEncryptionKey, Crypto::PublicEncryptionKey), \
+      (encryptedPrivateEncryptionKey, Crypto::TwoTimesSealedPrivateEncryptionKey)
 
 struct RawUserGroupProvisionalMember3
 {
@@ -27,12 +24,10 @@ struct RawUserGroupProvisionalMember3
 
 class UserGroupProvisionalMember3
 {
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
-      UserGroupProvisionalMember3,
-      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES)
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(UserGroupProvisionalMember3,
+                                            TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES)
 
-  friend void from_serialized(Serialization::SerializedSource&,
-                              UserGroupProvisionalMember3&);
+  friend void from_serialized(Serialization::SerializedSource&, UserGroupProvisionalMember3&);
 };
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupProvisionalMember3)

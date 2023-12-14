@@ -13,11 +13,9 @@ using namespace Tanker::TransparentSession;
 
 TEST_CASE("TransparentSessionAccessor")
 {
-  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
-                                            DataStore::MemoryPath);
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath, DataStore::MemoryPath);
   Store store({}, db.get());
-  auto shareMock =
-      [](auto const& _sess, auto const& _users, auto const& _groups) {};
+  auto shareMock = [](auto const& _sess, auto const& _users, auto const& _groups) {};
   Accessor accessor(&store, shareMock);
 
   SECTION("it creates different sessions for different recipient lists")
@@ -36,10 +34,8 @@ TEST_CASE("TransparentSessionAccessor")
 
   SECTION("it ignores duplicates and sorting order")
   {
-    auto sess1 =
-        AWAIT(accessor.getOrCreateTransparentSession({}, {{"A"}, {"B"}}));
-    auto sess2 = AWAIT(
-        accessor.getOrCreateTransparentSession({}, {{"B"}, {"A"}, {"A"}}));
+    auto sess1 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"A"}, {"B"}}));
+    auto sess2 = AWAIT(accessor.getOrCreateTransparentSession({}, {{"B"}, {"A"}, {"A"}}));
     CHECK(sess1.id == sess2.id);
   }
 

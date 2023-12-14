@@ -47,8 +47,7 @@ TEST_CASE("peeks and reads an underlying stream", "[peekableinputsource]")
   CHECK(out == buffer);
 }
 
-TEST_CASE("peeks past the end and reads an underlying stream",
-          "[peekableinputsource]")
+TEST_CASE("peeks past the end and reads an underlying stream", "[peekableinputsource]")
 {
   std::vector<uint8_t> buffer(50);
   auto peekable = fillAndMakePeekableSource(buffer);
@@ -79,8 +78,7 @@ TEST_CASE("peek multiple times", "[peekableinputsource]")
   CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
 }
 
-TEST_CASE("peek multiple times with a pre-filled peeking buffer",
-          "[peekableinputsource]")
+TEST_CASE("peek multiple times with a pre-filled peeking buffer", "[peekableinputsource]")
 {
   std::vector<uint8_t> buffer(50);
   auto peekable = fillAndMakePeekableSource(buffer);
@@ -105,8 +103,7 @@ TEST_CASE("peek multiple times with a pre-filled peeking buffer",
   CHECK(peek == gsl::make_span(buffer).subspan(5, 45));
 }
 
-TEST_CASE("alternate between peeks and read on a long underlying stream",
-          "[peekableinputsource]")
+TEST_CASE("alternate between peeks and read on a long underlying stream", "[peekableinputsource]")
 {
   std::vector<uint8_t> buffer(5 * 1024 * 1024);
   auto peekable = fillAndMakePeekableSource(buffer);

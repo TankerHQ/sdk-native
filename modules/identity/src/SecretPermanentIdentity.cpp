@@ -15,10 +15,9 @@ namespace Tanker
 namespace Identity
 {
 
-SecretPermanentIdentity createIdentity(
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-    Trustchain::UserId const& userId)
+SecretPermanentIdentity createIdentity(Trustchain::TrustchainId const& trustchainId,
+                                       Crypto::PrivateSignatureKey const& trustchainPrivateKey,
+                                       Trustchain::UserId const& userId)
 {
   return SecretPermanentIdentity{
       trustchainId,
@@ -38,13 +37,10 @@ std::string createIdentity(std::string const& trustchainIdParam,
   if (trustchainPrivateKey.empty())
     throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
-  auto const trustchainId =
-      mgs::base64::decode<Trustchain::TrustchainId>(trustchainIdParam);
-  return to_string(
-      createIdentity(trustchainId,
-                     mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
-                         trustchainPrivateKey),
-                     Tanker::obfuscateUserId(userId, trustchainId)));
+  auto const trustchainId = mgs::base64::decode<Trustchain::TrustchainId>(trustchainIdParam);
+  return to_string(createIdentity(trustchainId,
+                                  mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(trustchainPrivateKey),
+                                  Tanker::obfuscateUserId(userId, trustchainId)));
 }
 
 void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
@@ -57,25 +53,19 @@ void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
                              "invalid identity (expected a permanent identity, "
                              "got a provisional identity)");
     else
-      throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
-                             "unsupported identity target: {}",
-                             target);
+      throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget, "unsupported identity target: {}", target);
   }
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("value").get_to(identity.delegation.userId);
 
   if (j.find("user_secret") == j.end())
   {
-    throw Errors::formatEx(
-        Errc::InvalidFormat,
-        "invalid identity (expected an identity, got a public identity)");
+    throw Errors::formatEx(Errc::InvalidFormat, "invalid identity (expected an identity, got a public identity)");
   }
 
   j.at("user_secret").get_to(identity.userSecret);
-  j.at("ephemeral_public_signature_key")
-      .get_to(identity.delegation.ephemeralKeyPair.publicKey);
-  j.at("ephemeral_private_signature_key")
-      .get_to(identity.delegation.ephemeralKeyPair.privateKey);
+  j.at("ephemeral_public_signature_key").get_to(identity.delegation.ephemeralKeyPair.publicKey);
+  j.at("ephemeral_private_signature_key").get_to(identity.delegation.ephemeralKeyPair.privateKey);
   j.at("delegation_signature").get_to(identity.delegation.signature);
 }
 
@@ -85,10 +75,8 @@ void to_json(nlohmann::ordered_json& j, SecretPermanentIdentity const& identity)
   j["target"] = "user";
   j["value"] = identity.delegation.userId;
   j["delegation_signature"] = identity.delegation.signature;
-  j["ephemeral_public_signature_key"] =
-      identity.delegation.ephemeralKeyPair.publicKey;
-  j["ephemeral_private_signature_key"] =
-      identity.delegation.ephemeralKeyPair.privateKey;
+  j["ephemeral_public_signature_key"] = identity.delegation.ephemeralKeyPair.publicKey;
+  j["ephemeral_private_signature_key"] = identity.delegation.ephemeralKeyPair.privateKey;
   j["user_secret"] = identity.userSecret;
 }
 

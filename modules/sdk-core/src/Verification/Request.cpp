@@ -30,16 +30,14 @@ void checkNotEmpty(std::string const& value, std::string const& description)
 {
   if (value.empty())
   {
-    throw formatEx(
-        Errc::InvalidArgument, "{:s} should not be empty", description);
+    throw formatEx(Errc::InvalidArgument, "{:s} should not be empty", description);
   }
 }
 
 template <typename Ret = Tanker::Crypto::Hash, typename T>
 Ret hashField(T const& field)
 {
-  return Tanker::Crypto::generichash<Ret>(
-      gsl::make_span(field).template as_span<std::uint8_t const>());
+  return Tanker::Crypto::generichash<Ret>(gsl::make_span(field).template as_span<std::uint8_t const>());
 }
 
 // This function is NOT exposed to our users. It is important that others
@@ -48,8 +46,7 @@ Ret hashField(T const& field)
 // hash. The 'nothing up my sleeve' pepper constant provides confidence it
 // wasn't picked to match a value that might be already in use elsewhere
 // (whether accidentally or maliciously).
-Tanker::Trustchain::HashedE2ePassphrase prehashE2eVerificationPassphrase(
-    Tanker::E2ePassphrase const& passphrase)
+Tanker::Trustchain::HashedE2ePassphrase prehashE2eVerificationPassphrase(Tanker::E2ePassphrase const& passphrase)
 {
   static constexpr char pepper[] = "tanker e2e verification passphrase pepper";
   std::vector<std::uint8_t> buffer(passphrase.begin(), passphrase.end());
@@ -61,11 +58,10 @@ Tanker::Trustchain::HashedE2ePassphrase prehashE2eVerificationPassphrase(
 
 namespace Tanker::Verification
 {
-RequestWithVerif makeRequestWithVerif(
-    RequestVerification const& verification,
-    Crypto::SymmetricKey const& userSecret,
-    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
-    std::optional<std::string> const& withTokenNonce)
+RequestWithVerif makeRequestWithVerif(RequestVerification const& verification,
+                                      Crypto::SymmetricKey const& userSecret,
+                                      std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+                                      std::optional<std::string> const& withTokenNonce)
 {
   auto verif = boost::variant2::visit(
       overloaded{
@@ -73,40 +69,28 @@ RequestWithVerif makeRequestWithVerif(
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
-            EncryptedEmail encryptedEmail(
-                EncryptorV2::encryptedSize(v.email.size()));
-            EncryptorV2::encryptSync(
-                encryptedEmail,
-                gsl::make_span(v.email).as_span<uint8_t const>(),
-                userSecret);
+            EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.email.size()));
+            EncryptorV2::encryptSync(encryptedEmail, gsl::make_span(v.email).as_span<uint8_t const>(), userSecret);
 
-            return EncryptedEmailVerification{hashField(v.email),
-                                              std::move(encryptedEmail),
-                                              v.verificationCode};
+            return EncryptedEmailVerification{hashField(v.email), std::move(encryptedEmail), v.verificationCode};
           },
           [&](ByPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
 
-            EncryptedPhoneNumber encryptedPhoneNumber(
-                EncryptorV2::encryptedSize(v.phoneNumber.size()));
+            EncryptedPhoneNumber encryptedPhoneNumber(EncryptorV2::encryptedSize(v.phoneNumber.size()));
             EncryptorV2::encryptSync(
-                encryptedPhoneNumber,
-                gsl::make_span(v.phoneNumber).as_span<std::uint8_t const>(),
-                userSecret);
+                encryptedPhoneNumber, gsl::make_span(v.phoneNumber).as_span<std::uint8_t const>(), userSecret);
 
-            auto const provisionalSalt =
-                secretProvisionalSigKey.has_value() ?
-                    std::make_optional(
-                        hashField(secretProvisionalSigKey->privateKey)) :
-                    std::nullopt;
+            auto const provisionalSalt = secretProvisionalSigKey.has_value() ?
+                                             std::make_optional(hashField(secretProvisionalSigKey->privateKey)) :
+                                             std::nullopt;
 
-            return EncryptedPhoneNumberVerification{
-                v.phoneNumber,
-                hashField(userSecret),
-                provisionalSalt,
-                std::move(encryptedPhoneNumber),
-                v.verificationCode};
+            return EncryptedPhoneNumberVerification{v.phoneNumber,
+                                                    hashField(userSecret),
+                                                    provisionalSalt,
+                                                    std::move(encryptedPhoneNumber),
+                                                    v.verificationCode};
           },
           [](Passphrase const& p) -> RequestVerificationPayload {
             checkNotEmpty(p.string(), "passphrase");
@@ -114,8 +98,7 @@ RequestWithVerif makeRequestWithVerif(
           },
           [](E2ePassphrase const& p) -> RequestVerificationPayload {
             checkNotEmpty(p.string(), "e2ePassphrase");
-            return Trustchain::HashedE2ePassphrase{
-                prehashE2eVerificationPassphrase(p)};
+            return Trustchain::HashedE2ePassphrase{prehashE2eVerificationPassphrase(p)};
           },
           [](VerificationKey const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "verificationKey");
@@ -131,44 +114,31 @@ RequestWithVerif makeRequestWithVerif(
           [&](PreverifiedEmail const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "email");
             EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.size()));
-            EncryptorV2::encryptSync(encryptedEmail,
-                                     gsl::make_span(v).as_span<uint8_t const>(),
-                                     userSecret);
+            EncryptorV2::encryptSync(encryptedEmail, gsl::make_span(v).as_span<uint8_t const>(), userSecret);
 
-            return EncryptedPreverifiedEmailVerification{
-                hashField(v), std::move(encryptedEmail)};
+            return EncryptedPreverifiedEmailVerification{hashField(v), std::move(encryptedEmail)};
           },
           [&](PreverifiedPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "phoneNumber");
-            EncryptedPhoneNumber encryptedPhoneNumber(
-                EncryptorV2::encryptedSize(v.size()));
-            EncryptorV2::encryptSync(
-                encryptedPhoneNumber,
-                gsl::make_span(v).as_span<std::uint8_t const>(),
-                userSecret);
+            EncryptedPhoneNumber encryptedPhoneNumber(EncryptorV2::encryptedSize(v.size()));
+            EncryptorV2::encryptSync(encryptedPhoneNumber, gsl::make_span(v).as_span<std::uint8_t const>(), userSecret);
 
-            auto const provisionalSalt =
-                secretProvisionalSigKey.has_value() ?
-                    std::make_optional(
-                        hashField(secretProvisionalSigKey->privateKey)) :
-                    std::nullopt;
+            auto const provisionalSalt = secretProvisionalSigKey.has_value() ?
+                                             std::make_optional(hashField(secretProvisionalSigKey->privateKey)) :
+                                             std::nullopt;
 
             return EncryptedPreverifiedPhoneNumberVerification{
-                PhoneNumber{v.string()},
-                hashField(userSecret),
-                provisionalSalt,
-                std::move(encryptedPhoneNumber)};
+                PhoneNumber{v.string()}, hashField(userSecret), provisionalSalt, std::move(encryptedPhoneNumber)};
           },
       },
       verification);
   return {verif, withTokenNonce};
 }
 
-RequestWithVerif makeRequestWithVerif(
-    Verification const& verification,
-    Crypto::SymmetricKey const& userSecret,
-    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
-    std::optional<std::string> const& withTokenNonce)
+RequestWithVerif makeRequestWithVerif(Verification const& verification,
+                                      Crypto::SymmetricKey const& userSecret,
+                                      std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+                                      std::optional<std::string> const& withTokenNonce)
 {
   namespace bv2 = boost::variant2;
   if (auto const v = bv2::get_if<OidcIdToken>(&verification))
@@ -177,25 +147,19 @@ RequestWithVerif makeRequestWithVerif(
     return {*v, withTokenNonce};
   }
 
-  auto verif = bv2::visit(
-      overloaded{[&](auto const& v) -> RequestVerification { return v; },
-                 [&](OidcIdToken const& v) -> RequestVerification {
-                   throw bv2::bad_variant_access{};
-                 }},
-      verification);
+  auto verif =
+      bv2::visit(overloaded{[&](auto const& v) -> RequestVerification { return v; },
+                            [&](OidcIdToken const& v) -> RequestVerification { throw bv2::bad_variant_access{}; }},
+                 verification);
 
-  return makeRequestWithVerif(
-      verif, userSecret, secretProvisionalSigKey, withTokenNonce);
+  return makeRequestWithVerif(verif, userSecret, secretProvisionalSigKey, withTokenNonce);
 }
 
-std::vector<RequestWithVerif> makeRequestWithVerifs(
-    std::vector<Verification> const& verifications,
-    Crypto::SymmetricKey const& userSecret)
+std::vector<RequestWithVerif> makeRequestWithVerifs(std::vector<Verification> const& verifications,
+                                                    Crypto::SymmetricKey const& userSecret)
 {
-  return verifications |
-         ranges::views::transform([&userSecret](auto const& verification) {
-           return makeRequestWithVerif(
-               verification, userSecret, std::nullopt, std::nullopt);
+  return verifications | ranges::views::transform([&userSecret](auto const& verification) {
+           return makeRequestWithVerif(verification, userSecret, std::nullopt, std::nullopt);
          }) |
          ranges::to<std::vector>;
 }
@@ -207,9 +171,8 @@ void to_json(nlohmann::json& j, RequestWithVerif const& request)
     j["with_token"] = {{"nonce", *request.withTokenNonce}};
 }
 
-RequestWithSession makeRequestWithSession(
-    Identity::SecretProvisionalIdentity const& identity,
-    Crypto::SymmetricKey const& userSecret)
+RequestWithSession makeRequestWithSession(Identity::SecretProvisionalIdentity const& identity,
+                                          Crypto::SymmetricKey const& userSecret)
 {
   SessionRequestValue value;
   if (identity.target == Identity::TargetType::Email)
@@ -218,10 +181,8 @@ RequestWithSession makeRequestWithSession(
   }
   else if (identity.target == Identity::TargetType::PhoneNumber)
   {
-    const auto provisionalSalt =
-        hashField(identity.appSignatureKeyPair.privateKey);
-    value = PhoneNumberSessionRequest{
-        PhoneNumber(identity.value), hashField(userSecret), provisionalSalt};
+    const auto provisionalSalt = hashField(identity.appSignatureKeyPair.privateKey);
+    value = PhoneNumberSessionRequest{PhoneNumber(identity.value), hashField(userSecret), provisionalSalt};
   }
   else
   {
@@ -243,13 +204,11 @@ void to_json(nlohmann::json& j, SetVerifMethodRequest const& request)
 {
   j["verification"] = request.verification;
   if (request.encVkForUserSecret.has_value())
-    j["encrypted_verification_key_for_user_secret"] =
-        *request.encVkForUserSecret;
+    j["encrypted_verification_key_for_user_secret"] = *request.encVkForUserSecret;
   if (request.encVkForUserKey.has_value())
     j["encrypted_verification_key_for_user_key"] = *request.encVkForUserKey;
   if (request.encVkForE2ePass.has_value())
-    j["encrypted_verification_key_for_e2e_passphrase"] =
-        *request.encVkForE2ePass;
+    j["encrypted_verification_key_for_e2e_passphrase"] = *request.encVkForE2ePass;
 }
 }
 
@@ -260,58 +219,52 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
     json& j, Tanker::Verification::RequestVerificationPayload const& request)
 {
   using namespace Tanker;
-  boost::variant2::visit(
-      overloaded{
-          [&](Verification::EncryptedEmailVerification const& e) {
-            j["hashed_email"] = e.hashedEmail;
-            j["verification_code"] = e.verificationCode;
-            j["v2_encrypted_email"] = e.encryptedEmail;
-          },
-          [&](Verification::EncryptedPhoneNumberVerification const& e) {
-            j["phone_number"] = e.phoneNumber;
-            j["verification_code"] = e.verificationCode;
-            j["encrypted_phone_number"] = e.encryptedPhoneNumber;
-            j["user_salt"] = e.userSalt;
-            if (e.provisionalSalt)
-            {
-              j["provisional_salt"] = *e.provisionalSalt;
-            }
-          },
-          [&](Trustchain::HashedPassphrase const& p) {
-            j["hashed_passphrase"] = p;
-          },
-          [&](Trustchain::HashedE2ePassphrase const& p) {
-            j["hashed_e2e_passphrase"] = p;
-          },
-          [&](OidcIdToken const& t) { j["oidc_id_token"] = t.token; },
-          [&](Verification::OidcIdTokenWithChallenge const& t) {
-            j["oidc_id_token"] = t.oidcIdToken.token;
-            j["oidc_challenge"] = t.oidcChallenge.challenge;
-            j["oidc_challenge_signature"] = t.oidcChallenge.signature;
-            if (t.oidcTestNonce)
-            {
-              j["oidc_test_nonce"] = *t.oidcTestNonce;
-            }
-          },
-          [](VerificationKey const& v) {},
-          [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
-            j["hashed_email"] = e.hashedEmail;
-            j["v2_encrypted_email"] = e.encryptedEmail;
-            j["is_preverified"] = true;
-          },
-          [&](Verification::EncryptedPreverifiedPhoneNumberVerification const&
-                  e) {
-            j["phone_number"] = e.phoneNumber;
-            j["encrypted_phone_number"] = e.encryptedPhoneNumber;
-            j["user_salt"] = e.userSalt;
-            j["is_preverified"] = true;
-            if (e.provisionalSalt)
-            {
-              j["provisional_salt"] = *e.provisionalSalt;
-            }
-          },
-      },
-      request);
+  boost::variant2::visit(overloaded{
+                             [&](Verification::EncryptedEmailVerification const& e) {
+                               j["hashed_email"] = e.hashedEmail;
+                               j["verification_code"] = e.verificationCode;
+                               j["v2_encrypted_email"] = e.encryptedEmail;
+                             },
+                             [&](Verification::EncryptedPhoneNumberVerification const& e) {
+                               j["phone_number"] = e.phoneNumber;
+                               j["verification_code"] = e.verificationCode;
+                               j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+                               j["user_salt"] = e.userSalt;
+                               if (e.provisionalSalt)
+                               {
+                                 j["provisional_salt"] = *e.provisionalSalt;
+                               }
+                             },
+                             [&](Trustchain::HashedPassphrase const& p) { j["hashed_passphrase"] = p; },
+                             [&](Trustchain::HashedE2ePassphrase const& p) { j["hashed_e2e_passphrase"] = p; },
+                             [&](OidcIdToken const& t) { j["oidc_id_token"] = t.token; },
+                             [&](Verification::OidcIdTokenWithChallenge const& t) {
+                               j["oidc_id_token"] = t.oidcIdToken.token;
+                               j["oidc_challenge"] = t.oidcChallenge.challenge;
+                               j["oidc_challenge_signature"] = t.oidcChallenge.signature;
+                               if (t.oidcTestNonce)
+                               {
+                                 j["oidc_test_nonce"] = *t.oidcTestNonce;
+                               }
+                             },
+                             [](VerificationKey const& v) {},
+                             [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
+                               j["hashed_email"] = e.hashedEmail;
+                               j["v2_encrypted_email"] = e.encryptedEmail;
+                               j["is_preverified"] = true;
+                             },
+                             [&](Verification::EncryptedPreverifiedPhoneNumberVerification const& e) {
+                               j["phone_number"] = e.phoneNumber;
+                               j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+                               j["user_salt"] = e.userSalt;
+                               j["is_preverified"] = true;
+                               if (e.provisionalSalt)
+                               {
+                                 j["provisional_salt"] = *e.provisionalSalt;
+                               }
+                             },
+                         },
+                         request);
 }
 
 template <>
@@ -319,17 +272,14 @@ void adl_serializer<Tanker::Verification::SessionRequestValue>::to_json(
     json& j, Tanker::Verification::SessionRequestValue const& request)
 {
   using namespace Tanker;
-  boost::variant2::visit(
-      overloaded{
-          [&](Verification::EmailSessionRequest const& e) {
-            j["email"] = e.email;
-          },
-          [&](Verification::PhoneNumberSessionRequest const& e) {
-            j["phone_number"] = e.phoneNumber;
-            j["provisional_salt"] = e.provisionalSalt;
-            j["user_secret_salt"] = e.userSalt;
-          },
-      },
-      request);
+  boost::variant2::visit(overloaded{
+                             [&](Verification::EmailSessionRequest const& e) { j["email"] = e.email; },
+                             [&](Verification::PhoneNumberSessionRequest const& e) {
+                               j["phone_number"] = e.phoneNumber;
+                               j["provisional_salt"] = e.provisionalSalt;
+                               j["user_secret_salt"] = e.userSalt;
+                             },
+                         },
+                         request);
 }
 }

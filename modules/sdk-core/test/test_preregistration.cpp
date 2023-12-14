@@ -19,38 +19,27 @@ TEST_CASE("Preregistration")
   LocalUserAccessorMock userLocalAccessor;
 
   auto const alice = generator.makeUser("alice");
-  auto const provisionalUser =
-      generator.makeProvisionalUser("alice.test@tanker.io");
+  auto const provisionalUser = generator.makeProvisionalUser("alice.test@tanker.io");
   auto picEntry = alice.claim(provisionalUser);
 
   SECTION("throws if the user key is not found")
   {
-    REQUIRE_CALL(userLocalAccessor,
-                 pullUserKeyPair(alice.userKeys().back().publicKey))
-        .RETURN(
-            makeCoTask(std::optional<Crypto::EncryptionKeyPair>(std::nullopt)));
+    REQUIRE_CALL(userLocalAccessor, pullUserKeyPair(alice.userKeys().back().publicKey))
+        .RETURN(makeCoTask(std::optional<Crypto::EncryptionKeyPair>(std::nullopt)));
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(
-            userLocalAccessor, picEntry)),
-        Errc::InternalError);
+        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(userLocalAccessor, picEntry)), Errc::InternalError);
   }
 
   SECTION("can decrypt a preregistration claim")
   {
-    REQUIRE_CALL(userLocalAccessor,
-                 pullUserKeyPair(alice.userKeys().back().publicKey))
+    REQUIRE_CALL(userLocalAccessor, pullUserKeyPair(alice.userKeys().back().publicKey))
         .RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
 
-    auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(
-        userLocalAccessor, picEntry));
-    CHECK(gotKeys.appSignaturePublicKey ==
-          provisionalUser.appSignatureKeyPair().publicKey);
-    CHECK(gotKeys.tankerSignaturePublicKey ==
-          provisionalUser.tankerSignatureKeyPair().publicKey);
-    CHECK(gotKeys.appEncryptionKeyPair ==
-          provisionalUser.appEncryptionKeyPair());
-    CHECK(gotKeys.tankerEncryptionKeyPair ==
-          provisionalUser.tankerEncryptionKeyPair());
+    auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(userLocalAccessor, picEntry));
+    CHECK(gotKeys.appSignaturePublicKey == provisionalUser.appSignatureKeyPair().publicKey);
+    CHECK(gotKeys.tankerSignaturePublicKey == provisionalUser.tankerSignatureKeyPair().publicKey);
+    CHECK(gotKeys.appEncryptionKeyPair == provisionalUser.appEncryptionKeyPair());
+    CHECK(gotKeys.tankerEncryptionKeyPair == provisionalUser.tankerEncryptionKeyPair());
   }
 }

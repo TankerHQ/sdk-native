@@ -31,8 +31,7 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"app_not_found", AppdErrc::AppNotFound},
     {"device_not_found", AppdErrc::DeviceNotFound},
     {"provisional_identity_not_found", AppdErrc::ProvisionalIdentityNotFound},
-    {"provisional_identity_already_attached",
-     AppdErrc::ProvisionalIdentityAlreadyAttached},
+    {"provisional_identity_already_attached", AppdErrc::ProvisionalIdentityAlreadyAttached},
     {"too_many_attempts", AppdErrc::TooManyAttempts},
     {"invalid_passphrase", AppdErrc::InvalidPassphrase},
     {"invalid_verification_code", AppdErrc::InvalidVerificationCode},
@@ -95,9 +94,7 @@ HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
   }
   catch (nlohmann::json::exception const& ex)
   {
-    throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                           "invalid http response format: {}",
-                           res.body);
+    throw Errors::formatEx(Errors::AppdErrc::InternalError, "invalid http response format: {}", res.body);
   }
 }
 }
@@ -119,21 +116,12 @@ std::error_code make_error_code(HttpError const& e)
 
 [[noreturn]] void outcome_throw_as_system_error_with_payload(HttpError e)
 {
-  throw Errors::formatEx(e.ec,
-                         "HTTP error occurred: {} {}: {} {}, traceID: {}",
-                         e.method,
-                         e.href,
-                         e.status,
-                         e.message,
-                         e.traceId);
+  throw Errors::formatEx(
+      e.ec, "HTTP error occurred: {} {}: {} {}, traceID: {}", e.method, e.href, e.status, e.message, e.traceId);
 }
 
-HttpClient::HttpClient(std::string baseUrl,
-                       std::string instanceId,
-                       Backend* backend)
-  : _baseUrl(std::move(baseUrl)),
-    _instanceId(std::move(instanceId)),
-    _backend(backend)
+HttpClient::HttpClient(std::string baseUrl, std::string instanceId, Backend* backend)
+  : _baseUrl(std::move(baseUrl)), _instanceId(std::move(instanceId)), _backend(backend)
 {
   if (!_baseUrl.empty() && _baseUrl.back() != '/')
     _baseUrl += '/';
@@ -146,9 +134,8 @@ void HttpClient::setAccessToken(std::string_view accessToken)
   _accessToken = fmt::format("Bearer {}", accessToken);
 }
 
-void HttpClient::setDeviceAuthData(
-    Trustchain::DeviceId const& deviceId,
-    Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
+void HttpClient::setDeviceAuthData(Trustchain::DeviceId const& deviceId,
+                                   Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
 {
   _deviceId = deviceId;
   _deviceSignatureKeyPair = deviceSignatureKeyPair;
@@ -168,35 +155,26 @@ tc::cotask<void> HttpClient::authenticate()
   auto const doAuth = [&]() -> tc::cotask<void> {
     FUNC_TIMER(Net);
 
-    auto const baseTarget =
-        fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(HttpMethod::Post,
-                           makeUrl(fmt::format("{}/challenges", baseTarget)));
-    auto const challenge = TC_AWAIT(fetch(std::move(req)))
-                               .value()
-                               .at("challenge")
-                               .get<std::string>();
+    auto const baseTarget = fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
+    auto req = makeRequest(HttpMethod::Post, makeUrl(fmt::format("{}/challenges", baseTarget)));
+    auto const challenge = TC_AWAIT(fetch(std::move(req))).value().at("challenge").get<std::string>();
     // NOTE: It is MANDATORY to check this prefix is valid, or the server
     // could get us to sign anything!
     // NOTE: Visual Studio cannot compile a u8 string correctly, so hardcode
     // U+1F512 in hex
-    if (!boost::algorithm::starts_with(
-            challenge, "\xF0\x9F\x94\x92 Auth Challenge. 1234567890."))
+    if (!boost::algorithm::starts_with(challenge, "\xF0\x9F\x94\x92 Auth Challenge. 1234567890."))
     {
-      throw formatEx(
-          Errors::Errc::InternalError,
-          "received auth challenge does not contain mandatory prefix, server "
-          "may not be up to date, or we may be under attack.");
+      throw formatEx(Errors::Errc::InternalError,
+                     "received auth challenge does not contain mandatory prefix, server "
+                     "may not be up to date, or we may be under attack.");
     }
     auto const signature =
-        Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                     _deviceSignatureKeyPair.privateKey);
-    auto req2 = makeRequest(
-        HttpMethod::Post,
-        makeUrl(fmt::format("{}/sessions", baseTarget)),
-        {{"signature", signature},
-         {"challenge", challenge},
-         {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
+        Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(), _deviceSignatureKeyPair.privateKey);
+    auto req2 = makeRequest(HttpMethod::Post,
+                            makeUrl(fmt::format("{}/sessions", baseTarget)),
+                            {{"signature", signature},
+                             {"challenge", challenge},
+                             {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
     auto response = TC_AWAIT(fetch(std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
 
@@ -217,10 +195,8 @@ tc::cotask<void> HttpClient::deauthenticate()
 
   try
   {
-    auto const baseTarget =
-        fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(HttpMethod::Delete,
-                           makeUrl(fmt::format("{}/sessions", baseTarget)));
+    auto const baseTarget = fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
+    auto req = makeRequest(HttpMethod::Delete, makeUrl(fmt::format("{}/sessions", baseTarget)));
     auto res = TC_AWAIT(fetch(req));
     if (res.has_error())
     {
@@ -248,8 +224,7 @@ std::string HttpClient::makeUrl(std::string_view target) const
   return fmt::format("{}{}", _baseUrl, target);
 }
 
-std::string HttpClient::makeUrl(std::string_view target,
-                                nlohmann::json const& query) const
+std::string HttpClient::makeUrl(std::string_view target, nlohmann::json const& query) const
 {
   return fmt::format("{}{}?{}", _baseUrl, target, makeQueryString(query));
 }
@@ -272,8 +247,7 @@ std::string HttpClient::makeQueryString(nlohmann::json const& query) const
     }
     else
     {
-      throw Errors::AssertionError(
-          "unknown type in HttpClient::makeQueryString");
+      throw Errors::AssertionError("unknown type in HttpClient::makeQueryString");
     }
   }
   if (!out.empty())
@@ -287,15 +261,13 @@ tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
   TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
-                                             nlohmann::json data)
+tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target, nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Post, target, std::move(data));
   TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
-                                              nlohmann::json data)
+tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target, nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Patch, target, std::move(data));
   TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
@@ -313,16 +285,13 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target)
   TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target,
-                                                   nlohmann::json data)
+tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target, nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Post, target, std::move(data));
   TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 
-HttpRequest HttpClient::makeRequest(HttpMethod method,
-                                    std::string_view url,
-                                    nlohmann::json const& data)
+HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url, nlohmann::json const& data)
 {
   HttpRequest req;
   req.method = method;

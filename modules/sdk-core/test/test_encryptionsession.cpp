@@ -39,18 +39,15 @@ protected:
   std::shared_ptr<Session> session;
 };
 
-void commonEncSessionTests(std::shared_ptr<Session>& session,
-                           EncryptionSession encSession)
+void commonEncSessionTests(std::shared_ptr<Session>& session, EncryptionSession encSession)
 {
   SECTION("encrypt should never give the same result twice")
   {
     auto clearData = make_buffer("this is the data to encrypt");
 
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData1(encSession.encryptedSize(clearData.size()));
     AWAIT(encSession.encrypt(encryptedData1, clearData));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData2(encSession.encryptedSize(clearData.size()));
     AWAIT(encSession.encrypt(encryptedData2, clearData));
 
     CHECK(encryptedData1 != encryptedData2);
@@ -60,30 +57,26 @@ void commonEncSessionTests(std::shared_ptr<Session>& session,
   {
     auto const clearData = make_buffer("this is very secret");
 
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(encSession.encryptedSize(clearData.size()));
     auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
     std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
     encryptedData[2]++;
 
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
-        Errc::DecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
+                                  Errc::DecryptionFailed);
   }
 
   SECTION("Session's resourceId should match metadata and V7 resource ID")
   {
     auto clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(encSession.encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
     CHECK(encSession.resourceId() == metadata.resourceId);
-    CHECK(Encryptor::extractResourceId(encryptedData) ==
-          ResourceId{metadata.resourceId});
+    CHECK(Encryptor::extractResourceId(encryptedData) == ResourceId{metadata.resourceId});
   }
 
   SECTION("resourceId is the same for all session encryptions")
@@ -91,11 +84,9 @@ void commonEncSessionTests(std::shared_ptr<Session>& session,
     auto clearData1 = make_buffer("Rotating locomotion in living systems");
     auto clearData2 = make_buffer("Gondwanatheria, an enigmatic extinct group");
 
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData1.size()));
+    std::vector<uint8_t> encryptedData1(encSession.encryptedSize(clearData1.size()));
     auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData2.size()));
+    std::vector<uint8_t> encryptedData2(encSession.encryptedSize(clearData2.size()));
     auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
     CHECK(meta1.resourceId == meta2.resourceId);
@@ -103,15 +94,12 @@ void commonEncSessionTests(std::shared_ptr<Session>& session,
 
   SECTION("encryption key is the same for all session encryptions")
   {
-    auto clearData1 =
-        make_buffer("The Australian Cattle Dog is energetic and intelligent");
+    auto clearData1 = make_buffer("The Australian Cattle Dog is energetic and intelligent");
     auto clearData2 = make_buffer("It nests in hollows of gum trees");
 
-    std::vector<uint8_t> encryptedData1(
-        encSession.encryptedSize(clearData1.size()));
+    std::vector<uint8_t> encryptedData1(encSession.encryptedSize(clearData1.size()));
     auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
-    std::vector<uint8_t> encryptedData2(
-        encSession.encryptedSize(clearData2.size()));
+    std::vector<uint8_t> encryptedData2(encSession.encryptedSize(clearData2.size()));
     auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
     CHECK(meta1.resourceId == meta2.resourceId);
@@ -120,19 +108,14 @@ void commonEncSessionTests(std::shared_ptr<Session>& session,
   SECTION("cannot encrypt if a session has been reset")
   {
     auto clearData = make_buffer("It nests in hollows of gum trees");
-    std::vector<uint8_t> encryptedData(
-        encSession.encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(encSession.encryptedSize(clearData.size()));
 
     session.reset();
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(encSession.encrypt(encryptedData, clearData)),
-        Errc::PreconditionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encSession.encrypt(encryptedData, clearData)), Errc::PreconditionFailed);
 
-    TANKER_CHECK_THROWS_WITH_CODE(encSession.resourceId(),
-                                  Errc::PreconditionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(encSession.resourceId(), Errc::PreconditionFailed);
 
-    TANKER_CHECK_THROWS_WITH_CODE(encSession.sessionKey(),
-                                  Errc::PreconditionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(encSession.sessionKey(), Errc::PreconditionFailed);
   }
 }
 }
@@ -176,8 +159,7 @@ TEST_CASE_METHOD(FixtureSession, "encryption session tests with a padding step")
     for (auto const str : clearDatas)
     {
       auto const clearData = make_buffer(str);
-      std::vector<uint8_t> encryptedData(
-          encSession.encryptedSize(clearData.size()));
+      std::vector<uint8_t> encryptedData(encSession.encryptedSize(clearData.size()));
       AWAIT(encSession.encrypt(encryptedData, clearData));
 
       auto const unpaddedSize = encryptedData.size() - encryptionOverhead - 1;

@@ -64,9 +64,8 @@ unsigned char tanker_future_has_error(tanker_future_t* future)
   return future->future.has_exception();
 }
 
-#define CHECK_ENUM(cerror, cpperror)                                  \
-  static_assert(static_cast<int>(TANKER_ERROR_##cerror) ==            \
-                    static_cast<int>(Tanker::Errors::Errc::cpperror), \
+#define CHECK_ENUM(cerror, cpperror)                                                                         \
+  static_assert(static_cast<int>(TANKER_ERROR_##cerror) == static_cast<int>(Tanker::Errors::Errc::cpperror), \
                 "Error code enums not matching")
 
 CHECK_ENUM(INVALID_ARGUMENT, InvalidArgument);
@@ -92,8 +91,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 16,
-              "Add an assertion above and fix this one");
+static_assert(TANKER_ERROR_LAST == 16, "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
 {
@@ -113,27 +111,22 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
   }
   catch (Tanker::Errors::Exception const& e)
   {
-    cfuture->error.reset(
-        new tanker_error_t{static_cast<tanker_error_code_t>(
-                               e.errorCode().default_error_condition().value()),
-                           duplicateString(e.what())});
+    cfuture->error.reset(new tanker_error_t{
+        static_cast<tanker_error_code_t>(e.errorCode().default_error_condition().value()), duplicateString(e.what())});
   }
   catch (tc::operation_canceled const& e)
   {
-    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_OPERATION_CANCELED,
-                                            duplicateString(e.what())});
+    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_OPERATION_CANCELED, duplicateString(e.what())});
   }
   catch (std::exception const& e)
   {
-    cfuture->error.reset(new tanker_error_t{
-        TANKER_ERROR_INTERNAL_ERROR,
-        duplicateString(fmt::format(
-            FMT_STRING("{:s}: {:s}"), typeid(e).name(), e.what()))});
+    cfuture->error.reset(
+        new tanker_error_t{TANKER_ERROR_INTERNAL_ERROR,
+                           duplicateString(fmt::format(FMT_STRING("{:s}: {:s}"), typeid(e).name(), e.what()))});
   }
   catch (...)
   {
-    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_INTERNAL_ERROR,
-                                            duplicateString("unknown error")});
+    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_INTERNAL_ERROR, duplicateString("unknown error")});
   }
   return cfuture->error.get();
 }
@@ -156,13 +149,11 @@ tanker_future_t* wrapInC(tc::future<void*> fut)
 }
 }
 
-tanker_future_t* tanker_future_then(tanker_future_t* future,
-                                    tanker_future_then_t cb,
-                                    void* arg)
+tanker_future_t* tanker_future_then(tanker_future_t* future, tanker_future_then_t cb, void* arg)
 {
   return makeFuture(future->future.then([cb, arg](auto future) {
-    std::unique_ptr<tanker_future_t, void (*)(tanker_future_t*)> fut(
-        wrapInC(std::move(future)), [](tanker_future_t* f) { delete f; });
+    std::unique_ptr<tanker_future_t, void (*)(tanker_future_t*)> fut(wrapInC(std::move(future)),
+                                                                     [](tanker_future_t* f) { delete f; });
     return cb(fut.get(), arg);
   }));
 }

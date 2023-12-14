@@ -18,30 +18,23 @@ namespace Tanker::Trustchain
 {
 Crypto::Hash getHash(GroupAction const& action)
 {
-  return boost::variant2::visit(
-      [&](auto const& val) {
-        return val.visit([&](auto const& val) { return val.hash(); });
-      },
-      action);
+  return boost::variant2::visit([&](auto const& val) { return val.visit([&](auto const& val) { return val.hash(); }); },
+                                action);
 }
 
 Actions::Nature getNature(GroupAction const& action)
 {
-  return boost::variant2::visit([&](auto const& val) { return val.nature(); },
-                                action);
+  return boost::variant2::visit([&](auto const& val) { return val.nature(); }, action);
 }
 
 Crypto::Hash const& getAuthor(GroupAction const& action)
 {
-  return boost::variant2::visit(
-      [&](auto const& val) -> decltype(auto) { return val.author(); }, action);
+  return boost::variant2::visit([&](auto const& val) -> decltype(auto) { return val.author(); }, action);
 }
 
 Crypto::Signature const& getSignature(GroupAction const& action)
 {
-  return boost::variant2::visit(
-      [&](auto const& val) -> decltype(auto) { return val.signature(); },
-      action);
+  return boost::variant2::visit([&](auto const& val) -> decltype(auto) { return val.signature(); }, action);
 }
 
 GroupId getGroupId(GroupAction const& action)
@@ -76,10 +69,9 @@ GroupAction deserializeGroupAction(gsl::span<std::uint8_t const> block)
   default:
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals
-    throw Errors::formatEx(
-        Errors::Errc::UpgradeRequired,
-        "{} is not a known group block nature, Tanker needs to be updated",
-        static_cast<int>(nature));
+    throw Errors::formatEx(Errors::Errc::UpgradeRequired,
+                           "{} is not a known group block nature, Tanker needs to be updated",
+                           static_cast<int>(nature));
   }
 }
 }

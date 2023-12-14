@@ -16,10 +16,9 @@ namespace DataStore
 using Connection = sqlpp::sqlite3::connection;
 using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 
-ConnPtr createConnection(
-    std::string const& dbPath,
-    std::optional<Crypto::SymmetricKey> userSecret = std::nullopt,
-    bool exclusive = true);
+ConnPtr createConnection(std::string const& dbPath,
+                         std::optional<Crypto::SymmetricKey> userSecret = std::nullopt,
+                         bool exclusive = true);
 
 constexpr bool hasCipher()
 {

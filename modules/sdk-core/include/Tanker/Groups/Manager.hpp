@@ -43,8 +43,7 @@ struct MembersToAdd
   std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
 };
 
-tc::cotask<MembersToAdd> fetchFutureMembers(
-    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
+tc::cotask<MembersToAdd> fetchFutureMembers(Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
 
 struct MembersToRemove
 {
@@ -52,8 +51,8 @@ struct MembersToRemove
   std::vector<Trustchain::ProvisionalUserId> provisionalUsers;
 };
 
-tc::cotask<MembersToRemove> fetchMembersToRemove(
-    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
+tc::cotask<MembersToRemove> fetchMembersToRemove(Users::IUserAccessor& userAccessor,
+                                                 ProcessedIdentities const& identities);
 
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
@@ -64,13 +63,12 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-tc::cotask<SGroupId> create(
-    Users::IUserAccessor& userAccessor,
-    IRequester& requester,
-    std::vector<SPublicIdentity> spublicIdentities,
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
+tc::cotask<SGroupId> create(Users::IUserAccessor& userAccessor,
+                            IRequester& requester,
+                            std::vector<SPublicIdentity> spublicIdentities,
+                            Trustchain::TrustchainId const& trustchainId,
+                            Trustchain::DeviceId const& deviceId,
+                            Crypto::PrivateSignatureKey const& privateSignatureKey);
 
 Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     std::vector<Users::User> const& memberUsers,
@@ -82,21 +80,19 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
 Trustchain::Actions::UserGroupRemoval makeUserGroupRemovalAction(
     std::vector<Trustchain::UserId> const& membersToRemove,
-    std::vector<Trustchain::ProvisionalUserId> const&
-        provisionalMembersToRemove,
+    std::vector<Trustchain::ProvisionalUserId> const& provisionalMembersToRemove,
     InternalGroup const& group,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-tc::cotask<void> updateMembers(
-    Users::IUserAccessor& userAccessor,
-    IRequester& requester,
-    IAccessor& groupAccessor,
-    Trustchain::GroupId const& groupId,
-    std::vector<SPublicIdentity> spublicIdentitiesToAdd,
-    std::vector<SPublicIdentity> spublicIdentitiesToRemove,
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
+tc::cotask<void> updateMembers(Users::IUserAccessor& userAccessor,
+                               IRequester& requester,
+                               IAccessor& groupAccessor,
+                               Trustchain::GroupId const& groupId,
+                               std::vector<SPublicIdentity> spublicIdentitiesToAdd,
+                               std::vector<SPublicIdentity> spublicIdentitiesToRemove,
+                               Trustchain::TrustchainId const& trustchainId,
+                               Trustchain::DeviceId const& deviceId,
+                               Crypto::PrivateSignatureKey const& privateSignatureKey);
 }

@@ -33,20 +33,15 @@ public:
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) override;
 
-  tc::cotask<void> createGroup(
-      Trustchain::Actions::UserGroupCreation const& groupCreation) override;
+  tc::cotask<void> createGroup(Trustchain::Actions::UserGroupCreation const& groupCreation) override;
 
-  tc::cotask<void> updateGroup(
-      Trustchain::Actions::UserGroupAddition const& groupAddition) override;
+  tc::cotask<void> updateGroup(Trustchain::Actions::UserGroupAddition const& groupAddition) override;
 
-  tc::cotask<void> softUpdateGroup(
-      Trustchain::Actions::UserGroupRemoval const& groupRemoval,
-      std::optional<Trustchain::Actions::UserGroupAddition> const&
-          groupAddition) override;
+  tc::cotask<void> softUpdateGroup(Trustchain::Actions::UserGroupRemoval const& groupRemoval,
+                                   std::optional<Trustchain::Actions::UserGroupAddition> const& groupAddition) override;
 
 private:
-  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocksImpl(
-      nlohmann::json const& query);
+  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocksImpl(nlohmann::json const& query);
 
   Network::HttpClient* _httpClient;
 };

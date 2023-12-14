@@ -22,9 +22,7 @@ namespace
 {
 constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
 constexpr auto versionSize = 1;
-constexpr auto headerSize = versionSize + sizeOfChunkSize +
-                            SimpleResourceId::arraySize +
-                            Crypto::AeadIv::arraySize;
+constexpr auto headerSize = versionSize + sizeOfChunkSize + SimpleResourceId::arraySize + Crypto::AeadIv::arraySize;
 constexpr auto chunkOverhead = headerSize + Crypto::Mac::arraySize;
 
 // version 4 format layout:
@@ -33,8 +31,7 @@ constexpr auto chunkOverhead = headerSize + Crypto::Mac::arraySize;
 // content: [ciphertext, variable] [MAC, 16B]
 }
 
-std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize,
-                                         std::uint32_t encryptedChunkSize)
+std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize, std::uint32_t encryptedChunkSize)
 {
   auto const chunkSize = encryptedChunkSize - chunkOverhead;
   auto const chunks = clearSize / chunkSize;
@@ -43,8 +40,7 @@ std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize,
   return chunks * encryptedChunkSize + lastEncryptedChunkSize;
 }
 
-std::uint64_t EncryptorV4::decryptedSize(
-    gsl::span<std::uint8_t const> encryptedData)
+std::uint64_t EncryptorV4::decryptedSize(gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
   auto const header = Serialization::deserialize<Header>(ss);
@@ -53,19 +49,16 @@ std::uint64_t EncryptorV4::decryptedSize(
   if (ss.remaining_size() < Crypto::Mac::arraySize)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   auto const chunks = encryptedData.size() / header.encryptedChunkSize();
-  auto const lastEncryptedChunkSize =
-      encryptedData.size() % header.encryptedChunkSize();
+  auto const lastEncryptedChunkSize = encryptedData.size() % header.encryptedChunkSize();
   if (lastEncryptedChunkSize < chunkOverhead)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   auto const lastClearChunkSize = lastEncryptedChunkSize - chunkOverhead;
-  return chunks * (header.encryptedChunkSize() - chunkOverhead) +
-         lastClearChunkSize;
+  return chunks * (header.encryptedChunkSize() - chunkOverhead) + lastClearChunkSize;
 }
 
-tc::cotask<EncryptCacheMetadata> EncryptorV4::encrypt(
-    gsl::span<std::uint8_t> encryptedData,
-    gsl::span<std::uint8_t const> clearData,
-    std::uint32_t encryptedChunkSize)
+tc::cotask<EncryptCacheMetadata> EncryptorV4::encrypt(gsl::span<std::uint8_t> encryptedData,
+                                                      gsl::span<std::uint8_t const> clearData,
+                                                      std::uint32_t encryptedChunkSize)
 {
   TC_RETURN(TC_AWAIT(encrypt(encryptedData,
                              clearData,
@@ -74,47 +67,39 @@ tc::cotask<EncryptCacheMetadata> EncryptorV4::encrypt(
                              encryptedChunkSize)));
 }
 
-tc::cotask<EncryptCacheMetadata> EncryptorV4::encrypt(
-    gsl::span<std::uint8_t> encryptedData,
-    gsl::span<std::uint8_t const> clearData,
-    Crypto::SimpleResourceId const& resourceId,
-    Crypto::SymmetricKey const& key,
-    std::uint32_t encryptedChunkSize)
+tc::cotask<EncryptCacheMetadata> EncryptorV4::encrypt(gsl::span<std::uint8_t> encryptedData,
+                                                      gsl::span<std::uint8_t const> clearData,
+                                                      Crypto::SimpleResourceId const& resourceId,
+                                                      Crypto::SymmetricKey const& key,
+                                                      std::uint32_t encryptedChunkSize)
 {
-  EncryptionStreamV4 encryptor(
-      bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
 
   while (auto const nbRead = TC_AWAIT(encryptor(encryptedData)))
     encryptedData = encryptedData.subspan(nbRead);
 
-  TC_RETURN(
-      (EncryptCacheMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
+  TC_RETURN((EncryptCacheMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
 }
 
-tc::cotask<std::uint64_t> EncryptorV4::decrypt(
-    gsl::span<std::uint8_t> decryptedData,
-    Encryptor::ResourceKeyFinder const& keyFinder,
-    gsl::span<std::uint8_t const> encryptedData)
+tc::cotask<std::uint64_t> EncryptorV4::decrypt(gsl::span<std::uint8_t> decryptedData,
+                                               Encryptor::ResourceKeyFinder const& keyFinder,
+                                               gsl::span<std::uint8_t const> encryptedData)
 {
   auto const initialSize = decryptedData.size();
 
-  auto decryptor = TC_AWAIT(DecryptionStreamV4::create(
-      bufferViewToInputSource(encryptedData), keyFinder));
+  auto decryptor = TC_AWAIT(DecryptionStreamV4::create(bufferViewToInputSource(encryptedData), keyFinder));
 
   while (auto const nbRead = TC_AWAIT(decryptor(decryptedData)))
     decryptedData = decryptedData.subspan(nbRead);
 
   if (!decryptedData.empty())
     throw Errors::AssertionError(fmt::format(
-        "EncryptorV4: got less than expected data (expected: {}, missing: {})",
-        initialSize,
-        decryptedData.size()));
+        "EncryptorV4: got less than expected data (expected: {}, missing: {})", initialSize, decryptedData.size()));
 
   TC_RETURN(initialSize);
 }
 
-SimpleResourceId EncryptorV4::extractResourceId(
-    gsl::span<std::uint8_t const> encryptedData)
+SimpleResourceId EncryptorV4::extractResourceId(gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
   return Serialization::deserialize<Header>(ss).resourceId();

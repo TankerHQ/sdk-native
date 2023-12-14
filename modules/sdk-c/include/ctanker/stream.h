@@ -22,11 +22,10 @@ typedef struct tanker_stream_read_operation tanker_stream_read_operation_t;
  * \param operation The current read operation
  * \param additional_data additional data
  */
-typedef void (*tanker_stream_input_source_t)(
-    uint8_t* buffer,
-    int64_t buffer_size,
-    tanker_stream_read_operation_t* operation,
-    void* additional_data);
+typedef void (*tanker_stream_input_source_t)(uint8_t* buffer,
+                                             int64_t buffer_size,
+                                             tanker_stream_read_operation_t* operation,
+                                             void* additional_data);
 
 /*!
  * Create an encryption stream
@@ -40,11 +39,10 @@ typedef void (*tanker_stream_input_source_t)(
  *
  * \return A new stream encryptor, to be closed with tanker_stream_close
  */
-CTANKER_EXPORT tanker_future_t* tanker_stream_encrypt(
-    tanker_t* tanker,
-    tanker_stream_input_source_t cb,
-    void* additional_data,
-    tanker_encrypt_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_stream_encrypt(tanker_t* tanker,
+                                                      tanker_stream_input_source_t cb,
+                                                      void* additional_data,
+                                                      tanker_encrypt_options_t const* options);
 
 /*!
  * Create a decryption stream
@@ -56,8 +54,9 @@ CTANKER_EXPORT tanker_future_t* tanker_stream_encrypt(
  * \pre tanker_status == TANKER_STATUS_READY
  * \return A new stream encryptor, to be closed with tanker_stream_close
  */
-CTANKER_EXPORT tanker_future_t* tanker_stream_decrypt(
-    tanker_t* tanker, tanker_stream_input_source_t cb, void* additional_data);
+CTANKER_EXPORT tanker_future_t* tanker_stream_decrypt(tanker_t* tanker,
+                                                      tanker_stream_input_source_t cb,
+                                                      void* additional_data);
 
 /*!
  * Finish a read operation
@@ -66,8 +65,7 @@ CTANKER_EXPORT tanker_future_t* tanker_stream_decrypt(
  * \param nb_read The number of bytes read during the operation, or 0 if EOF is
  * reached, or -1 if an error occurred.
  */
-CTANKER_EXPORT void tanker_stream_read_operation_finish(
-    tanker_stream_read_operation_t* op, int64_t nb_read);
+CTANKER_EXPORT void tanker_stream_read_operation_finish(tanker_stream_read_operation_t* op, int64_t nb_read);
 
 /*!
  * Read input from a stream
@@ -88,9 +86,7 @@ CTANKER_EXPORT void tanker_stream_read_operation_finish(
  *
  * \return The number of bytes read, or 0 if EOF is reached
  */
-CTANKER_EXPORT tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
-                                                   uint8_t* buffer,
-                                                   int64_t buffer_size);
+CTANKER_EXPORT tanker_future_t* tanker_stream_read(tanker_stream_t* stream, uint8_t* buffer, int64_t buffer_size);
 
 /*!
  * Get the resource id from a stream
@@ -98,8 +94,7 @@ CTANKER_EXPORT tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
  * \param stream the stream
  * \return the resource id
  */
-CTANKER_EXPORT tanker_expected_t* tanker_stream_get_resource_id(
-    tanker_stream_t* stream);
+CTANKER_EXPORT tanker_expected_t* tanker_stream_get_resource_id(tanker_stream_t* stream);
 
 /*!
  * Close a stream

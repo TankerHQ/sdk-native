@@ -28,32 +28,22 @@ constexpr auto Version = 1;
 
 std::vector<uint8_t> serializeEncryptedDevice(DeviceData const& deviceData)
 {
-  std::vector<uint8_t> data(
-      sizeof(uint8_t) +
-      Serialization::serialized_size(deviceData.trustchainPublicKey) +
-      Serialization::serialized_size(deviceData.deviceId) +
-      Serialization::serialized_size(
-          deviceData.deviceKeys.signatureKeyPair.privateKey) +
-      Serialization::serialized_size(
-          deviceData.deviceKeys.signatureKeyPair.publicKey) +
-      Serialization::serialized_size(
-          deviceData.deviceKeys.encryptionKeyPair.privateKey) +
-      Serialization::serialized_size(
-          deviceData.deviceKeys.encryptionKeyPair.publicKey) +
-      Serialization::serialized_size(deviceData.userKeys));
+  std::vector<uint8_t> data(sizeof(uint8_t) + Serialization::serialized_size(deviceData.trustchainPublicKey) +
+                            Serialization::serialized_size(deviceData.deviceId) +
+                            Serialization::serialized_size(deviceData.deviceKeys.signatureKeyPair.privateKey) +
+                            Serialization::serialized_size(deviceData.deviceKeys.signatureKeyPair.publicKey) +
+                            Serialization::serialized_size(deviceData.deviceKeys.encryptionKeyPair.privateKey) +
+                            Serialization::serialized_size(deviceData.deviceKeys.encryptionKeyPair.publicKey) +
+                            Serialization::serialized_size(deviceData.userKeys));
 
   auto it = data.data();
   it = Serialization::serialize<uint8_t>(it, Version);
   it = Serialization::serialize(it, deviceData.trustchainPublicKey);
   it = Serialization::serialize(it, deviceData.deviceId);
-  it = Serialization::serialize(
-      it, deviceData.deviceKeys.signatureKeyPair.privateKey);
-  it = Serialization::serialize(
-      it, deviceData.deviceKeys.signatureKeyPair.publicKey);
-  it = Serialization::serialize(
-      it, deviceData.deviceKeys.encryptionKeyPair.privateKey);
-  it = Serialization::serialize(
-      it, deviceData.deviceKeys.encryptionKeyPair.publicKey);
+  it = Serialization::serialize(it, deviceData.deviceKeys.signatureKeyPair.privateKey);
+  it = Serialization::serialize(it, deviceData.deviceKeys.signatureKeyPair.publicKey);
+  it = Serialization::serialize(it, deviceData.deviceKeys.encryptionKeyPair.privateKey);
+  it = Serialization::serialize(it, deviceData.deviceKeys.encryptionKeyPair.publicKey);
   it = Serialization::serialize(it, deviceData.userKeys);
 
   return data;
@@ -68,51 +58,40 @@ DeviceData deserializeEncryptedDevice(gsl::span<const uint8_t> payload)
   Serialization::deserialize_to(source, version);
 
   if (version != Version)
-    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
-                           "unsupported device storage version: {}",
-                           static_cast<int>(version));
+    throw Errors::formatEx(
+        DataStore::Errc::InvalidDatabaseVersion, "unsupported device storage version: {}", static_cast<int>(version));
 
   Serialization::deserialize_to(source, out.trustchainPublicKey);
   Serialization::deserialize_to(source, out.deviceId);
-  Serialization::deserialize_to(source,
-                                out.deviceKeys.signatureKeyPair.privateKey);
-  Serialization::deserialize_to(source,
-                                out.deviceKeys.signatureKeyPair.publicKey);
-  Serialization::deserialize_to(source,
-                                out.deviceKeys.encryptionKeyPair.privateKey);
-  Serialization::deserialize_to(source,
-                                out.deviceKeys.encryptionKeyPair.publicKey);
+  Serialization::deserialize_to(source, out.deviceKeys.signatureKeyPair.privateKey);
+  Serialization::deserialize_to(source, out.deviceKeys.signatureKeyPair.publicKey);
+  Serialization::deserialize_to(source, out.deviceKeys.encryptionKeyPair.privateKey);
+  Serialization::deserialize_to(source, out.deviceKeys.encryptionKeyPair.publicKey);
   Serialization::deserialize_to(source, out.userKeys);
 
   if (!source.eof())
   {
-    throw Errors::formatEx(Serialization::Errc::TrailingInput,
-                           "{} trailing bytes",
-                           source.remaining_size());
+    throw Errors::formatEx(Serialization::Errc::TrailingInput, "{} trailing bytes", source.remaining_size());
   }
 
   return out;
 }
 }
 
-LocalUserStore::LocalUserStore(Crypto::SymmetricKey const& userSecret,
-                               DataStore::DataStore* db)
+LocalUserStore::LocalUserStore(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
   : _userSecret(userSecret), _db(db)
 {
 }
 
-tc::cotask<void> LocalUserStore::initializeDevice(
-    Crypto::PublicSignatureKey const& trustchainPublicKey,
-    Trustchain::DeviceId const& deviceId,
-    DeviceKeys const& deviceKeys,
-    std::vector<Crypto::EncryptionKeyPair> const& userKeys)
+tc::cotask<void> LocalUserStore::initializeDevice(Crypto::PublicSignatureKey const& trustchainPublicKey,
+                                                  Trustchain::DeviceId const& deviceId,
+                                                  DeviceKeys const& deviceKeys,
+                                                  std::vector<Crypto::EncryptionKeyPair> const& userKeys)
 {
-  TC_AWAIT(setDeviceData(
-      DeviceData{trustchainPublicKey, deviceId, deviceKeys, userKeys}));
+  TC_AWAIT(setDeviceData(DeviceData{trustchainPublicKey, deviceId, deviceKeys, userKeys}));
 }
 
-tc::cotask<void> LocalUserStore::putUserKeys(
-    std::vector<Crypto::EncryptionKeyPair> userKeys)
+tc::cotask<void> LocalUserStore::putUserKeys(std::vector<Crypto::EncryptionKeyPair> userKeys)
 {
   auto deviceData = TC_AWAIT(getDeviceData());
   if (!deviceData)
@@ -122,8 +101,7 @@ tc::cotask<void> LocalUserStore::putUserKeys(
   ranges::sort(userKeys, {}, proj);
   ranges::sort(deviceData->userKeys, {}, proj);
   deviceData->userKeys =
-      ranges::views::set_union(userKeys, deviceData->userKeys, {}, proj, proj) |
-      ranges::to<std::vector>;
+      ranges::views::set_union(userKeys, deviceData->userKeys, {}, proj, proj) | ranges::to<std::vector>;
   setDeviceData(*deviceData);
 }
 
@@ -144,8 +122,7 @@ tc::cotask<std::optional<DeviceKeys>> LocalUserStore::findDeviceKeys() const
   TC_RETURN(deviceData->deviceKeys);
 }
 
-tc::cotask<std::optional<Crypto::PublicSignatureKey>>
-LocalUserStore::findTrustchainPublicSignatureKey() const
+tc::cotask<std::optional<Crypto::PublicSignatureKey>> LocalUserStore::findTrustchainPublicSignatureKey() const
 {
   auto const deviceData = TC_AWAIT(getDeviceData());
   if (!deviceData)
@@ -153,8 +130,7 @@ LocalUserStore::findTrustchainPublicSignatureKey() const
   TC_RETURN(deviceData->trustchainPublicKey);
 }
 
-tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
-    Trustchain::UserId const& userId) const
+tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(Trustchain::UserId const& userId) const
 {
   auto const keys = TC_AWAIT(getDeviceKeys());
   auto const deviceId = TC_AWAIT(getDeviceId());
@@ -162,8 +138,7 @@ tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
   TC_RETURN(std::make_optional(LocalUser(userId, deviceId, keys, userKeys)));
 }
 
-tc::cotask<std::vector<Crypto::EncryptionKeyPair>>
-LocalUserStore::getUserKeyPairs() const
+tc::cotask<std::vector<Crypto::EncryptionKeyPair>> LocalUserStore::getUserKeyPairs() const
 {
   auto deviceData = TC_AWAIT(getDeviceData());
   if (!deviceData)
@@ -189,8 +164,7 @@ tc::cotask<std::optional<DeviceData>> LocalUserStore::getDeviceData() const
     if (!encryptedPayload)
       TC_RETURN(std::nullopt);
 
-    auto const payload =
-        TC_AWAIT(DataStore::decryptValue(_userSecret, *encryptedPayload));
+    auto const payload = TC_AWAIT(DataStore::decryptValue(_userSecret, *encryptedPayload));
     auto const device = deserializeEncryptedDevice(payload);
 
     if (device.userKeys.empty())

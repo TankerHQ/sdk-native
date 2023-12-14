@@ -101,8 +101,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
 
       // invert them, just to check that the order is respected
       auto const keys = makeKeys({key2, unknownKey, key});
-      CacheResult expected{
-          make_buffer(value2), std::nullopt, make_buffer(value)};
+      CacheResult expected{make_buffer(value2), std::nullopt, make_buffer(value)};
       CHECK(store->findCacheValues(keys) == expected);
     }
 
@@ -162,9 +161,8 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       REQUIRE_NOTHROW(store->putCacheValues(keyValues, OnConflict::Fail));
 
       auto const keyValues2 = makeKeyValues({{key, value2}});
-      TANKER_CHECK_THROWS_WITH_CODE(
-          store->putCacheValues(keyValues2, OnConflict::Fail),
-          Tanker::DataStore::Errc::ConstraintFailed);
+      TANKER_CHECK_THROWS_WITH_CODE(store->putCacheValues(keyValues2, OnConflict::Fail),
+                                    Tanker::DataStore::Errc::ConstraintFailed);
 
       auto const keys = makeKeys({key});
       CacheResult expected{make_buffer(value)};

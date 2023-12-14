@@ -19,8 +19,7 @@ inline std::ostream& operator<<(std::ostream& os, Group const&) = delete;
 
 TEST_CASE("GroupStore")
 {
-  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
-                                            DataStore::MemoryPath);
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath, DataStore::MemoryPath);
 
   Groups::Store groupStore({}, db.get());
 
@@ -42,36 +41,27 @@ TEST_CASE("GroupStore")
   SECTION("it should not find a non-existent group")
   {
     auto const unexistentGroupId = make<GroupId>("unexistent");
-    auto const unexistentGroupKey =
-        make<Crypto::PublicEncryptionKey>("unexistent");
+    auto const unexistentGroupKey = make<Crypto::PublicEncryptionKey>("unexistent");
 
-    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
-              unexistentGroupKey)) == std::nullopt);
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(unexistentGroupKey)) == std::nullopt);
     CHECK(AWAIT(groupStore.findById(unexistentGroupId)) == std::nullopt);
-    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(unexistentGroupKey)) ==
-          std::nullopt);
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(unexistentGroupKey)) == std::nullopt);
   }
 
   SECTION("it should find a group that was inserted")
   {
     AWAIT_VOID(groupStore.put(group));
     CHECK(AWAIT(groupStore.findById(group.id)).value() == Group{group});
-    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
-                    group.encryptionKeyPair.publicKey))
-              .value() == group);
-    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(
-                    group.encryptionKeyPair.publicKey))
-              .value() == Group{group});
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(group.encryptionKeyPair.publicKey)).value() == group);
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(group.encryptionKeyPair.publicKey)).value() == Group{group});
   }
 
   SECTION("it should find an external group that was inserted")
   {
     AWAIT_VOID(groupStore.put(externalGroup));
     CHECK(AWAIT(groupStore.findById(group.id)).value() == Group{externalGroup});
-    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(
-              group.encryptionKeyPair.publicKey)) == Group{externalGroup});
-    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
-              group.encryptionKeyPair.publicKey)) == std::nullopt);
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(group.encryptionKeyPair.publicKey)) == Group{externalGroup});
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(group.encryptionKeyPair.publicKey)) == std::nullopt);
   }
 
   SECTION("it should overwrite a group that was previously inserted")
@@ -106,15 +96,11 @@ TEST_CASE("GroupStore")
   {
     AWAIT_VOID(groupStore.put(group));
     auto externalGroup2 = externalGroup;
-    externalGroup2.publicSignatureKey =
-        Crypto::makeSignatureKeyPair().publicKey;
-    externalGroup2.publicEncryptionKey =
-        Crypto::makeEncryptionKeyPair().publicKey;
+    externalGroup2.publicSignatureKey = Crypto::makeSignatureKeyPair().publicKey;
+    externalGroup2.publicEncryptionKey = Crypto::makeEncryptionKeyPair().publicKey;
     externalGroup2.lastBlockHash = make<Crypto::Hash>("other last");
-    externalGroup2.lastKeyRotationBlockHash =
-        make<Crypto::Hash>("and another one");
+    externalGroup2.lastKeyRotationBlockHash = make<Crypto::Hash>("and another one");
     AWAIT_VOID(groupStore.put(externalGroup2));
-    CHECK(AWAIT(groupStore.findById(externalGroup2.id)).value() ==
-          Group{externalGroup2});
+    CHECK(AWAIT(groupStore.findById(externalGroup2.id)).value() == Group{externalGroup2});
   }
 }

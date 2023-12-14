@@ -28,8 +28,7 @@ struct tanker_future
 
 inline tanker_future_t* makeFuture(tc::shared_future<void*> fut)
 {
-  return new tanker_future{fut.and_then([](void* arg) { return arg; }),
-                           nullptr};
+  return new tanker_future{fut.and_then([](void* arg) { return arg; }), nullptr};
 }
 
 inline tanker_future_t* makeFuture(tc::future<void*> fut)
@@ -41,7 +40,5 @@ template <template <typename> class Future>
 tanker_future_t* makeFuture(Future<void> fut)
 {
   return new tanker_future{
-      fut.and_then(tc::get_synchronous_executor(),
-                   [](auto&&) { return static_cast<void*>(nullptr); }),
-      nullptr};
+      fut.and_then(tc::get_synchronous_executor(), [](auto&&) { return static_cast<void*>(nullptr); }), nullptr};
 }

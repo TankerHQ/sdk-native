@@ -33,13 +33,11 @@ std::vector<uint8_t> serializeStoreKey(SimpleResourceId const& resourceId)
 }
 }
 
-Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
-  : _userSecret(userSecret), _db(db)
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db) : _userSecret(userSecret), _db(db)
 {
 }
 
-tc::cotask<void> Store::putKey(SimpleResourceId const& resourceId,
-                               Crypto::SymmetricKey const& key)
+tc::cotask<void> Store::putKey(SimpleResourceId const& resourceId, Crypto::SymmetricKey const& key)
 {
   TDEBUG("Adding key for {}", resourceId);
   FUNC_TIMER(DB);
@@ -48,28 +46,23 @@ tc::cotask<void> Store::putKey(SimpleResourceId const& resourceId,
 
   auto const encryptedKey = DataStore::encryptValue(_userSecret, key);
 
-  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
-      keyValues{{storeRid, encryptedKey}};
+  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>> keyValues{{storeRid, encryptedKey}};
 
   _db->putCacheValues(keyValues, DataStore::OnConflict::Ignore);
   TC_RETURN();
 }
 
-tc::cotask<Crypto::SymmetricKey> Store::getKey(
-    SimpleResourceId const& resourceId) const
+tc::cotask<Crypto::SymmetricKey> Store::getKey(SimpleResourceId const& resourceId) const
 {
   auto const key = TC_AWAIT(findKey(resourceId));
   if (!key)
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           FMT_STRING("key not found for resource {:s}"),
-                           resourceId);
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, FMT_STRING("key not found for resource {:s}"), resourceId);
   }
   TC_RETURN(*key);
 }
 
-tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
-    SimpleResourceId const& resourceId) const
+tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(SimpleResourceId const& resourceId) const
 {
   FUNC_TIMER(DB);
 
@@ -81,8 +74,7 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     if (!result.at(0))
       TC_RETURN(std::nullopt);
 
-    auto const key =
-        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
+    auto const key = TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(Crypto::SymmetricKey{key});
   }

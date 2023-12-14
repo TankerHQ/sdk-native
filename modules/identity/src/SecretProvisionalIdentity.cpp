@@ -13,8 +13,7 @@ namespace Tanker
 {
 namespace Identity
 {
-SecretProvisionalIdentity createProvisionalIdentity(
-    TrustchainId const& trustchainId, Email const& email)
+SecretProvisionalIdentity createProvisionalIdentity(TrustchainId const& trustchainId, Email const& email)
 {
   return SecretProvisionalIdentity{
       trustchainId,
@@ -25,8 +24,7 @@ SecretProvisionalIdentity createProvisionalIdentity(
   };
 }
 
-SecretProvisionalIdentity createProvisionalIdentity(
-    TrustchainId const& trustchainId, PhoneNumber const& phoneNumber)
+SecretProvisionalIdentity createProvisionalIdentity(TrustchainId const& trustchainId, PhoneNumber const& phoneNumber)
 {
   return SecretProvisionalIdentity{
       trustchainId,
@@ -37,29 +35,25 @@ SecretProvisionalIdentity createProvisionalIdentity(
   };
 }
 
-std::string createProvisionalIdentity(std::string const& trustchainIdParam,
-                                      Email const& email)
+std::string createProvisionalIdentity(std::string const& trustchainIdParam, Email const& email)
 {
   if (email.empty())
     throw Errors::Exception(Errc::InvalidEmail);
   if (trustchainIdParam.empty())
     throw Errors::Exception(Errc::InvalidTrustchainId);
 
-  auto const trustchainId =
-      mgs::base64::decode<TrustchainId>(trustchainIdParam);
+  auto const trustchainId = mgs::base64::decode<TrustchainId>(trustchainIdParam);
   return to_string(createProvisionalIdentity(trustchainId, email));
 }
 
-std::string createProvisionalIdentity(std::string const& trustchainIdParam,
-                                      PhoneNumber const& phoneNumber)
+std::string createProvisionalIdentity(std::string const& trustchainIdParam, PhoneNumber const& phoneNumber)
 {
   if (phoneNumber.empty())
     throw Errors::Exception(Errc::InvalidPhoneNumber);
   if (trustchainIdParam.empty())
     throw Errors::Exception(Errc::InvalidTrustchainId);
 
-  auto const trustchainId =
-      mgs::base64::decode<TrustchainId>(trustchainIdParam);
+  auto const trustchainId = mgs::base64::decode<TrustchainId>(trustchainIdParam);
   return to_string(createProvisionalIdentity(trustchainId, phoneNumber));
 }
 
@@ -74,31 +68,24 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
   }
   if (target != "email" && target != "phone_number")
   {
-    throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
-                           "unsupported provisional identity target: {}",
-                           target);
+    throw Errors::formatEx(
+        Errc::InvalidProvisionalIdentityTarget, "unsupported provisional identity target: {}", target);
   }
 
   identity = SecretProvisionalIdentity{
       j.at("trustchain_id").get<TrustchainId>(),
       to_secret_target_type(target),
       j.at("value").get<std::string>(),
-      {mgs::base64::decode<Crypto::PublicSignatureKey>(
-           j.at("public_signature_key").get<std::string>()),
-       mgs::base64::decode<Crypto::PrivateSignatureKey>(
-           j.at("private_signature_key").get<std::string>())},
-      {mgs::base64::decode<Crypto::PublicEncryptionKey>(
-           j.at("public_encryption_key").get<std::string>()),
-       mgs::base64::decode<Crypto::PrivateEncryptionKey>(
-           j.at("private_encryption_key").get<std::string>())},
+      {mgs::base64::decode<Crypto::PublicSignatureKey>(j.at("public_signature_key").get<std::string>()),
+       mgs::base64::decode<Crypto::PrivateSignatureKey>(j.at("private_signature_key").get<std::string>())},
+      {mgs::base64::decode<Crypto::PublicEncryptionKey>(j.at("public_encryption_key").get<std::string>()),
+       mgs::base64::decode<Crypto::PrivateEncryptionKey>(j.at("private_encryption_key").get<std::string>())},
   };
 }
 
-void to_json(nlohmann::ordered_json& j,
-             SecretProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j, SecretProvisionalIdentity const& identity)
 {
-  if (identity.target != TargetType::Email &&
-      identity.target != TargetType::PhoneNumber)
+  if (identity.target != TargetType::Email && identity.target != TargetType::PhoneNumber)
   {
     throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
                            "unsupported provisional identity target: {}",
@@ -108,14 +95,10 @@ void to_json(nlohmann::ordered_json& j,
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = to_string(identity.target);
   j["value"] = identity.value;
-  j["public_encryption_key"] =
-      mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
-  j["private_encryption_key"] =
-      mgs::base64::encode(identity.appEncryptionKeyPair.privateKey);
-  j["public_signature_key"] =
-      mgs::base64::encode(identity.appSignatureKeyPair.publicKey);
-  j["private_signature_key"] =
-      mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
+  j["public_encryption_key"] = mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
+  j["private_encryption_key"] = mgs::base64::encode(identity.appEncryptionKeyPair.privateKey);
+  j["public_signature_key"] = mgs::base64::encode(identity.appSignatureKeyPair.publicKey);
+  j["private_signature_key"] = mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
 }
 
 std::string to_string(SecretProvisionalIdentity const& identity)

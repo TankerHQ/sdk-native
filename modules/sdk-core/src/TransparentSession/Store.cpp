@@ -31,14 +31,11 @@ std::vector<uint8_t> serializeStoreKey(Crypto::Hash const& recipients)
   return keyBuffer;
 }
 
-std::vector<uint8_t> serializeTransparentSession(
-    TransparentSessionData const& sessionData)
+std::vector<uint8_t> serializeTransparentSession(TransparentSessionData const& sessionData)
 {
-  std::vector<uint8_t> data(
-      sizeof(uint8_t) +
-      Serialization::serialized_size(sessionData.creationTimestamp) +
-      Serialization::serialized_size(sessionData.sessionId) +
-      Serialization::serialized_size(sessionData.sessionKey));
+  std::vector<uint8_t> data(sizeof(uint8_t) + Serialization::serialized_size(sessionData.creationTimestamp) +
+                            Serialization::serialized_size(sessionData.sessionId) +
+                            Serialization::serialized_size(sessionData.sessionKey));
 
   auto it = data.data();
   it = Serialization::serialize<uint8_t>(it, Version);
@@ -48,8 +45,7 @@ std::vector<uint8_t> serializeTransparentSession(
   return data;
 }
 
-TransparentSessionData deserializeTransparentSession(
-    gsl::span<const uint8_t> payload)
+TransparentSessionData deserializeTransparentSession(gsl::span<const uint8_t> payload)
 {
   TransparentSessionData out;
   Serialization::SerializedSource source(payload);
@@ -58,10 +54,9 @@ TransparentSessionData deserializeTransparentSession(
   Serialization::deserialize_to(source, version);
 
   if (version != Version)
-    throw Errors::formatEx(
-        DataStore::Errc::InvalidDatabaseVersion,
-        "unsupported transparent session storage version: {}",
-        static_cast<int>(version));
+    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
+                           "unsupported transparent session storage version: {}",
+                           static_cast<int>(version));
 
   Serialization::deserialize_to(source, out.creationTimestamp);
   Serialization::deserialize_to(source, out.sessionId);
@@ -69,22 +64,18 @@ TransparentSessionData deserializeTransparentSession(
 
   if (!source.eof())
   {
-    throw Errors::formatEx(Serialization::Errc::TrailingInput,
-                           "{} trailing bytes",
-                           source.remaining_size());
+    throw Errors::formatEx(Serialization::Errc::TrailingInput, "{} trailing bytes", source.remaining_size());
   }
 
   return out;
 }
 }
 
-Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
-  : _userSecret(userSecret), _db(db)
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db) : _userSecret(userSecret), _db(db)
 {
 }
 
-Crypto::Hash Store::hashRecipients(std::vector<SPublicIdentity> users,
-                                   std::vector<SGroupId> groups)
+Crypto::Hash Store::hashRecipients(std::vector<SPublicIdentity> users, std::vector<SGroupId> groups)
 {
   users |= Actions::deduplicate;
   groups |= Actions::deduplicate;
@@ -117,14 +108,12 @@ tc::cotask<void> Store::put(Crypto::Hash const& recipientsHash,
   auto const valueBuffer = serializeTransparentSession(sessionData);
   auto const encryptedValue = DataStore::encryptValue(_userSecret, valueBuffer);
 
-  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
-      keyValues{{keyBuffer, encryptedValue}};
+  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>> keyValues{{keyBuffer, encryptedValue}};
   _db->putCacheValues(keyValues, DataStore::OnConflict::Replace);
   TC_RETURN();
 }
 
-tc::cotask<std::optional<TransparentSessionData>> Store::get(
-    Crypto::Hash const& recipientsHash) const
+tc::cotask<std::optional<TransparentSessionData>> Store::get(Crypto::Hash const& recipientsHash) const
 {
   FUNC_TIMER(DB);
 
@@ -136,8 +125,7 @@ tc::cotask<std::optional<TransparentSessionData>> Store::get(
     if (!result.at(0))
       TC_RETURN(std::nullopt);
 
-    auto const decryptedValue =
-        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
+    auto const decryptedValue = TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
     TC_RETURN(deserializeTransparentSession(decryptedValue));
   }
   catch (Errors::Exception const& e)

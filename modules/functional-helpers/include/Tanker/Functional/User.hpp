@@ -22,9 +22,7 @@ public:
 
   User() = default;
 
-  User(std::string trustchainUrl,
-       std::string trustchainId,
-       std::string trustchainPrivateSignatureKey);
+  User(std::string trustchainUrl, std::string trustchainId, std::string trustchainPrivateSignatureKey);
 
   Device makeDevice();
 

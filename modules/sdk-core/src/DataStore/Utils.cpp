@@ -12,14 +12,12 @@ namespace Tanker::DataStore
 {
 [[noreturn]] void handleError(Errors::Exception const& e)
 {
-  if (e.errorCode().category() == Serialization::ErrcCategory() ||
-      e.errorCode().category() == Crypto::ErrcCategory() ||
+  if (e.errorCode().category() == Serialization::ErrcCategory() || e.errorCode().category() == Crypto::ErrcCategory() ||
       e.errorCode() == Errors::Errc::InvalidArgument)
   {
     TERROR("Failed to decrypt/deserialize database buffer: {}", e.what());
-    throw Errors::Exception(
-        DataStore::Errc::DatabaseCorrupt,
-        "database is corrupted, or an incorrect identity was used");
+    throw Errors::Exception(DataStore::Errc::DatabaseCorrupt,
+                            "database is corrupted, or an incorrect identity was used");
   }
   else
     throw;
@@ -33,22 +31,18 @@ namespace Tanker::DataStore
 // V5 has a resource ID which we don't need
 // See https://github.com/TankerHQ/spec/blob/master/encryption_formats.md
 
-std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret,
-                                  gsl::span<uint8_t const> value)
+std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret, gsl::span<uint8_t const> value)
 {
   std::vector<uint8_t> encryptedValue(EncryptorV2::encryptedSize(value.size()));
   EncryptorV2::encryptSync(encryptedValue, value, userSecret);
   return encryptedValue;
 }
 
-tc::cotask<std::vector<uint8_t>> decryptValue(
-    Crypto::SymmetricKey const& userSecret,
-    gsl::span<uint8_t const> encryptedValue)
+tc::cotask<std::vector<uint8_t>> decryptValue(Crypto::SymmetricKey const& userSecret,
+                                              gsl::span<uint8_t const> encryptedValue)
 {
-  std::vector<uint8_t> decryptedValue(
-      EncryptorV2::decryptedSize(encryptedValue));
-  TC_AWAIT(EncryptorV2::decrypt(
-      decryptedValue, Encryptor::fixedKeyFinder(userSecret), encryptedValue));
+  std::vector<uint8_t> decryptedValue(EncryptorV2::decryptedSize(encryptedValue));
+  TC_AWAIT(EncryptorV2::decrypt(decryptedValue, Encryptor::fixedKeyFinder(userSecret), encryptedValue));
   TC_RETURN(decryptedValue);
 }
 }

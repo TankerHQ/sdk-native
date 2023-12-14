@@ -22,14 +22,12 @@ std::vector<std::uint8_t> UserGroupAddition::signatureData() const
 
 std::uint8_t* to_serialized(std::uint8_t* it, UserGroupAddition const& uga)
 {
-  return uga.visit(
-      [it](auto const& val) { return Serialization::to_serialized(it, val); });
+  return uga.visit([it](auto const& val) { return Serialization::to_serialized(it, val); });
 }
 
 std::size_t serialized_size(UserGroupAddition const& uga)
 {
-  return uga.visit(
-      [](auto const& val) { return Serialization::serialized_size(val); });
+  return uga.visit([](auto const& val) { return Serialization::serialized_size(val); });
 }
 
 void to_json(nlohmann::json& j, UserGroupAddition const& uga)

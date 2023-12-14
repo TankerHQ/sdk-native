@@ -28,17 +28,14 @@ struct multi::async_socket
   boost::asio::ip::tcp::socket socket;
   curl_sockaddr sockaddr;
 
-  explicit async_socket(boost::asio::io_context& io_context)
-    : socket(io_context)
+  explicit async_socket(boost::asio::io_context& io_context) : socket(io_context)
   {
   }
 };
 
 // C bouncers
 
-curl_socket_t multi::opensocket_c(void* clientp,
-                                  curlsocktype purpose,
-                                  struct curl_sockaddr* address)
+curl_socket_t multi::opensocket_c(void* clientp, curlsocktype purpose, struct curl_sockaddr* address)
 {
   return static_cast<multi*>(clientp)->opensocket(purpose, address);
 }
@@ -58,8 +55,7 @@ int multi::multi_timer_cb_c(CURLM* cmulti, long timeout_ms, void* g)
   return static_cast<multi*>(g)->multi_timer_cb(cmulti, timeout_ms);
 }
 
-int multi::socketfunction_cb_c(
-    CURL* easy, curl_socket_t s, int action, void* userp, void* socketp)
+int multi::socketfunction_cb_c(CURL* easy, curl_socket_t s, int action, void* userp, void* socketp)
 {
   return static_cast<multi*>(userp)->socketfunction_cb(easy, s, action);
 }
@@ -88,17 +84,14 @@ multi::multi() : multi(tc::get_default_executor().get_io_service())
 {
 }
 
-multi::multi(boost::asio::io_context& io_context)
-  : _io_context(io_context), _multi(curl_multi_init())
+multi::multi(boost::asio::io_context& io_context) : _io_context(io_context), _multi(curl_multi_init())
 {
   if (!_multi)
     throw std::runtime_error("curl_multi_init() failed");
 
-  curl_multi_setopt(
-      _multi.get(), CURLMOPT_SOCKETFUNCTION, &multi::socketfunction_cb_c);
+  curl_multi_setopt(_multi.get(), CURLMOPT_SOCKETFUNCTION, &multi::socketfunction_cb_c);
   curl_multi_setopt(_multi.get(), CURLMOPT_SOCKETDATA, this);
-  curl_multi_setopt(
-      _multi.get(), CURLMOPT_TIMERFUNCTION, &multi::multi_timer_cb_c);
+  curl_multi_setopt(_multi.get(), CURLMOPT_TIMERFUNCTION, &multi::multi_timer_cb_c);
   curl_multi_setopt(_multi.get(), CURLMOPT_TIMERDATA, this);
 }
 
@@ -125,20 +118,16 @@ multi::~multi()
 
 void multi::process(std::shared_ptr<request> req)
 {
-  curl_easy_setopt(
-      req->_easy.get(), CURLOPT_OPENSOCKETFUNCTION, &multi::opensocket_c);
+  curl_easy_setopt(req->_easy.get(), CURLOPT_OPENSOCKETFUNCTION, &multi::opensocket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_OPENSOCKETDATA, this);
-  curl_easy_setopt(
-      req->_easy.get(), CURLOPT_CLOSESOCKETFUNCTION, &multi::close_socket_c);
+  curl_easy_setopt(req->_easy.get(), CURLOPT_CLOSESOCKETFUNCTION, &multi::close_socket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_CLOSESOCKETDATA, this);
-  curl_easy_setopt(
-      req->_easy.get(), CURLOPT_SOCKOPTFUNCTION, &multi::sockopt_c);
+  curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTFUNCTION, &multi::sockopt_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_SOCKOPTDATA, this);
 
   auto rc = curl_multi_add_handle(_multi.get(), req->_easy.get());
   if (CURLM_OK != rc)
-    throw std::runtime_error(std::string("curl_multi_add_handle failed: ") +
-                             curl_multi_strerror(rc));
+    throw std::runtime_error(std::string("curl_multi_add_handle failed: ") + curl_multi_strerror(rc));
 
   _running_requests.emplace_back(std::move(req));
 }
@@ -147,9 +136,8 @@ void multi::cancel(request& req)
 {
   abort_request(req);
   _running_requests.erase(
-      std::remove_if(_running_requests.begin(),
-                     _running_requests.end(),
-                     [&](auto const& r) { return r.get() == &req; }),
+      std::remove_if(
+          _running_requests.begin(), _running_requests.end(), [&](auto const& r) { return r.get() == &req; }),
       _running_requests.end());
 }
 
@@ -181,8 +169,7 @@ void multi::remove_finished()
   }
 }
 
-curl_socket_t multi::opensocket(curlsocktype purpose,
-                                struct curl_sockaddr* address)
+curl_socket_t multi::opensocket(curlsocktype purpose, struct curl_sockaddr* address)
 {
   curl_socket_t sockfd = CURL_SOCKET_BAD;
 
@@ -200,8 +187,7 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
 
     if (ec)
     {
-      throw std::runtime_error(std::string("couldn't open socket: ") +
-                               ec.message());
+      throw std::runtime_error(std::string("couldn't open socket: ") + ec.message());
     }
     else
     {
@@ -239,8 +225,7 @@ int multi::sockopt_cb(curl_socket_t curlfd)
 
   sockaddr_in* sockaddr = (sockaddr_in*)&asocket->sockaddr.addr;
   uint32_t ip_addr = ntohl(sockaddr->sin_addr.s_addr);
-  boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4(ip_addr),
-                                          ntohs(sockaddr->sin_port));
+  boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address_v4(ip_addr), ntohs(sockaddr->sin_port));
 
   boost::system::error_code ec;
   asocket->socket.connect(endpoint, ec);
@@ -261,10 +246,7 @@ int multi::sockopt_cb(curl_socket_t)
 #endif
 
 // Called by asio when there is an action on a socket
-void multi::event_cb(curl_socket_t sock,
-                     async_socket* asocket,
-                     uint8_t action,
-                     boost::system::error_code const& ec)
+void multi::event_cb(curl_socket_t sock, async_socket* asocket, uint8_t action, boost::system::error_code const& ec)
 {
   if (ec == boost::asio::error::operation_aborted)
     return;
@@ -290,16 +272,14 @@ void multi::event_cb(curl_socket_t sock,
   auto const sockfd = asocket->socket.native_handle();
 
   int still_running;
-  auto const rc = curl_multi_socket_action(
-      _multi.get(),
-      asocket->socket.native_handle(),
-      action == ActionRead ? CURL_CSELECT_IN : CURL_CSELECT_OUT,
-      &still_running);
+  auto const rc = curl_multi_socket_action(_multi.get(),
+                                           asocket->socket.native_handle(),
+                                           action == ActionRead ? CURL_CSELECT_IN : CURL_CSELECT_OUT,
+                                           &still_running);
 
   if (CURLM_OK != rc)
   {
-    std::cerr << "curl_multi_socket_action failed: " << curl_multi_strerror(rc)
-              << std::endl;
+    std::cerr << "curl_multi_socket_action failed: " << curl_multi_strerror(rc) << std::endl;
     return;
   }
 
@@ -320,13 +300,11 @@ void multi::timer_cb()
   scope_lock l{_mutex};
 
   int still_running; // don't care
-  auto rc = curl_multi_socket_action(
-      _multi.get(), CURL_SOCKET_TIMEOUT, 0, &still_running);
+  auto rc = curl_multi_socket_action(_multi.get(), CURL_SOCKET_TIMEOUT, 0, &still_running);
 
   if (CURLM_OK != rc)
   {
-    std::cerr << "curl_multi_socket_action failed: " << curl_multi_strerror(rc)
-              << std::endl;
+    std::cerr << "curl_multi_socket_action failed: " << curl_multi_strerror(rc) << std::endl;
     return;
   }
   remove_finished();
@@ -351,8 +329,7 @@ int multi::multi_timer_cb(CURLM* multi, long timeout_ms)
 
     // update timer
     _timer_future = tc::async_wait(std::chrono::milliseconds(safe_timeout_ms))
-                        .and_then(tconcurrent::get_synchronous_executor(),
-                                  [this](tc::tvoid) { timer_cb(); });
+                        .and_then(tconcurrent::get_synchronous_executor(), [this](tc::tvoid) { timer_cb(); });
   }
 
   return 0;
@@ -393,8 +370,7 @@ int multi::socketfunction_cb(CURL*, curl_socket_t s, int curlaction)
     return 0;
 
   // if we want to stop either reading or writing
-  if ((asocket->current_action & asocket->wanted_action) !=
-      asocket->current_action)
+  if ((asocket->current_action & asocket->wanted_action) != asocket->current_action)
   {
     // cancel all pending asyncs and start over (we can't cancel only read or
     // only write)
@@ -406,26 +382,16 @@ int multi::socketfunction_cb(CURL*, curl_socket_t s, int curlaction)
 
   if (todo & ActionRead)
   {
-    asocket->socket.async_read_some(boost::asio::null_buffers(),
-                                    std::bind(&multi::event_cb_c,
-                                              _alive,
-                                              this,
-                                              s,
-                                              asocket,
-                                              ActionRead,
-                                              std::placeholders::_1));
+    asocket->socket.async_read_some(
+        boost::asio::null_buffers(),
+        std::bind(&multi::event_cb_c, _alive, this, s, asocket, ActionRead, std::placeholders::_1));
     asocket->current_action |= ActionRead;
   }
   else if (todo & ActionWrite)
   {
-    asocket->socket.async_write_some(boost::asio::null_buffers(),
-                                     std::bind(&multi::event_cb_c,
-                                               _alive,
-                                               this,
-                                               s,
-                                               asocket,
-                                               ActionWrite,
-                                               std::placeholders::_1));
+    asocket->socket.async_write_some(
+        boost::asio::null_buffers(),
+        std::bind(&multi::event_cb_c, _alive, this, s, asocket, ActionWrite, std::placeholders::_1));
     asocket->current_action |= ActionWrite;
   }
 

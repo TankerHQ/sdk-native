@@ -22,10 +22,8 @@ T extractBlob(Field const& f)
 
 [[noreturn]] void handleError(Errors::Exception const& e);
 
-std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret,
-                                  gsl::span<uint8_t const> value);
-tc::cotask<std::vector<uint8_t>> decryptValue(
-    Crypto::SymmetricKey const& userSecret,
-    gsl::span<uint8_t const> encryptedValue);
+std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret, gsl::span<uint8_t const> value);
+tc::cotask<std::vector<uint8_t>> decryptValue(Crypto::SymmetricKey const& userSecret,
+                                              gsl::span<uint8_t const> encryptedValue);
 }
 }

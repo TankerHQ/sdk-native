@@ -4,6 +4,5 @@
 
 namespace Tanker
 {
-using EncryptedPreverifiedPhoneNumber =
-    BufferWrapper<struct EncryptedPreverifiedPhoneNumberTag>;
+using EncryptedPreverifiedPhoneNumber = BufferWrapper<struct EncryptedPreverifiedPhoneNumberTag>;
 }

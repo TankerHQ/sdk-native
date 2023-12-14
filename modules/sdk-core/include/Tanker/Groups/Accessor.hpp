@@ -37,8 +37,7 @@ public:
   Accessor& operator=(Accessor const&) = delete;
   Accessor& operator=(Accessor&&) = delete;
 
-  tc::cotask<InternalGroup> getInternalGroup(
-      Trustchain::GroupId const& groupId) override;
+  tc::cotask<InternalGroup> getInternalGroup(Trustchain::GroupId const& groupId) override;
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds) override;
   // This function can only return keys for groups you are a member of
@@ -66,20 +65,15 @@ private:
   TaskCoalescer<EncryptionKeyPairEntry> _getEncryptionKeyPairCoalescer;
   TaskCoalescer<GroupEntry> _getPublicEncryptionKeyCoalescer;
 
-  using GroupMap =
-      boost::container::flat_map<Trustchain::GroupId,
-                                 std::vector<Trustchain::GroupAction>>;
+  using GroupMap = boost::container::flat_map<Trustchain::GroupId, std::vector<Trustchain::GroupAction>>;
 
   GroupMap partitionGroups(std::vector<Trustchain::GroupAction> entries);
-  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupEntries(
-      gsl::span<Trustchain::GroupId const>);
+  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupEntries(gsl::span<Trustchain::GroupId const>);
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
-  tc::cotask<Accessor::GroupPullResult> getGroups(
-      std::vector<Trustchain::GroupId> groupIds);
+  tc::cotask<Accessor::GroupPullResult> getGroups(std::vector<Trustchain::GroupId> groupIds);
   tc::cotask<std::vector<Group>> processGroupEntries(GroupMap const& groups);
   tc::cotask<std::vector<EncryptionKeyPairEntry>> getEncryptionKeyPairsImpl(
       gsl::span<Crypto::PublicEncryptionKey const> publicEncryptionKeys);
-  tc::cotask<std::vector<GroupEntry>> getPublicEncryptionKeysImpl(
-      gsl::span<Trustchain::GroupId const> groupIds);
+  tc::cotask<std::vector<GroupEntry>> getPublicEncryptionKeysImpl(gsl::span<Trustchain::GroupId const> groupIds);
 };
 }

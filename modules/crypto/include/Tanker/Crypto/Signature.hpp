@@ -11,8 +11,7 @@ namespace Tanker
 {
 namespace Crypto
 {
-extern template class BasicCryptographicType<class Signature,
-                                             crypto_sign_BYTES>;
+extern template class BasicCryptographicType<class Signature, crypto_sign_BYTES>;
 
 class Signature : public BasicCryptographicType<Signature, crypto_sign_BYTES>
 {

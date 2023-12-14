@@ -8,21 +8,18 @@ namespace Streams
 {
 constexpr const std::uint64_t PeekableInputSource::chunkSize;
 
-PeekableInputSource::PeekableInputSource(InputSource source)
-  : _underlyingStream(std::move(source))
+PeekableInputSource::PeekableInputSource(InputSource source) : _underlyingStream(std::move(source))
 {
 }
 
-tc::cotask<gsl::span<std::uint8_t const>> PeekableInputSource::peek(
-    std::uint64_t size)
+tc::cotask<gsl::span<std::uint8_t const>> PeekableInputSource::peek(std::uint64_t size)
 {
   auto const bytesAvailable = _buffer.size() - _pos;
   if (size > bytesAvailable)
     TC_AWAIT(fillBuffer(size - bytesAvailable));
 
   auto const availableToRead = gsl::make_span(_buffer).subspan(_pos);
-  auto const result = availableToRead.subspan(
-      0, std::min<std::uint64_t>(availableToRead.size(), size));
+  auto const result = availableToRead.subspan(0, std::min<std::uint64_t>(availableToRead.size(), size));
   TC_RETURN(result);
 }
 
@@ -48,13 +45,11 @@ tc::cotask<void> PeekableInputSource::fillBuffer(std::uint64_t bytesNeeded)
   _buffer.resize(_buffer.size() - toFill.size());
 }
 
-tc::cotask<std::int64_t> PeekableInputSource::operator()(
-    gsl::span<std::uint8_t> buffer)
+tc::cotask<std::int64_t> PeekableInputSource::operator()(gsl::span<std::uint8_t> buffer)
 {
   if (!_buffer.empty())
   {
-    auto const toRead =
-        std::min<std::uint64_t>(buffer.size(), _buffer.size() - _pos);
+    auto const toRead = std::min<std::uint64_t>(buffer.size(), _buffer.size() - _pos);
     std::copy_n(_buffer.begin() + _pos, toRead, buffer.data());
     _pos += toRead;
     if (_pos == _buffer.size())

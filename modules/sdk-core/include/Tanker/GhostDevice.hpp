@@ -19,8 +19,7 @@ struct GhostDevice
   Crypto::PrivateSignatureKey privateSignatureKey;
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   static GhostDevice create(VerificationKey const& key);
-  static GhostDevice create(
-      DeviceKeys const& deviceKeys = DeviceKeys::create());
+  static GhostDevice create(DeviceKeys const& deviceKeys = DeviceKeys::create());
   DeviceKeys toDeviceKeys() const;
   VerificationKey toVerificationKey() const;
 };
@@ -39,10 +38,8 @@ struct GeneratedGhostDevice
   Crypto::EncryptionKeyPair userKeyPair;
 };
 
-GeneratedGhostDevice generateGhostDevice(
-    Identity::SecretPermanentIdentity const& identity,
-    DeviceKeys const& ghostDeviceKeys);
+GeneratedGhostDevice generateGhostDevice(Identity::SecretPermanentIdentity const& identity,
+                                         DeviceKeys const& ghostDeviceKeys);
 
-DeviceKeys generateGhostDeviceKeys(
-    std::optional<Verification::Verification> const& verification);
+DeviceKeys generateGhostDeviceKeys(std::optional<Verification::Verification> const& verification);
 }

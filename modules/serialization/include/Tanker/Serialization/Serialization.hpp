@@ -56,8 +56,7 @@ void deserialize_to(gsl::span<std::uint8_t const> serialized, T& val)
   deserialize_to(ss, val);
   if (!ss.eof())
   {
-    throw Errors::formatEx(
-        Errc::TrailingInput, "{} trailing bytes", ss.remaining_size());
+    throw Errors::formatEx(Errc::TrailingInput, "{} trailing bytes", ss.remaining_size());
   }
 }
 

@@ -18,9 +18,8 @@ namespace Tanker
 namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
-  : _admin(std::make_unique<Admin::Client>(TestConstants::appManagementUrl(),
-                                           TestConstants::appManagementToken(),
-                                           TestConstants::environmentName()))
+  : _admin(std::make_unique<Admin::Client>(
+        TestConstants::appManagementUrl(), TestConstants::appManagementToken(), TestConstants::environmentName()))
 {
 }
 
@@ -31,22 +30,18 @@ tc::cotask<TrustchainFactory::Ptr> TrustchainFactory::create()
   TC_RETURN(std::move(factory));
 }
 
-tc::cotask<void> TrustchainFactory::deleteTrustchain(
-    Tanker::Trustchain::TrustchainId const& id)
+tc::cotask<void> TrustchainFactory::deleteTrustchain(Tanker::Trustchain::TrustchainId const& id)
 {
   TC_AWAIT(_admin->deleteTrustchain(id));
 }
 
-tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
-    std::string const& name)
+tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(std::string const& name)
 {
   auto const app = TC_AWAIT(_admin->createTrustchain(name));
-  TC_RETURN(Trustchain::make(
-      TestConstants::appdUrl(), std::move(app.id), std::move(app.secret)));
+  TC_RETURN(Trustchain::make(TestConstants::appdUrl(), std::move(app.id), std::move(app.secret)));
 }
 
-tc::cotask<void> TrustchainFactory::enableOidc(
-    Tanker::Trustchain::TrustchainId const& id)
+tc::cotask<void> TrustchainFactory::enableOidc(Tanker::Trustchain::TrustchainId const& id)
 {
   auto const& oidcConfig = TestConstants::oidcConfig();
   Admin::OidcConfiguration adminOidcConf{};
@@ -72,43 +67,38 @@ std::string to_string(PSCProvider provider)
   }
 }
 
-tc::cotask<void> TrustchainFactory::enablePSCOidc(
-    Tanker::Trustchain::TrustchainId const& id, PSCProvider const& provider)
+tc::cotask<void> TrustchainFactory::enablePSCOidc(Tanker::Trustchain::TrustchainId const& id,
+                                                  PSCProvider const& provider)
 {
   Admin::OidcConfiguration adminOidcConf{};
   adminOidcConf.displayName = to_string(provider);
   adminOidcConf.clientId = "doctolib-dev";
-  adminOidcConf.issuer =
-      "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
+  adminOidcConf.issuer = "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::setUserEnrollmentEnabled(
-    Tanker::Trustchain::TrustchainId const& id, bool state)
+tc::cotask<void> TrustchainFactory::setUserEnrollmentEnabled(Tanker::Trustchain::TrustchainId const& id, bool state)
 {
   Admin::AppUpdateOptions options;
   options.userEnrollment = state;
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
-    std::string configPath)
+tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(std::string configPath)
 {
   auto config = loadTrustchainConfig(std::move(configPath));
   TC_RETURN(Trustchain::make(std::move(config)));
 }
 
-void TrustchainFactory::saveTrustchainConfig(std::string const& path,
-                                             TrustchainConfig const& config)
+void TrustchainFactory::saveTrustchainConfig(std::string const& path, TrustchainConfig const& config)
 {
   saveJson(path, config);
 }
 
-TrustchainConfig TrustchainFactory::loadTrustchainConfig(
-    std::string const& path)
+TrustchainConfig TrustchainFactory::loadTrustchainConfig(std::string const& path)
 {
   return loadJson(path).get<TrustchainConfig>();
 }

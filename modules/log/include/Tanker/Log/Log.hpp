@@ -7,8 +7,7 @@
 
 #include <cstdint>
 
-#define TLOG_CATEGORY(name) \
-  static constexpr auto TANKER_LOG_CATEGORY TANKER_MAYBE_UNUSED = #name
+#define TLOG_CATEGORY(name) static constexpr auto TANKER_LOG_CATEGORY TANKER_MAYBE_UNUSED = #name
 
 namespace Tanker::Log
 {
@@ -29,18 +28,13 @@ void format(Log::Level level,
             fmt::string_view format,
             Args const&... args)
 {
-  Tanker::Log::format(
-      level, cat, file, line, format, fmt::make_format_args(args...));
+  Tanker::Log::format(level, cat, file, line, format, fmt::make_format_args(args...));
 }
 }
 }
 
-#define TLOG(LEVEL, ...)                                   \
-  Tanker::Log::detail::format((Tanker::Log::Level::LEVEL), \
-                              (TANKER_LOG_CATEGORY),       \
-                              __FILE__,                    \
-                              __LINE__,                    \
-                              __VA_ARGS__)
+#define TLOG(LEVEL, ...) \
+  Tanker::Log::detail::format((Tanker::Log::Level::LEVEL), (TANKER_LOG_CATEGORY), __FILE__, __LINE__, __VA_ARGS__)
 
 #define TDEBUG(...) TLOG(Debug, __VA_ARGS__)
 

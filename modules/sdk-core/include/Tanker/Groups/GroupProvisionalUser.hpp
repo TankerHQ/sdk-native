@@ -8,15 +8,12 @@
 
 namespace Tanker
 {
-#define TANKER_GROUP_PROVISIONAL_USER_ATTRIBUTES              \
-  (appPublicSignatureKey, Crypto::PublicSignatureKey),        \
-      (tankerPublicSignatureKey, Crypto::PublicSignatureKey), \
-      (encryptedPrivateEncryptionKey,                         \
-       Crypto::TwoTimesSealedPrivateEncryptionKey)
+#define TANKER_GROUP_PROVISIONAL_USER_ATTRIBUTES                                                               \
+  (appPublicSignatureKey, Crypto::PublicSignatureKey), (tankerPublicSignatureKey, Crypto::PublicSignatureKey), \
+      (encryptedPrivateEncryptionKey, Crypto::TwoTimesSealedPrivateEncryptionKey)
 
 class GroupProvisionalUser
 {
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
-      GroupProvisionalUser, TANKER_GROUP_PROVISIONAL_USER_ATTRIBUTES)
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(GroupProvisionalUser, TANKER_GROUP_PROVISIONAL_USER_ATTRIBUTES)
 };
 }

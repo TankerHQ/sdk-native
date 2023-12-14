@@ -31,18 +31,16 @@ class LocalUserAccessor : public ILocalUserAccessor
 public:
   LocalUserAccessor(LocalUserAccessor&&) = default;
 
-  static tc::cotask<LocalUserAccessor> createAndInit(
-      Trustchain::UserId const& userId,
-      Trustchain::TrustchainId const& trustchainId,
-      IRequester* requester,
-      LocalUserStore* store,
-      DeviceKeys const& deviceKeys,
-      Trustchain::DeviceId const& deviceId);
-  static tc::cotask<LocalUserAccessor> create(
-      Trustchain::UserId const& userId,
-      Trustchain::TrustchainId const& trustchainId,
-      IRequester* requester,
-      LocalUserStore* store);
+  static tc::cotask<LocalUserAccessor> createAndInit(Trustchain::UserId const& userId,
+                                                     Trustchain::TrustchainId const& trustchainId,
+                                                     IRequester* requester,
+                                                     LocalUserStore* store,
+                                                     DeviceKeys const& deviceKeys,
+                                                     Trustchain::DeviceId const& deviceId);
+  static tc::cotask<LocalUserAccessor> create(Trustchain::UserId const& userId,
+                                              Trustchain::TrustchainId const& trustchainId,
+                                              IRequester* requester,
+                                              LocalUserStore* store);
 
   LocalUserAccessor(LocalUser localUser,
                     Trustchain::Context context,

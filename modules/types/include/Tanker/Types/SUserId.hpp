@@ -11,8 +11,7 @@ namespace Tanker
 {
 using SUserId = StringWrapper<struct UserIdTag>;
 
-inline Trustchain::UserId obfuscateUserId(
-    SUserId const& s, Trustchain::TrustchainId const& trustchainId)
+inline Trustchain::UserId obfuscateUserId(SUserId const& s, Trustchain::TrustchainId const& trustchainId)
 {
   std::vector<std::uint8_t> toHash;
 

@@ -56,27 +56,21 @@ public:
   ~HttpClient();
 
   tc::cotask<HttpResult> asyncGet(std::string_view target);
-  tc::cotask<HttpResult> asyncPost(std::string_view target,
-                                   nlohmann::json data);
-  tc::cotask<HttpResult> asyncPatch(std::string_view target,
-                                    nlohmann::json data);
+  tc::cotask<HttpResult> asyncPost(std::string_view target, nlohmann::json data);
+  tc::cotask<HttpResult> asyncPatch(std::string_view target, nlohmann::json data);
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   tc::cotask<HttpResult> asyncUnauthGet(std::string_view target);
-  tc::cotask<HttpResult> asyncUnauthPost(std::string_view target,
-                                         nlohmann::json data);
+  tc::cotask<HttpResult> asyncUnauthPost(std::string_view target, nlohmann::json data);
 
   std::string makeUrl(std::string_view target) const;
-  std::string makeUrl(std::string_view target,
-                      nlohmann::json const& query) const;
+  std::string makeUrl(std::string_view target, nlohmann::json const& query) const;
   std::string makeQueryString(nlohmann::json const& query) const;
 
   tc::cotask<void> deauthenticate();
 
   void setAccessToken(std::string_view accessToken);
-  void setDeviceAuthData(
-      Trustchain::DeviceId const& deviceId,
-      Crypto::SignatureKeyPair const& deviceSignatureKeyPair);
+  void setDeviceAuthData(Trustchain::DeviceId const& deviceId, Crypto::SignatureKeyPair const& deviceSignatureKeyPair);
 
 private:
   std::string _baseUrl;
@@ -91,9 +85,7 @@ private:
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
   tc::cotask<void> authenticate();
-  HttpRequest makeRequest(HttpMethod method,
-                          std::string_view url,
-                          nlohmann::json const& data);
+  HttpRequest makeRequest(HttpMethod method, std::string_view url, nlohmann::json const& data);
   HttpRequest makeRequest(HttpMethod method, std::string_view url);
 
   tc::cotask<HttpResult> authenticatedFetch(HttpRequest req);

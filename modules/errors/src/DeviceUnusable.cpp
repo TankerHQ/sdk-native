@@ -11,8 +11,7 @@ namespace Tanker
 {
 namespace Errors
 {
-DeviceUnusable::DeviceUnusable(std::string const& message)
-  : Exception(make_error_code(Errc::InternalError), message)
+DeviceUnusable::DeviceUnusable(std::string const& message) : Exception(make_error_code(Errc::InternalError), message)
 {
   TERROR("This device is unusable and will be re-created: {}", what());
 }

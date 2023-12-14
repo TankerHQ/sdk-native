@@ -8,17 +8,13 @@
 namespace Tanker::Trustchain
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_USER_ID_ATTRIBUTES \
-  (appSignaturePublicKey, Crypto::PublicSignatureKey),           \
-      (tankerSignaturePublicKey, Crypto::PublicSignatureKey)
+  (appSignaturePublicKey, Crypto::PublicSignatureKey), (tankerSignaturePublicKey, Crypto::PublicSignatureKey)
 
 class ProvisionalUserId
 {
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
-      ProvisionalUserId,
-      TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_USER_ID_ATTRIBUTES)
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(ProvisionalUserId, TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_USER_ID_ATTRIBUTES)
 
-  friend void from_serialized(Serialization::SerializedSource& ss,
-                              ProvisionalUserId& k);
+  friend void from_serialized(Serialization::SerializedSource& ss, ProvisionalUserId& k);
 };
 
 // replace with operator<=> in C++20

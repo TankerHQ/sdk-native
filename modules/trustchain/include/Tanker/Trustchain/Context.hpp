@@ -13,8 +13,7 @@ class Context
 {
 public:
   Context() = default;
-  Context(TrustchainId const& id,
-          Crypto::PublicSignatureKey const& publicSignatureKey);
+  Context(TrustchainId const& id, Crypto::PublicSignatureKey const& publicSignatureKey);
 
   TrustchainId const& id() const;
   Crypto::PublicSignatureKey const& publicSignatureKey() const;

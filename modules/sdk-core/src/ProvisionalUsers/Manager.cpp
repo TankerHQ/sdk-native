@@ -23,8 +23,7 @@ namespace ProvisionalUsers
 namespace
 {
 std::optional<Verification::VerificationMethod> findVerificationMethod(
-    gsl::span<Verification::VerificationMethod const> methods,
-    Verification::VerificationMethod const& wanted)
+    gsl::span<Verification::VerificationMethod const> methods, Verification::VerificationMethod const& wanted)
 {
   auto it = std::find(methods.begin(), methods.end(), wanted);
   if (it != methods.end())
@@ -40,8 +39,7 @@ Verification::VerificationMethod getSecretProvisionalVerifMethod(
   else if (provisionalIdentity.target == Identity::TargetType::PhoneNumber)
     return PhoneNumber{provisionalIdentity.value};
   else
-    throw Errors::AssertionError(
-        "Unexpected target for secret provisional identity");
+    throw Errors::AssertionError("Unexpected target for secret provisional identity");
 }
 }
 
@@ -63,17 +61,14 @@ Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
 tc::cotask<std::optional<ProvisionalUserKeys>> Manager::fetchProvisionalKeys(
     Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
-  auto optProvisionalKey = TC_AWAIT(
-      _provisionalUserKeysStore->findProvisionalUserKeysByAppPublicSignatureKey(
-          provisionalIdentity.appSignatureKeyPair.publicKey));
+  auto optProvisionalKey = TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeysByAppPublicSignatureKey(
+      provisionalIdentity.appSignatureKeyPair.publicKey));
 
   if (!optProvisionalKey)
   {
     TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
-    optProvisionalKey =
-        TC_AWAIT(_provisionalUserKeysStore
-                     ->findProvisionalUserKeysByAppPublicSignatureKey(
-                         provisionalIdentity.appSignatureKeyPair.publicKey));
+    optProvisionalKey = TC_AWAIT(_provisionalUserKeysStore->findProvisionalUserKeysByAppPublicSignatureKey(
+        provisionalIdentity.appSignatureKeyPair.publicKey));
   }
   TC_RETURN(std::move(optProvisionalKey));
 }
@@ -83,11 +78,9 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentityWithMethod(
     Verification::VerificationMethod const& method,
     Crypto::SymmetricKey const& userSecret)
 {
-  auto const request =
-      Verification::makeRequestWithSession(provisionalIdentity, userSecret);
+  auto const request = Verification::makeRequestWithSession(provisionalIdentity, userSecret);
   if (auto const tankerKeys =
-          TC_AWAIT(_requester->getVerifiedProvisionalIdentityKeys(
-              _localUserAccessor->get().userId(), request)))
+          TC_AWAIT(_requester->getVerifiedProvisionalIdentityKeys(_localUserAccessor->get().userId(), request)))
   {
     auto const localUser = TC_AWAIT(_localUserAccessor->pull());
     auto const claimAction = Users::createProvisionalIdentityClaimAction(
@@ -108,53 +101,42 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentityWithMethod(
 }
 
 tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
-    Identity::SecretProvisionalIdentity const& provisionalIdentity,
-    Crypto::SymmetricKey const& userSecret)
+    Identity::SecretProvisionalIdentity const& provisionalIdentity, Crypto::SymmetricKey const& userSecret)
 {
   auto method = getSecretProvisionalVerifMethod(provisionalIdentity);
   auto const& userId = _localUserAccessor->get().userId();
-  auto genericVerificationMethods =
-      TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
-  auto verificationMethods = TC_AWAIT(
-      Verification::decryptMethods(genericVerificationMethods, userSecret));
+  auto genericVerificationMethods = TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
+  auto verificationMethods = TC_AWAIT(Verification::decryptMethods(genericVerificationMethods, userSecret));
 
   if (findVerificationMethod(verificationMethods, method))
   {
-    TC_RETURN(TC_AWAIT(claimProvisionalIdentityWithMethod(
-        provisionalIdentity, method, userSecret)));
+    TC_RETURN(TC_AWAIT(claimProvisionalIdentityWithMethod(provisionalIdentity, method, userSecret)));
   }
   _provisionalIdentity = provisionalIdentity;
   TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, method}));
 }
 
-tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
-    SSecretProvisionalIdentity const& sidentity,
-    Crypto::SymmetricKey const& userSecret)
+tc::cotask<AttachResult> Manager::attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity,
+                                                            Crypto::SymmetricKey const& userSecret)
 {
-  auto const provisionalIdentity =
-      Identity::extract<Identity::SecretProvisionalIdentity>(
-          sidentity.string());
+  auto const provisionalIdentity = Identity::extract<Identity::SecretProvisionalIdentity>(sidentity.string());
 
   if (provisionalIdentity.target != Identity::TargetType::Email &&
       provisionalIdentity.target != Identity::TargetType::PhoneNumber)
   {
     throw Errors::AssertionError(
-        fmt::format(FMT_STRING("unsupported provisional identity target {:s}"),
-                    provisionalIdentity.target));
+        fmt::format(FMT_STRING("unsupported provisional identity target {:s}"), provisionalIdentity.target));
   }
 
   if (TC_AWAIT(fetchProvisionalKeys(provisionalIdentity)))
     TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
 
-  TC_RETURN(
-      TC_AWAIT(claimProvisionalIdentity(provisionalIdentity, userSecret)));
+  TC_RETURN(TC_AWAIT(claimProvisionalIdentity(provisionalIdentity, userSecret)));
 }
 
-tc::cotask<void> Manager::verifyProvisionalIdentity(
-    Verification::RequestWithVerif const& unlockRequest)
+tc::cotask<void> Manager::verifyProvisionalIdentity(Verification::RequestWithVerif const& unlockRequest)
 {
-  auto const tankerKeys =
-      TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));
+  auto const tankerKeys = TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));
 
   auto const localUser = TC_AWAIT(_localUserAccessor->pull());
   auto const clientEntry = Users::createProvisionalIdentityClaimAction(
@@ -175,8 +157,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
 }
 
-std::optional<Identity::SecretProvisionalIdentity> const&
-Manager::provisionalIdentity() const
+std::optional<Identity::SecretProvisionalIdentity> const& Manager::provisionalIdentity() const
 {
   return _provisionalIdentity;
 }

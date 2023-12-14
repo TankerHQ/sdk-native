@@ -11,13 +11,12 @@ namespace Trustchain
 {
 namespace Actions
 {
-KeyPublishToUser::KeyPublishToUser(
-    TrustchainId const& trustchainId,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::SimpleResourceId const& resourceId,
-    Crypto::SealedSymmetricKey const& sealedSymmetricKey,
-    Crypto::Hash const& author,
-    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+KeyPublishToUser::KeyPublishToUser(TrustchainId const& trustchainId,
+                                   Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+                                   Crypto::SimpleResourceId const& resourceId,
+                                   Crypto::SealedSymmetricKey const& sealedSymmetricKey,
+                                   Crypto::Hash const& author,
+                                   Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
   : _trustchainId(trustchainId),
     _recipientPublicEncryptionKey(recipientPublicEncryptionKey),
     _resourceId(resourceId),
@@ -28,8 +27,7 @@ KeyPublishToUser::KeyPublishToUser(
 {
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
-    KeyPublishToUser, TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(KeyPublishToUser, TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_ATTRIBUTES)
 }
 }
 }

@@ -26,11 +26,9 @@ class DecryptionStream : protected BufferedStream<Derived>
 
 public:
   using ResourceKeyFinder =
-      std::function<tc::cotask<std::optional<Crypto::SymmetricKey>>(
-          Crypto::SimpleResourceId const&)>;
+      std::function<tc::cotask<std::optional<Crypto::SymmetricKey>>(Crypto::SimpleResourceId const&)>;
 
-  static tc::cotask<Derived> create(InputSource cb,
-                                    ResourceKeyFinder const& finder);
+  static tc::cotask<Derived> create(InputSource cb, ResourceKeyFinder const& finder);
 
   using BufferedStream<Derived>::operator();
 
@@ -42,15 +40,12 @@ protected:
   HeaderType _header;
   std::int64_t _chunkIndex{};
 
-  explicit DecryptionStream(InputSource,
-                            HeaderType header,
-                            Crypto::SymmetricKey key);
+  explicit DecryptionStream(InputSource, HeaderType header, Crypto::SymmetricKey key);
 
   tc::cotask<void> processInput();
   tc::cotask<HeaderType> readHeader();
 
-  void checkHeaderIntegrity(HeaderType const& oldHeader,
-                            HeaderType const& currentHeader);
+  void checkHeaderIntegrity(HeaderType const& oldHeader, HeaderType const& currentHeader);
 };
 }
 }

@@ -17,8 +17,7 @@ using namespace Tanker;
 
 TEST_CASE("Resource Keys Store")
 {
-  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
-                                            DataStore::MemoryPath);
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath, DataStore::MemoryPath);
 
   ResourceKeys::Store keys({}, db.get());
 
@@ -26,8 +25,7 @@ TEST_CASE("Resource Keys Store")
   {
     auto const unexistentMac = make<Crypto::SimpleResourceId>("unexistent");
 
-    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
-                                  Errors::Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)), Errors::Errc::InvalidArgument);
   }
 
   SECTION("it should find a key that was inserted")

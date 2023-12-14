@@ -18,11 +18,9 @@ BufferedStream<Derived>::BufferedStream(InputSource cb) : _cb(std::move(cb))
 }
 
 template <typename Derived>
-tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(
-    gsl::span<std::uint8_t> out)
+tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(gsl::span<std::uint8_t> out)
 {
-  auto const toRead =
-      std::min<std::int64_t>(out.size(), _output.size() - _currentPosition);
+  auto const toRead = std::min<std::int64_t>(out.size(), _output.size() - _currentPosition);
   std::copy_n(_output.begin() + _currentPosition, toRead, out.data());
   _currentPosition += toRead;
   if (_currentPosition == static_cast<std::int64_t>(_output.size()))
@@ -36,8 +34,7 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(
 }
 
 template <typename Derived>
-tc::cotask<gsl::span<std::uint8_t const>>
-BufferedStream<Derived>::readInputSource(std::int64_t n)
+tc::cotask<gsl::span<std::uint8_t const>> BufferedStream<Derived>::readInputSource(std::int64_t n)
 {
   if (!_cb)
     TC_RETURN(gsl::span<std::uint8_t const>());
@@ -51,8 +48,7 @@ BufferedStream<Derived>::readInputSource(std::int64_t n)
 }
 
 template <typename Derived>
-gsl::span<std::uint8_t> BufferedStream<Derived>::prepareWrite(
-    std::int64_t toWrite)
+gsl::span<std::uint8_t> BufferedStream<Derived>::prepareWrite(std::int64_t toWrite)
 {
   _output.resize(toWrite);
   _state = State::BufferedOutput;
@@ -60,8 +56,7 @@ gsl::span<std::uint8_t> BufferedStream<Derived>::prepareWrite(
 }
 
 template <typename Derived>
-tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
-    gsl::span<std::uint8_t> out)
+tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(gsl::span<std::uint8_t> out)
 {
   using namespace Errors;
 
@@ -72,8 +67,7 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
     case State::EndOfStream:
       TC_RETURN(0);
     case State::Error:
-      throw Exception(make_error_code(Errc::IOError),
-                      "buffered stream is in an error state");
+      throw Exception(make_error_code(Errc::IOError), "buffered stream is in an error state");
     case State::NoOutput:
       _output.clear();
       while (_output.empty() && !_processingComplete)
@@ -116,8 +110,7 @@ template <typename Derived>
 void BufferedStream<Derived>::shrinkOutput(std::uint64_t n)
 {
   if (n > _output.size())
-    throw Errors::AssertionError(
-        "attempting to enlarge buffer with shrinkOutput()");
+    throw Errors::AssertionError("attempting to enlarge buffer with shrinkOutput()");
 
   _output.resize(n);
 }

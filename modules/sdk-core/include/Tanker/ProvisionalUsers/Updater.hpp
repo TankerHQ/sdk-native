@@ -25,9 +25,8 @@ struct UsedSecretUser
   Crypto::EncryptionKeyPair tankerEncryptionKeyPair;
 };
 
-tc::cotask<UsedSecretUser> extractKeysToStore(
-    Users::ILocalUserAccessor& localUserAccessor,
-    Trustchain::Actions::ProvisionalIdentityClaim const& action);
+tc::cotask<UsedSecretUser> extractKeysToStore(Users::ILocalUserAccessor& localUserAccessor,
+                                              Trustchain::Actions::ProvisionalIdentityClaim const& action);
 
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,

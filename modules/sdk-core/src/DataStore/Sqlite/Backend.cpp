@@ -44,8 +44,7 @@ std::string appendDbSuffix(std::string db, std::string_view suffix)
 int getDbVersion(Connection& db)
 {
   auto result = db(sqlpp::custom_query(sqlpp::verbatim("PRAGMA user_version"))
-                       .with_result_type_of(
-                           sqlpp::select(sqlpp::value(0).as(sqlpp::alias::a))));
+                       .with_result_type_of(sqlpp::select(sqlpp::value(0).as(sqlpp::alias::a))));
   return result.begin()->a;
 }
 
@@ -71,48 +70,42 @@ void createCacheTable(Connection& db)
 
 ConnPtr openDeviceDb(std::string dataPath)
 {
-  auto dbDevice = createConnection(
-      appendDbSuffix(std::move(dataPath), "-device.db"), {}, true);
+  auto dbDevice = createConnection(appendDbSuffix(std::move(dataPath), "-device.db"), {}, true);
   auto deviceVersion = getDbVersion(*dbDevice);
   switch (deviceVersion)
   {
   case 0:
     createDeviceTable(*dbDevice);
-    dbDevice->execute(
-        fmt::format("PRAGMA user_version = {}", LatestDeviceVersion));
+    dbDevice->execute(fmt::format("PRAGMA user_version = {}", LatestDeviceVersion));
     break;
   case LatestDeviceVersion:
     break;
   default:
-    throw Errors::formatEx(
-        Errc::DatabaseTooRecent,
-        "device database version too recent, expected {}, got {}",
-        LatestDeviceVersion,
-        deviceVersion);
+    throw Errors::formatEx(Errc::DatabaseTooRecent,
+                           "device database version too recent, expected {}, got {}",
+                           LatestDeviceVersion,
+                           deviceVersion);
   }
   return dbDevice;
 }
 
 ConnPtr openCacheDb(std::string cachePath)
 {
-  auto dbCache = createConnection(
-      appendDbSuffix(std::move(cachePath), "-cache.db"), {}, true);
+  auto dbCache = createConnection(appendDbSuffix(std::move(cachePath), "-cache.db"), {}, true);
   auto cacheVersion = getDbVersion(*dbCache);
   switch (cacheVersion)
   {
   case 0:
     createCacheTable(*dbCache);
-    dbCache->execute(
-        fmt::format("PRAGMA user_version = {}", LatestCacheVersion));
+    dbCache->execute(fmt::format("PRAGMA user_version = {}", LatestCacheVersion));
     break;
   case LatestCacheVersion:
     break;
   default:
-    throw Errors::formatEx(
-        Errc::DatabaseTooRecent,
-        "cache database version too recent, expected {}, got {}",
-        LatestCacheVersion,
-        cacheVersion);
+    throw Errors::formatEx(Errc::DatabaseTooRecent,
+                           "cache database version too recent, expected {}, got {}",
+                           LatestCacheVersion,
+                           cacheVersion);
   }
   return dbCache;
 }
@@ -121,14 +114,12 @@ ConnPtr openCacheDb(std::string cachePath)
 using DeviceTable = device::device;
 using CacheTable = cache::cache;
 
-std::unique_ptr<DataStore> SqliteBackend::open(std::string const& dataPath,
-                                               std::string const& cachePath)
+std::unique_ptr<DataStore> SqliteBackend::open(std::string const& dataPath, std::string const& cachePath)
 {
   auto dbDevice = openDeviceDb(dataPath);
   auto dbCache = openCacheDb(cachePath);
 
-  return std::unique_ptr<SqliteDataStore>(
-      new SqliteDataStore(std::move(dbDevice), std::move(dbCache)));
+  return std::unique_ptr<SqliteDataStore>(new SqliteDataStore(std::move(dbDevice), std::move(dbCache)));
 }
 
 SqliteDataStore::SqliteDataStore(ConnPtr dbDevice, ConnPtr dbCache)
@@ -148,8 +139,7 @@ void SqliteDataStore::putSerializedDevice(gsl::span<uint8_t const> device)
 {
   DeviceTable tab{};
   (*_dbDevice)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
-      tab.id = 1,
-      tab.deviceblob = std::vector<uint8_t>(device.begin(), device.end())));
+      tab.id = 1, tab.deviceblob = std::vector<uint8_t>(device.begin(), device.end())));
 }
 
 std::optional<std::vector<uint8_t>> SqliteDataStore::findSerializedDevice()
@@ -166,19 +156,15 @@ std::optional<std::vector<uint8_t>> SqliteDataStore::findSerializedDevice()
 namespace
 {
 template <typename T>
-void fillMultiInsert(
-    T& multi_insert,
-    gsl::span<std::pair<DataStore::Key, DataStore::Value> const> keyValues)
+void fillMultiInsert(T& multi_insert, gsl::span<std::pair<DataStore::Key, DataStore::Value> const> keyValues)
 {
   CacheTable tab{};
   for (auto const& [key, value] : keyValues)
-    multi_insert.values.add(tab.key = key | ranges::to<std::vector>,
-                            tab.value = value | ranges::to<std::vector>);
+    multi_insert.values.add(tab.key = key | ranges::to<std::vector>, tab.value = value | ranges::to<std::vector>);
 }
 }
 
-void SqliteDataStore::putCacheValues(
-    gsl::span<std::pair<Key, Value> const> keyValues, OnConflict onConflict)
+void SqliteDataStore::putCacheValues(gsl::span<std::pair<Key, Value> const> keyValues, OnConflict onConflict)
 {
   if (keyValues.empty())
     return;
@@ -205,15 +191,13 @@ void SqliteDataStore::putCacheValues(
     return;
   }
   case OnConflict::Ignore: {
-    auto multi_insert =
-        sqlpp::sqlite3::insert_or_ignore_into(tab).columns(tab.key, tab.value);
+    auto multi_insert = sqlpp::sqlite3::insert_or_ignore_into(tab).columns(tab.key, tab.value);
     fillMultiInsert(multi_insert, keyValues);
     (*_dbCache)(multi_insert);
     return;
   }
   case OnConflict::Replace: {
-    auto multi_insert =
-        sqlpp::sqlite3::insert_or_replace_into(tab).columns(tab.key, tab.value);
+    auto multi_insert = sqlpp::sqlite3::insert_or_replace_into(tab).columns(tab.key, tab.value);
     fillMultiInsert(multi_insert, keyValues);
     (*_dbCache)(multi_insert);
     return;
@@ -221,49 +205,38 @@ void SqliteDataStore::putCacheValues(
   case OnConflict::Last:
     break;
   }
-  throw Errors::formatEx(Errors::Errc::InternalError,
-                         "unknown OnConflict value: {}",
-                         static_cast<int>(onConflict));
+  throw Errors::formatEx(Errors::Errc::InternalError, "unknown OnConflict value: {}", static_cast<int>(onConflict));
 }
 
 namespace
 {
 template <typename T>
-std::vector<std::optional<std::vector<uint8_t>>> sortResults(
-    T& rows, std::vector<std::vector<uint8_t>> const& keys)
+std::vector<std::optional<std::vector<uint8_t>>> sortResults(T& rows, std::vector<std::vector<uint8_t>> const& keys)
 {
-  boost::container::flat_map<std::vector<uint8_t>, std::vector<uint8_t>>
-      resultMap;
+  boost::container::flat_map<std::vector<uint8_t>, std::vector<uint8_t>> resultMap;
   resultMap.reserve(keys.size());
   for (auto const& row : rows)
     resultMap[row.key] = extractBlob<std::vector<uint8_t>>(row.value);
 
-  return keys |
-         ranges::views::transform(
-             [&](auto const& key) -> std::optional<std::vector<uint8_t>> {
-               if (auto const it = resultMap.find(key); it != resultMap.end())
-                 return it->second;
-               else
-                 return std::nullopt;
-             }) |
+  return keys | ranges::views::transform([&](auto const& key) -> std::optional<std::vector<uint8_t>> {
+           if (auto const it = resultMap.find(key); it != resultMap.end())
+             return it->second;
+           else
+             return std::nullopt;
+         }) |
          ranges::to<std::vector>;
 }
 }
 
-std::vector<std::optional<std::vector<uint8_t>>>
-SqliteDataStore::findCacheValues(
+std::vector<std::optional<std::vector<uint8_t>>> SqliteDataStore::findCacheValues(
     gsl::span<gsl::span<uint8_t const> const> keysArg)
 {
   // sqlpp needs vectors, so we convert the spans
-  auto const keys = keysArg | ranges::views::transform([](auto const& k) {
-                      return ranges::to<std::vector>(k);
-                    }) |
+  auto const keys = keysArg | ranges::views::transform([](auto const& k) { return ranges::to<std::vector>(k); }) |
                     ranges::to<std::vector>;
 
   CacheTable tab{};
-  auto rows = (*_dbCache)(select(tab.key, tab.value)
-                              .from(tab)
-                              .where(tab.key.in(sqlpp::value_list(keys))));
+  auto rows = (*_dbCache)(select(tab.key, tab.value).from(tab).where(tab.key.in(sqlpp::value_list(keys))));
 
   return sortResults(rows, keys);
 }

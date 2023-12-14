@@ -18,8 +18,7 @@ class NonceManager
 {
 public:
   Nonce createOidcNonce();
-  SignedChallenge signOidcChallenge(Nonce const& nonce,
-                                    Challenge const& challenge);
+  SignedChallenge signOidcChallenge(Nonce const& nonce, Challenge const& challenge);
 
   void setTestNonce(Nonce const& nonce);
   std::optional<Nonce> testNonce() const;

@@ -35,8 +35,7 @@ int main(int argc, char* argv[])
                                tc::executor(tp),
                                [&]() -> tc::cotask<int> {
                                  TC_AWAIT(TrustchainFixture::setUp());
-                                 auto const ret =
-                                     TC_AWAIT(session.run(argc, argv));
+                                 auto const ret = TC_AWAIT(session.run(argc, argv));
                                  TC_AWAIT(TrustchainFixture::tearDown());
                                  TC_RETURN(ret);
                                })

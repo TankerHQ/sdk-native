@@ -11,19 +11,16 @@ namespace Crypto
 template <typename Unused>
 class BasicHash;
 
-extern template class BasicCryptographicType<BasicHash<void>,
-                                             crypto_generichash_BYTES>;
+extern template class BasicCryptographicType<BasicHash<void>, crypto_generichash_BYTES>;
 
 template <>
-class BasicHash<void>
-  : public BasicCryptographicType<BasicHash<void>, crypto_generichash_BYTES>
+class BasicHash<void> : public BasicCryptographicType<BasicHash<void>, crypto_generichash_BYTES>
 {
   using base_t::base_t;
 };
 
 template <typename Unused>
-class BasicHash
-  : public BasicCryptographicType<BasicHash<Unused>, crypto_generichash_BYTES>
+class BasicHash : public BasicCryptographicType<BasicHash<Unused>, crypto_generichash_BYTES>
 {
   using BasicHash::BasicCryptographicType::BasicCryptographicType;
 

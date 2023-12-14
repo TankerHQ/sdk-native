@@ -90,21 +90,17 @@ TEST_CASE("UserGroupAddition serialization test vectors")
 
     auto const groupId = make<GroupId>("group id");
     auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
-    UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const
-        sealedPrivateEncryptionKeysForUsers{
-            {make<Crypto::PublicEncryptionKey>("pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "encrypted group priv key")},
-            {make<Crypto::PublicEncryptionKey>("second pub user key"),
-             make<Crypto::SealedPrivateEncryptionKey>(
-                 "second encrypted group priv key")}};
+    UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const sealedPrivateEncryptionKeysForUsers{
+        {make<Crypto::PublicEncryptionKey>("pub user key"),
+         make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
+        {make<Crypto::PublicEncryptionKey>("second pub user key"),
+         make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
 
     auto const trustchainId = make<TrustchainId>("trustchain id");
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "+J1iz8DZz+W+QUwyfjXCd/zEa0KQQkTqz1Ougnq3xFg=");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("+J1iz8DZz+W+QUwyfjXCd/zEa0KQQkTqz1Ougnq3xFg=");
 
     UserGroupAddition::v1 const uga{trustchainId,
                                     groupId,
@@ -116,8 +112,7 @@ TEST_CASE("UserGroupAddition serialization test vectors")
                                     signature};
 
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
-    CHECK(Serialization::deserialize<UserGroupAddition::v1>(
-              serializedUserGroupAddition) == uga);
+    CHECK(Serialization::deserialize<UserGroupAddition::v1>(serializedUserGroupAddition) == uga);
   }
 
   SECTION("it should serialize/deserialize a UserGroupAddition2")
@@ -253,21 +248,16 @@ TEST_CASE("UserGroupAddition serialization test vectors")
          make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
         {make<UserId>("second user id"),
          make<Crypto::PublicEncryptionKey>("second pub user key"),
-         make<Crypto::SealedPrivateEncryptionKey>(
-             "second encrypted group priv key")}};
-    std::vector<UserGroupAddition::v2::ProvisionalMember> const
-        provisionalMembers{
-            {make<Crypto::PublicSignatureKey>("app provisional sig key"),
-             make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
-             make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                 "provisional encrypted group priv key")},
-            {make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
-             make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
-             make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                 "2nd provisional encrypted group priv key")}};
+         make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")}};
+    std::vector<UserGroupAddition::v2::ProvisionalMember> const provisionalMembers{
+        {make<Crypto::PublicSignatureKey>("app provisional sig key"),
+         make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
+         make<Crypto::TwoTimesSealedPrivateEncryptionKey>("provisional encrypted group priv key")},
+        {make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
+         make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
+         make<Crypto::TwoTimesSealedPrivateEncryptionKey>("2nd provisional encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "KrjiPbdL/Eekt+vTD03gMiAjafG3wod2DI03wsggiOo=");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("KrjiPbdL/Eekt+vTD03gMiAjafG3wod2DI03wsggiOo=");
 
     UserGroupAddition::v2 const uga{trustchainId,
                                     groupId,
@@ -280,8 +270,7 @@ TEST_CASE("UserGroupAddition serialization test vectors")
                                     signature};
 
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
-    CHECK(Serialization::deserialize<UserGroupAddition::v2>(
-              serializedUserGroupAddition) == uga);
+    CHECK(Serialization::deserialize<UserGroupAddition::v2>(serializedUserGroupAddition) == uga);
   }
 
   SECTION("it should serialize/deserialize a UserGroupAddition3")
@@ -433,26 +422,20 @@ TEST_CASE("UserGroupAddition serialization test vectors")
          make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
         {make<UserId>("second user id"),
          make<Crypto::PublicEncryptionKey>("second pub user key"),
-         make<Crypto::SealedPrivateEncryptionKey>(
-             "second encrypted group priv key")}};
-    std::vector<UserGroupAddition::v3::ProvisionalMember> const
-        provisionalMembers{
-            {make<Crypto::PublicSignatureKey>("app provisional sig key"),
-             make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
-             make<Crypto::PublicEncryptionKey>("app provisional enc key"),
-             make<Crypto::PublicEncryptionKey>("tanker provisional enc key"),
-             make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                 "provisional encrypted group priv key")},
-            {make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
-             make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
-             make<Crypto::PublicEncryptionKey>("2nd app provisional enc key"),
-             make<Crypto::PublicEncryptionKey>(
-                 "2nd tanker provisional enc key"),
-             make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-                 "2nd provisional encrypted group priv key")}};
+         make<Crypto::SealedPrivateEncryptionKey>("second encrypted group priv key")}};
+    std::vector<UserGroupAddition::v3::ProvisionalMember> const provisionalMembers{
+        {make<Crypto::PublicSignatureKey>("app provisional sig key"),
+         make<Crypto::PublicSignatureKey>("tanker provisional sig key"),
+         make<Crypto::PublicEncryptionKey>("app provisional enc key"),
+         make<Crypto::PublicEncryptionKey>("tanker provisional enc key"),
+         make<Crypto::TwoTimesSealedPrivateEncryptionKey>("provisional encrypted group priv key")},
+        {make<Crypto::PublicSignatureKey>("2nd app provisional sig key"),
+         make<Crypto::PublicSignatureKey>("2nd tanker provisional sig key"),
+         make<Crypto::PublicEncryptionKey>("2nd app provisional enc key"),
+         make<Crypto::PublicEncryptionKey>("2nd tanker provisional enc key"),
+         make<Crypto::TwoTimesSealedPrivateEncryptionKey>("2nd provisional encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "j6fNrHULMUAhPAIEXQAkeHscTh+wDuRmVQEMP/hKlhI=");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("j6fNrHULMUAhPAIEXQAkeHscTh+wDuRmVQEMP/hKlhI=");
 
     UserGroupAddition::v3 const uga{trustchainId,
                                     groupId,
@@ -465,7 +448,6 @@ TEST_CASE("UserGroupAddition serialization test vectors")
                                     signature};
 
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
-    CHECK(Serialization::deserialize<UserGroupAddition::v3>(
-              serializedUserGroupAddition) == uga);
+    CHECK(Serialization::deserialize<UserGroupAddition::v3>(serializedUserGroupAddition) == uga);
   }
 }

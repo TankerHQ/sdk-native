@@ -58,25 +58,16 @@ TEST_CASE("SessionCertificate serialization test vectors")
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
 
-    auto const sessionSignaturKey =
-        make<Crypto::PublicSignatureKey>("session sig key");
+    auto const sessionSignaturKey = make<Crypto::PublicSignatureKey>("session sig key");
     auto const timestamp = 1633867200;
     auto const verifType = VerificationMethodType::Email;
     auto const verifTarget = make<Crypto::Hash>("hashed email");
 
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "d88Au3e2dVr5tMtayfyYaVNaokR0CCl92Pq1JZhl6Mw=");
-    SessionCertificate const sc(trustchainId,
-                                sessionSignaturKey,
-                                timestamp,
-                                verifType,
-                                verifTarget,
-                                author,
-                                hash,
-                                signature);
+    auto const hash = mgs::base64::decode<Crypto::Hash>("d88Au3e2dVr5tMtayfyYaVNaokR0CCl92Pq1JZhl6Mw=");
+    SessionCertificate const sc(
+        trustchainId, sessionSignaturKey, timestamp, verifType, verifTarget, author, hash, signature);
 
     CHECK(Serialization::serialize(sc) == serializedSessionCertificate);
-    CHECK(Serialization::deserialize<SessionCertificate>(
-              serializedSessionCertificate) == sc);
+    CHECK(Serialization::deserialize<SessionCertificate>(serializedSessionCertificate) == sc);
   }
 }

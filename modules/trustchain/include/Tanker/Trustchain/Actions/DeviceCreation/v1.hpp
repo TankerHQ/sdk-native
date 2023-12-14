@@ -14,34 +14,30 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES                \
-  (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey), (userId, UserId), \
-      (delegationSignature, Crypto::Signature),                                \
-      (publicSignatureKey, Crypto::PublicSignatureKey),                        \
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES                                   \
+  (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey), (userId, UserId),                    \
+      (delegationSignature, Crypto::Signature), (publicSignatureKey, Crypto::PublicSignatureKey), \
       (publicEncryptionKey, Crypto::PublicEncryptionKey)
 
 class DeviceCreation1
 {
 public:
-  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
-      DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
 
 public:
-  DeviceCreation1(
-      TrustchainId const& trustchainId,
-      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-      UserId const& userId,
-      Crypto::Signature const& delegationSignature,
-      Crypto::PublicSignatureKey const& publicSignatureKey,
-      Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Crypto::Hash const& author,
-      Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey);
+  DeviceCreation1(TrustchainId const& trustchainId,
+                  Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+                  UserId const& userId,
+                  Crypto::Signature const& delegationSignature,
+                  Crypto::PublicSignatureKey const& publicSignatureKey,
+                  Crypto::PublicEncryptionKey const& publicEncryptionKey,
+                  Crypto::Hash const& author,
+                  Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey);
 
   std::vector<std::uint8_t> delegationSignatureData() const;
 
 protected:
-  friend void from_serialized(Serialization::SerializedSource&,
-                              DeviceCreation1&);
+  friend void from_serialized(Serialization::SerializedSource&, DeviceCreation1&);
 };
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation1)

@@ -18,18 +18,14 @@ public:
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore const&) = delete;
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore&&) = delete;
 
-  ProvisionalUserKeysStore(Crypto::SymmetricKey const& userSecret,
-                           DataStore::DataStore* db);
+  ProvisionalUserKeysStore(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
-  tc::cotask<void> putProvisionalUserKeys(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey,
-      ProvisionalUserKeys const& provisionalUserKeys);
+  tc::cotask<void> putProvisionalUserKeys(Crypto::PublicSignatureKey const& appPublicSigKey,
+                                          Crypto::PublicSignatureKey const& tankerPublicSigKey,
+                                          ProvisionalUserKeys const& provisionalUserKeys);
   tc::cotask<std::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey) const;
-  tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-  findProvisionalUserKeysByAppPublicSignatureKey(
+      Crypto::PublicSignatureKey const& appPublicSigKey, Crypto::PublicSignatureKey const& tankerPublicSigKey) const;
+  tc::cotask<std::optional<Tanker::ProvisionalUserKeys>> findProvisionalUserKeysByAppPublicSignatureKey(
       Crypto::PublicSignatureKey const& appPublicSignatureKey) const;
 
 private:

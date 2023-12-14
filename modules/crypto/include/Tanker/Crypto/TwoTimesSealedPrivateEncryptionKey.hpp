@@ -8,9 +8,8 @@ namespace Tanker
 {
 namespace Crypto
 {
-extern template class BasicCryptographicType<
-    Sealed<SealedPrivateEncryptionKey>,
-    Sealed<SealedPrivateEncryptionKey>::arraySize>;
+extern template class BasicCryptographicType<Sealed<SealedPrivateEncryptionKey>,
+                                             Sealed<SealedPrivateEncryptionKey>::arraySize>;
 
 using TwoTimesSealedPrivateEncryptionKey = Sealed<Sealed<PrivateEncryptionKey>>;
 }

@@ -17,19 +17,16 @@ class EncryptionStreamV8 : public EncryptionStream<EncryptionStreamV8>
   friend EncryptionStream<EncryptionStreamV8>;
 
 public:
-  inline static constexpr auto overhead =
-      Header::serializedSize + Crypto::Mac::arraySize + 1;
+  inline static constexpr auto overhead = Header::serializedSize + Crypto::Mac::arraySize + 1;
 
-  EncryptionStreamV8(
-      InputSource,
-      std::optional<std::uint32_t> padding = std::nullopt,
-      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
-  EncryptionStreamV8(
-      InputSource,
-      Crypto::SimpleResourceId const& resourceId,
-      Crypto::SymmetricKey const& key,
-      std::optional<std::uint32_t> padding = std::nullopt,
-      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
+  EncryptionStreamV8(InputSource,
+                     std::optional<std::uint32_t> padding = std::nullopt,
+                     std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
+  EncryptionStreamV8(InputSource,
+                     Crypto::SimpleResourceId const& resourceId,
+                     Crypto::SymmetricKey const& key,
+                     std::optional<std::uint32_t> padding = std::nullopt,
+                     std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
 
 private:
   std::optional<std::uint32_t> _paddingStep;

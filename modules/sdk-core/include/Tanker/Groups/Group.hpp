@@ -78,8 +78,7 @@ using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
 BaseGroup extractBaseGroup(Group const& group);
 
 // optional has no .map()
-inline std::optional<BaseGroup> extractBaseGroup(
-    std::optional<Group> const& group)
+inline std::optional<BaseGroup> extractBaseGroup(std::optional<Group> const& group)
 {
   if (!group)
     return std::nullopt;
@@ -87,8 +86,7 @@ inline std::optional<BaseGroup> extractBaseGroup(
 }
 
 void updateLastGroupBlock(Group& group, Crypto::Hash const& lastBlockHash);
-void updateLastKeyRotationBlockHash(
-    Group& group, Crypto::Hash const& lastKeyRotationBlockHash);
+void updateLastKeyRotationBlockHash(Group& group, Crypto::Hash const& lastKeyRotationBlockHash);
 Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 Trustchain::GroupId getGroupId(Group const& group);
 }

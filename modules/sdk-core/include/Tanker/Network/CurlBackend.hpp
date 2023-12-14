@@ -18,8 +18,7 @@ public:
   CurlBackend& operator=(CurlBackend const&) = delete;
   CurlBackend& operator=(CurlBackend&&) = delete;
 
-  CurlBackend(SdkInfo sdkInfo,
-              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
+  CurlBackend(SdkInfo sdkInfo, std::chrono::nanoseconds timeout = std::chrono::seconds(30));
 
   tc::cotask<HttpResponse> fetch(HttpRequest req) override;
 

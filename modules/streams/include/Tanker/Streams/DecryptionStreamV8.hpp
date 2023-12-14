@@ -15,12 +15,10 @@ class DecryptionStreamV8 : public DecryptionStream<DecryptionStreamV8, Header>
 private:
   bool _onlyPaddingLeft = false;
 
-  explicit DecryptionStreamV8(InputSource cb,
-                              Header header,
-                              Crypto::SymmetricKey key);
+  explicit DecryptionStreamV8(InputSource cb, Header header, Crypto::SymmetricKey key);
 
   tc::cotask<void> decryptChunk();
-  static tc::cotask<std::optional<Crypto::SymmetricKey>> tryGetKey(
-      ResourceKeyFinder const& finder, Header const& header);
+  static tc::cotask<std::optional<Crypto::SymmetricKey>> tryGetKey(ResourceKeyFinder const& finder,
+                                                                   Header const& header);
 };
 }

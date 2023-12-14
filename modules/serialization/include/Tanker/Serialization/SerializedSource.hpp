@@ -31,9 +31,7 @@ public:
     }
     catch (gsl::fail_fast const&)
     {
-      throw Errors::Exception(
-          Errc::TruncatedInput,
-          "could not read " + std::to_string(size) + " bytes");
+      throw Errors::Exception(Errc::TruncatedInput, "could not read " + std::to_string(size) + " bytes");
     }
   }
 

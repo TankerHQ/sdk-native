@@ -17,25 +17,21 @@ TLOG_CATEGORY(CTankerStorage);
 using namespace Tanker::DataStore;
 namespace Errors = Tanker::Errors;
 
-std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
-    tanker_datastore_options_t const& options)
+std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(tanker_datastore_options_t const& options)
 {
-  auto const datastoreHandlersCount =
-      !!options.open + !!options.close + !!options.nuke +
-      !!options.put_serialized_device + !!options.find_serialized_device +
-      !!options.put_cache_values + !!options.find_cache_values;
+  auto const datastoreHandlersCount = !!options.open + !!options.close + !!options.nuke +
+                                      !!options.put_serialized_device + !!options.find_serialized_device +
+                                      !!options.put_cache_values + !!options.find_cache_values;
   if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
-    throw Errors::Exception(
-        make_error_code(Errors::Errc::InternalError),
-        "the provided datastore implementation is incomplete");
+    throw Errors::Exception(make_error_code(Errors::Errc::InternalError),
+                            "the provided datastore implementation is incomplete");
   if (datastoreHandlersCount == 0)
     return nullptr;
   return std::make_unique<CTankerStorageBackend>(options);
 }
 
-#define STATIC_ENUM_CHECK(cval, cppval)           \
-  static_assert(cval == static_cast<int>(cppval), \
-                "enum values not in sync: " #cval " and " #cppval)
+#define STATIC_ENUM_CHECK(cval, cppval) \
+  static_assert(cval == static_cast<int>(cppval), "enum values not in sync: " #cval " and " #cppval)
 
 STATIC_ENUM_CHECK(TANKER_DATASTORE_ONCONFLICT_FAIL, OnConflict::Fail);
 STATIC_ENUM_CHECK(TANKER_DATASTORE_ONCONFLICT_IGNORE, OnConflict::Ignore);
@@ -46,18 +42,13 @@ static_assert(TANKER_DATASTORE_ONCONFLICT_LAST == 3,
               "Please update the assertions above if you added a new "
               "onconflict method");
 
-STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_INVALID_DATABASE_VERSION,
-                  Errc::InvalidDatabaseVersion);
-STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_RECORD_NOT_FOUND,
-                  Errc::RecordNotFound);
+STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_INVALID_DATABASE_VERSION, Errc::InvalidDatabaseVersion);
+STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_RECORD_NOT_FOUND, Errc::RecordNotFound);
 STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_ERROR, Errc::DatabaseError);
 STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_LOCKED, Errc::DatabaseLocked);
-STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_CORRUPT,
-                  Errc::DatabaseCorrupt);
-STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_TOO_RECENT,
-                  Errc::DatabaseTooRecent);
-STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_CONSTRAINT_FAILED,
-                  Errc::ConstraintFailed);
+STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_CORRUPT, Errc::DatabaseCorrupt);
+STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_DATABASE_TOO_RECENT, Errc::DatabaseTooRecent);
+STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_CONSTRAINT_FAILED, Errc::ConstraintFailed);
 STATIC_ENUM_CHECK(TANKER_DATASTORE_ERROR_LAST, Errc::Last);
 
 static_assert(TANKER_DATASTORE_ERROR_LAST == 8,
@@ -75,27 +66,21 @@ void rethrowError(std::exception_ptr e)
 }
 }
 
-CTankerStorageBackend::CTankerStorageBackend(
-    tanker_datastore_options_t const& options)
-  : _options(options)
+CTankerStorageBackend::CTankerStorageBackend(tanker_datastore_options_t const& options) : _options(options)
 {
 }
 
-std::unique_ptr<DataStore> CTankerStorageBackend::open(
-    std::string const& dataPath, std::string const& cachePath)
+std::unique_ptr<DataStore> CTankerStorageBackend::open(std::string const& dataPath, std::string const& cachePath)
 {
   tanker_datastore_t* db;
   std::exception_ptr err;
   TDEBUG("Opening databases {} and {}", dataPath, cachePath);
-  tc::dispatch_on_thread_context([&] {
-    return _options.open(&err, &db, dataPath.c_str(), cachePath.c_str());
-  });
+  tc::dispatch_on_thread_context([&] { return _options.open(&err, &db, dataPath.c_str(), cachePath.c_str()); });
   rethrowError(err);
   return std::make_unique<CTankerStorageDataStore>(_options, db);
 }
 
-CTankerStorageDataStore::CTankerStorageDataStore(
-    tanker_datastore_options_t options, tanker_datastore_t* store)
+CTankerStorageDataStore::CTankerStorageDataStore(tanker_datastore_options_t options, tanker_datastore_t* store)
   : _options(options), _datastore(store)
 {
   TDEBUG("Opened database ({})", static_cast<void*>(this));
@@ -110,19 +95,15 @@ CTankerStorageDataStore::~CTankerStorageDataStore()
 void CTankerStorageDataStore::nuke()
 {
   std::exception_ptr err;
-  tc::dispatch_on_thread_context(
-      [&] { return _options.nuke(_datastore, &err); });
+  tc::dispatch_on_thread_context([&] { return _options.nuke(_datastore, &err); });
   rethrowError(err);
 }
 
-void CTankerStorageDataStore::putSerializedDevice(
-    gsl::span<uint8_t const> device)
+void CTankerStorageDataStore::putSerializedDevice(gsl::span<uint8_t const> device)
 {
   std::exception_ptr err;
-  tc::dispatch_on_thread_context([&] {
-    return _options.put_serialized_device(
-        _datastore, &err, device.data(), device.size());
-  });
+  tc::dispatch_on_thread_context(
+      [&] { return _options.put_serialized_device(_datastore, &err, device.data(), device.size()); });
   rethrowError(err);
 }
 
@@ -135,39 +116,31 @@ struct DeviceResult
 };
 }
 
-std::optional<std::vector<uint8_t>>
-CTankerStorageDataStore::findSerializedDevice()
+std::optional<std::vector<uint8_t>> CTankerStorageDataStore::findSerializedDevice()
 {
   DeviceResult result;
-  tc::dispatch_on_thread_context(
-      [&] { return _options.find_serialized_device(_datastore, &result); });
+  tc::dispatch_on_thread_context([&] { return _options.find_serialized_device(_datastore, &result); });
   rethrowError(result.err);
   return result.data;
 }
 
-uint8_t* tanker_datastore_allocate_device_buffer(
-    tanker_datastore_device_get_result_handle_t* result_handle, uint32_t size)
+uint8_t* tanker_datastore_allocate_device_buffer(tanker_datastore_device_get_result_handle_t* result_handle,
+                                                 uint32_t size)
 {
   auto& optVec = static_cast<DeviceResult*>(result_handle)->data;
   optVec = std::vector<uint8_t>(size);
   return optVec->data();
 }
 
-void CTankerStorageDataStore::putCacheValues(
-    gsl::span<std::pair<Key, Value> const> keyValues, OnConflict onConflict)
+void CTankerStorageDataStore::putCacheValues(gsl::span<std::pair<Key, Value> const> keyValues, OnConflict onConflict)
 {
-  auto const keyPtrs = keyValues | ranges::views::keys |
-                       ranges::views::transform(&Key::data) |
-                       ranges::to<std::vector>;
-  auto const keySizes = keyValues | ranges::views::keys |
-                        ranges::views::transform(&Key::size) |
-                        ranges::to<std::vector<uint32_t>>;
-  auto const valuePtrs = keyValues | ranges::views::values |
-                         ranges::views::transform(&Value::data) |
-                         ranges::to<std::vector>;
-  auto const valueSizes = keyValues | ranges::views::values |
-                          ranges::views::transform(&Value::size) |
-                          ranges::to<std::vector<uint32_t>>;
+  auto const keyPtrs = keyValues | ranges::views::keys | ranges::views::transform(&Key::data) | ranges::to<std::vector>;
+  auto const keySizes =
+      keyValues | ranges::views::keys | ranges::views::transform(&Key::size) | ranges::to<std::vector<uint32_t>>;
+  auto const valuePtrs =
+      keyValues | ranges::views::values | ranges::views::transform(&Value::data) | ranges::to<std::vector>;
+  auto const valueSizes =
+      keyValues | ranges::views::values | ranges::views::transform(&Value::size) | ranges::to<std::vector<uint32_t>>;
 
   std::exception_ptr err;
   tc::dispatch_on_thread_context([&] {
@@ -192,8 +165,7 @@ struct CacheResult
 };
 }
 
-std::vector<std::optional<std::vector<uint8_t>>>
-CTankerStorageDataStore::findCacheValues(
+std::vector<std::optional<std::vector<uint8_t>>> CTankerStorageDataStore::findCacheValues(
     gsl::span<gsl::span<uint8_t const> const> keys)
 {
   std::vector<uint8_t const*> keyPtrs;
@@ -208,22 +180,18 @@ CTankerStorageDataStore::findCacheValues(
 
   CacheResult result;
   result.data.resize(keys.size());
-  tc::dispatch_on_thread_context([&] {
-    return _options.find_cache_values(
-        _datastore, &result, keyPtrs.data(), keySizes.data(), keys.size());
-  });
+  tc::dispatch_on_thread_context(
+      [&] { return _options.find_cache_values(_datastore, &result, keyPtrs.data(), keySizes.data(), keys.size()); });
   rethrowError(result.err);
   if (result.data.size() != keys.size())
-    throw Errors::formatEx(Errc::DatabaseError,
-                           "the database backend didn't return enough results");
+    throw Errors::formatEx(Errc::DatabaseError, "the database backend didn't return enough results");
 
   return result.data;
 }
 
-void tanker_datastore_allocate_cache_buffer(
-    tanker_datastore_cache_get_result_handle_t* result_handle,
-    uint8_t** outPtrs,
-    uint32_t* sizes)
+void tanker_datastore_allocate_cache_buffer(tanker_datastore_cache_get_result_handle_t* result_handle,
+                                            uint8_t** outPtrs,
+                                            uint32_t* sizes)
 {
   auto& vec = static_cast<CacheResult*>(result_handle)->data;
   for (auto i : ranges::views::iota(0u, vec.size()))
@@ -237,11 +205,8 @@ void tanker_datastore_allocate_cache_buffer(
   }
 }
 
-void tanker_datastore_report_error(tanker_datastore_error_handle_t* handle,
-                                   uint8_t error_code,
-                                   char const* message)
+void tanker_datastore_report_error(tanker_datastore_error_handle_t* handle, uint8_t error_code, char const* message)
 {
   auto const err = static_cast<std::exception_ptr*>(handle);
-  *err = std::make_exception_ptr(
-      Errors::formatEx(static_cast<Errc>(error_code), "{}", message));
+  *err = std::make_exception_ptr(Errors::formatEx(static_cast<Errc>(error_code), "{}", message));
 }

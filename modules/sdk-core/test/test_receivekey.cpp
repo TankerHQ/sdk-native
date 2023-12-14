@@ -37,11 +37,9 @@ TEST_CASE("decryptAndStoreKey")
 
   SECTION("should process a key publish to user action")
   {
-    auto const keyPublishEntry =
-        generator.shareWith(senderDevice, receiver, resource);
+    auto const keyPublishEntry = generator.shareWith(senderDevice, receiver, resource);
 
-    REQUIRE_CALL(receiverLocalUserAccessor,
-                 pullUserKeyPair(receiver.userKeys().back().publicKey))
+    REQUIRE_CALL(receiverLocalUserAccessor, pullUserKeyPair(receiver.userKeys().back().publicKey))
         .RETURN(makeCoTask(std::make_optional(receiver.userKeys().back())));
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
@@ -54,8 +52,7 @@ TEST_CASE("decryptAndStoreKey")
   SECTION("should process a key publish to group action")
   {
     auto const group = receiver.makeGroup();
-    auto const keyPublishEntry =
-        generator.shareWith(senderDevice, group, resource);
+    auto const keyPublishEntry = generator.shareWith(senderDevice, group, resource);
 
     REQUIRE_CALL(receiverGroupAccessor, getEncryptionKeyPair(trompeloeil::_))
         .LR_RETURN(makeCoTask(std::make_optional(group.currentEncKp())));
@@ -71,15 +68,12 @@ TEST_CASE("decryptAndStoreKey")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail.com");
 
-    auto const keyPublishEntry =
-        generator.shareWith(senderDevice, provisionalUser, resource);
+    auto const keyPublishEntry = generator.shareWith(senderDevice, provisionalUser, resource);
 
-    REQUIRE_CALL(
-        receiverProvisionalUsersAccessor,
-        pullEncryptionKeys(provisionalUser.appSignatureKeyPair().publicKey,
-                           provisionalUser.tankerSignatureKeyPair().publicKey))
-        .LR_RETURN(makeCoTask(
-            std::make_optional<ProvisionalUserKeys>(provisionalUser)));
+    REQUIRE_CALL(receiverProvisionalUsersAccessor,
+                 pullEncryptionKeys(provisionalUser.appSignatureKeyPair().publicKey,
+                                    provisionalUser.tankerSignatureKeyPair().publicKey))
+        .LR_RETURN(makeCoTask(std::make_optional<ProvisionalUserKeys>(provisionalUser)));
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
                                               receiverLocalUserAccessor,

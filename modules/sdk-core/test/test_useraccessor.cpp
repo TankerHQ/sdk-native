@@ -26,11 +26,8 @@ TEST_CASE("UserAccessor")
 
   SECTION("it should return user ids it did not find")
   {
-    REQUIRE_CALL(requester,
-                 getUsers(ANY(gsl::span<Trustchain::UserId const>),
-                          Tanker::Users::IRequester::IsLight::No))
-        .RETURN(makeCoTask(
-            Tanker::Users::IRequester::GetResult{generator.rootBlock(), {}}));
+    REQUIRE_CALL(requester, getUsers(ANY(gsl::span<Trustchain::UserId const>), Tanker::Users::IRequester::IsLight::No))
+        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{generator.rootBlock(), {}}));
 
     std::vector ids{bob.id(), charlie.id()};
     std::sort(ids.begin(), ids.end());
@@ -44,11 +41,9 @@ TEST_CASE("UserAccessor")
     std::vector ids{alice.id(), bob.id(), charlie.id()};
     std::sort(ids.begin(), ids.end());
 
-    REQUIRE_CALL(requester,
-                 getUsers(ids, Tanker::Users::IRequester::IsLight::No))
-        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{
-            generator.rootBlock(),
-            generator.makeEntryList({alice, bob, charlie})}));
+    REQUIRE_CALL(requester, getUsers(ids, Tanker::Users::IRequester::IsLight::No))
+        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{generator.rootBlock(),
+                                                                generator.makeEntryList({alice, bob, charlie})}));
     auto result = AWAIT(userAccessor.pull(ids));
     CHECK(result.notFound.empty());
     auto expectedUsers = std::vector<Users::User>{alice, bob, charlie};
@@ -62,11 +57,9 @@ TEST_CASE("UserAccessor")
   {
     std::vector ids{alice.id(), alice.id()};
 
-    REQUIRE_CALL(requester,
-                 getUsers(std::vector{alice.id()},
-                          Tanker::Users::IRequester::IsLight::No))
-        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{
-            generator.rootBlock(), generator.makeEntryList({alice})}));
+    REQUIRE_CALL(requester, getUsers(std::vector{alice.id()}, Tanker::Users::IRequester::IsLight::No))
+        .RETURN(
+            makeCoTask(Tanker::Users::IRequester::GetResult{generator.rootBlock(), generator.makeEntryList({alice})}));
     auto result = AWAIT(userAccessor.pull(ids));
 
     CHECK(result.notFound.empty());

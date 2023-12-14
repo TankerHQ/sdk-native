@@ -13,16 +13,11 @@ namespace Tanker
 namespace Verif
 {
 template <typename... Args>
-void ensures(bool condition,
-             std::error_code code,
-             fmt::string_view formatString,
-             Args&&... formatArgs)
+void ensures(bool condition, std::error_code code, fmt::string_view formatString, Args&&... formatArgs)
 {
   if (!condition)
   {
-    throw Errors::Exception(
-        code,
-        fmt::vformat(formatString, {fmt::make_format_args(formatArgs...)}));
+    throw Errors::Exception(code, fmt::vformat(formatString, {fmt::make_format_args(formatArgs...)}));
   }
 }
 }

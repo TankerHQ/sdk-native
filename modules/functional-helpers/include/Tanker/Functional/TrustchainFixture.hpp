@@ -29,8 +29,7 @@ struct TrustchainFixtureSimple
   {
     TC_RETURN(TC_AWAIT(trustchain.getVerificationCode(target)));
   }
-  tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
-                                             AppProvisionalUser const& prov);
+  tc::cotask<void> attachProvisionalIdentity(AsyncCore& session, AppProvisionalUser const& prov);
   tc::cotask<void> injectStoreResourceKey(AsyncCore& session,
                                           Crypto::SimpleResourceId const& id,
                                           Crypto::SymmetricKey const& key);

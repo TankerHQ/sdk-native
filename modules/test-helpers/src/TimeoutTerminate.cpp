@@ -27,10 +27,8 @@ void TimeoutTerminate::runTimeout()
     if (_done.load())
       return;
   }
-  std::cerr
-      << "the "
-      << std::chrono::duration_cast<std::chrono::seconds>(_timeout).count()
-      << "s timeout was reached, exiting";
+  std::cerr << "the " << std::chrono::duration_cast<std::chrono::seconds>(_timeout).count()
+            << "s timeout was reached, exiting";
   std::_Exit(1);
 }
 }

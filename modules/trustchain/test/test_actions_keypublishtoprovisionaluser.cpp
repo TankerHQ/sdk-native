@@ -69,27 +69,16 @@ TEST_CASE("KeyPublishToProvisionalUser serialization test vectors")
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
 
-    auto const appPublicSignatureKey =
-        make<Crypto::PublicSignatureKey>("recipient user");
+    auto const appPublicSignatureKey = make<Crypto::PublicSignatureKey>("recipient user");
     Crypto::PublicSignatureKey const tankerPublicSignatureKey{};
     auto const resourceId = make<Crypto::SimpleResourceId>("resource mac");
-    auto const key =
-        make<Crypto::TwoTimesSealedSymmetricKey>("encrypted key...");
-    auto const hash = mgs::base64::decode<Crypto::Hash>(
-        "gYchdTY/TBXC4U0rlK0RrxbqiKHfahLW/FteMvcXLzk=");
-    KeyPublishToProvisionalUser const kp(trustchainId,
-                                         appPublicSignatureKey,
-                                         tankerPublicSignatureKey,
-                                         resourceId,
-                                         key,
-                                         author,
-                                         hash,
-                                         signature);
+    auto const key = make<Crypto::TwoTimesSealedSymmetricKey>("encrypted key...");
+    auto const hash = mgs::base64::decode<Crypto::Hash>("gYchdTY/TBXC4U0rlK0RrxbqiKHfahLW/FteMvcXLzk=");
+    KeyPublishToProvisionalUser const kp(
+        trustchainId, appPublicSignatureKey, tankerPublicSignatureKey, resourceId, key, author, hash, signature);
 
     auto const skp = Serialization::serialize(kp);
-    CHECK(std::equal(
-        skp.begin(), skp.end(), serializedKeyPublishToProvisionalUser.begin()));
-    CHECK(Serialization::deserialize<KeyPublishToProvisionalUser>(
-              serializedKeyPublishToProvisionalUser) == kp);
+    CHECK(std::equal(skp.begin(), skp.end(), serializedKeyPublishToProvisionalUser.begin()));
+    CHECK(Serialization::deserialize<KeyPublishToProvisionalUser>(serializedKeyPublishToProvisionalUser) == kp);
   }
 }

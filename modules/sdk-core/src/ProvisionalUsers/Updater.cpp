@@ -34,21 +34,17 @@ namespace Updater
 {
 namespace
 {
-using DeviceMap =
-    boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
+using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
-tc::cotask<DeviceMap> extractAuthors(
-    Users::IUserAccessor& userAccessor,
-    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> entries)
+tc::cotask<DeviceMap> extractAuthors(Users::IUserAccessor& userAccessor,
+                                     gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> entries)
 {
   DeviceMap out;
 
-  auto authors = entries | ranges::views::transform([](auto const& action) {
-                   return Trustchain::DeviceId{action.author()};
-                 }) |
+  auto authors = entries |
+                 ranges::views::transform([](auto const& action) { return Trustchain::DeviceId{action.author()}; }) |
                  ranges::to<std::vector>;
-  auto const pullResult =
-      TC_AWAIT(userAccessor.pull(authors, Users::IRequester::IsLight::Yes));
+  auto const pullResult = TC_AWAIT(userAccessor.pull(authors, Users::IRequester::IsLight::Yes));
   if (!pullResult.notFound.empty())
   {
     // we should have all the devices because they are *our* devices
@@ -64,32 +60,25 @@ tc::cotask<DeviceMap> extractAuthors(
 }
 }
 
-tc::cotask<UsedSecretUser> extractKeysToStore(
-    Users::ILocalUserAccessor& localUserAccessor,
-    ProvisionalIdentityClaim const& provisionalIdentityClaim)
+tc::cotask<UsedSecretUser> extractKeysToStore(Users::ILocalUserAccessor& localUserAccessor,
+                                              ProvisionalIdentityClaim const& provisionalIdentityClaim)
 {
-  auto const userKeyPair = TC_AWAIT(localUserAccessor.pullUserKeyPair(
-      provisionalIdentityClaim.userPublicEncryptionKey()));
+  auto const userKeyPair =
+      TC_AWAIT(localUserAccessor.pullUserKeyPair(provisionalIdentityClaim.userPublicEncryptionKey()));
 
   if (!userKeyPair)
-    throw Exception(make_error_code(Errc::InternalError),
-                    "cannot find user key for claim decryption");
+    throw Exception(make_error_code(Errc::InternalError), "cannot find user key for claim decryption");
 
-  auto const provisionalIdentityKeys = Crypto::sealDecrypt(
-      provisionalIdentityClaim.sealedPrivateEncryptionKeys(), *userKeyPair);
+  auto const provisionalIdentityKeys =
+      Crypto::sealDecrypt(provisionalIdentityClaim.sealedPrivateEncryptionKeys(), *userKeyPair);
 
   // this size is ensured because the encrypted buffer has a fixed size
-  assert(provisionalIdentityKeys.size() ==
-         2 * Crypto::PrivateEncryptionKey::arraySize);
+  assert(provisionalIdentityKeys.size() == 2 * Crypto::PrivateEncryptionKey::arraySize);
 
-  auto const appEncryptionKeyPair =
-      Crypto::makeEncryptionKeyPair(Crypto::PrivateEncryptionKey(
-          gsl::make_span(provisionalIdentityKeys)
-              .subspan(0, Crypto::PrivateEncryptionKey::arraySize)));
-  auto const tankerEncryptionKeyPair =
-      Crypto::makeEncryptionKeyPair(Crypto::PrivateEncryptionKey(
-          gsl::make_span(provisionalIdentityKeys)
-              .subspan(Crypto::PrivateEncryptionKey::arraySize)));
+  auto const appEncryptionKeyPair = Crypto::makeEncryptionKeyPair(Crypto::PrivateEncryptionKey(
+      gsl::make_span(provisionalIdentityKeys).subspan(0, Crypto::PrivateEncryptionKey::arraySize)));
+  auto const tankerEncryptionKeyPair = Crypto::makeEncryptionKeyPair(Crypto::PrivateEncryptionKey(
+      gsl::make_span(provisionalIdentityKeys).subspan(Crypto::PrivateEncryptionKey::arraySize)));
 
   TC_RETURN((UsedSecretUser{provisionalIdentityClaim.appSignaturePublicKey(),
                             provisionalIdentityClaim.tankerSignaturePublicKey(),
@@ -108,16 +97,12 @@ tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
   for (auto const& action : actions)
   {
     auto const authorIt = authors.find(Trustchain::DeviceId{action.author()});
-    Verif::ensures(authorIt != authors.end(),
-                   Verif::Errc::InvalidAuthor,
-                   "author not found");
+    Verif::ensures(authorIt != authors.end(), Verif::Errc::InvalidAuthor, "author not found");
     auto const& author = authorIt->second;
 
-    auto const verifiedAction =
-        Verif::verifyProvisionalIdentityClaim(action, author);
+    auto const verifiedAction = Verif::verifyProvisionalIdentityClaim(action, author);
 
-    out.push_back(
-        TC_AWAIT(extractKeysToStore(localUserAccessor, verifiedAction)));
+    out.push_back(TC_AWAIT(extractKeysToStore(localUserAccessor, verifiedAction)));
   }
   TC_RETURN(out);
 }

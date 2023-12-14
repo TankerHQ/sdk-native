@@ -31,8 +31,7 @@ TargetType to_public_target_type(std::string const& s)
   else if (s == "hashed_phone_number")
     return TargetType::HashedPhoneNumber;
   else
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "Invalid public identity target type: " + s);
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "Invalid public identity target type: " + s);
 }
 
 TargetType to_secret_target_type(std::string const& s)
@@ -42,7 +41,6 @@ TargetType to_secret_target_type(std::string const& s)
   else if (s == "phone_number")
     return TargetType::PhoneNumber;
   else
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "Invalid secret identity target type: " + s);
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "Invalid secret identity target type: " + s);
 }
 }

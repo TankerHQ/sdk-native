@@ -5,6 +5,5 @@
 
 namespace Tanker::Actions
 {
-inline constexpr auto deduplicate =
-    ranges::actions::sort | ranges::actions::unique;
+inline constexpr auto deduplicate = ranges::actions::sort | ranges::actions::unique;
 }

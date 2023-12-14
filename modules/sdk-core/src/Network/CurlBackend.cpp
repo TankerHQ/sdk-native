@@ -11,8 +11,7 @@ namespace Tanker::Network
 {
 namespace
 {
-std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo,
-                                            HttpRequest const& req)
+std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo, HttpRequest const& req)
 {
   auto creq = std::make_shared<tcurl::request>();
   creq->set_url(std::move(req.url));
@@ -36,8 +35,7 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo,
   }
   if (!req.body.empty())
   {
-    curl_easy_setopt(
-        creq->get_curl(), CURLOPT_POSTFIELDSIZE, long(req.body.size()));
+    curl_easy_setopt(creq->get_curl(), CURLOPT_POSTFIELDSIZE, long(req.body.size()));
     curl_easy_setopt(creq->get_curl(), CURLOPT_COPYPOSTFIELDS, req.body.data());
   }
   else
@@ -56,8 +54,7 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo,
 }
 }
 
-CurlBackend::CurlBackend(SdkInfo sdkInfo, std::chrono::nanoseconds timeout)
-  : _sdkInfo(std::move(sdkInfo))
+CurlBackend::CurlBackend(SdkInfo sdkInfo, std::chrono::nanoseconds timeout) : _sdkInfo(std::move(sdkInfo))
 {
 }
 

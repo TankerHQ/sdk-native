@@ -84,8 +84,7 @@ private:
     auto& lastSection = _testStack.back();
     lastSection.isLeaf = false;
 
-    _testStack.emplace_back(
-        fmt::format("{:s} {:s}", lastSection.name, sectionName));
+    _testStack.emplace_back(fmt::format("{:s} {:s}", lastSection.name, sectionName));
   };
 
   std::vector<Test> _testStack{};

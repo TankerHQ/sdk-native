@@ -36,8 +36,7 @@ std::string getDbPath(std::string const& path, Trustchain::UserId const& userId)
 }
 }
 
-Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
-                          std::unique_ptr<DataStore::DataStore> pdb)
+Session::Storage::Storage(Crypto::SymmetricKey const& userSecret, std::unique_ptr<DataStore::DataStore> pdb)
   : db(std::move(pdb)),
     localUserStore(userSecret, db.get()),
     groupStore(userSecret, db.get()),
@@ -47,33 +46,22 @@ Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
 {
 }
 
-Session::Accessors::Accessors(
-    Storage& storage,
-    Requesters* requesters,
-    Users::LocalUserAccessor plocalUserAccessor,
-    TransparentSession::SessionShareCallback shareCallback)
+Session::Accessors::Accessors(Storage& storage,
+                              Requesters* requesters,
+                              Users::LocalUserAccessor plocalUserAccessor,
+                              TransparentSession::SessionShareCallback shareCallback)
   : localUserAccessor(std::move(plocalUserAccessor)),
     userAccessor(localUserAccessor.getContext(), requesters),
-    provisionalUsersAccessor(requesters,
-                             &userAccessor,
-                             &localUserAccessor,
-                             &storage.provisionalUserKeysStore),
+    provisionalUsersAccessor(requesters, &userAccessor, &localUserAccessor, &storage.provisionalUserKeysStore),
     provisionalUsersManager(&localUserAccessor,
                             requesters,
                             requesters,
                             &provisionalUsersAccessor,
                             &storage.provisionalUserKeysStore,
                             localUserAccessor.getContext().id()),
-    groupAccessor(requesters,
-                  &userAccessor,
-                  &storage.groupStore,
-                  &localUserAccessor,
-                  &provisionalUsersAccessor),
-    resourceKeyAccessor(requesters,
-                        &localUserAccessor,
-                        &groupAccessor,
-                        &provisionalUsersAccessor,
-                        &storage.resourceKeyStore),
+    groupAccessor(requesters, &userAccessor, &storage.groupStore, &localUserAccessor, &provisionalUsersAccessor),
+    resourceKeyAccessor(
+        requesters, &localUserAccessor, &groupAccessor, &provisionalUsersAccessor, &storage.resourceKeyStore),
     transparentSessionAccessor(&storage.transparentSessionStore, shareCallback)
 {
 }
@@ -88,8 +76,7 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::unique_ptr<Network::HttpClient> httpClient,
-                 DataStore::Backend* datastoreBackend)
+Session::Session(std::unique_ptr<Network::HttpClient> httpClient, DataStore::Backend* datastoreBackend)
   : _httpClient(std::move(httpClient)),
     _datastoreBackend(datastoreBackend),
     _requesters(_httpClient.get()),
@@ -124,16 +111,11 @@ void removeStorageFile(std::string_view path)
 }
 }
 
-void Session::removeOldStorage(
-    Identity::SecretPermanentIdentity const& identity,
-    std::string const& dataPath)
+void Session::removeOldStorage(Identity::SecretPermanentIdentity const& identity, std::string const& dataPath)
 {
   // Delete the db from <2.25
-  removeStorageFile(fmt::format(
-      FMT_STRING("{:s}/tanker-{:S}.db"), dataPath, identity.delegation.userId));
-  removeStorageFile(fmt::format(FMT_STRING("{:s}/tanker-{:S}.db-journal"),
-                                dataPath,
-                                identity.delegation.userId));
+  removeStorageFile(fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), dataPath, identity.delegation.userId));
+  removeStorageFile(fmt::format(FMT_STRING("{:s}/tanker-{:S}.db-journal"), dataPath, identity.delegation.userId));
 }
 
 void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
@@ -146,9 +128,7 @@ void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
 
   _identity = identity;
   _storage = std::make_unique<Storage>(
-      userSecret(),
-      _datastoreBackend->open(getDbPath(dataPath, userId()),
-                              getDbPath(cachePath, userId())));
+      userSecret(), _datastoreBackend->open(getDbPath(dataPath, userId()), getDbPath(cachePath, userId())));
 
   auto const key = "version"sv;
   auto const keySpan = gsl::make_span(key).as_span<uint8_t const>();
@@ -163,12 +143,10 @@ void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
     _storage->db->putCacheValues(keyValues, DataStore::OnConflict::Fail);
   }
   // dbVersionResult has one row and one column
-  else if (auto const dbVersion = (*dbVersionResult[0]).at(0);
-           dbVersion != Version)
+  else if (auto const dbVersion = (*dbVersionResult[0]).at(0); dbVersion != Version)
   {
-    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
-                           "unsupported device storage version: {}",
-                           static_cast<int>(dbVersion));
+    throw Errors::formatEx(
+        DataStore::Errc::InvalidDatabaseVersion, "unsupported device storage version: {}", static_cast<int>(dbVersion));
   }
 }
 
@@ -176,8 +154,7 @@ Session::Storage const& Session::storage() const
 {
   if (!_storage)
   {
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "session storage not initialized");
+    throw Errors::formatEx(Errors::Errc::InternalError, "session storage not initialized");
   }
   return *_storage;
 }
@@ -186,8 +163,7 @@ Session::Storage& Session::storage()
 {
   if (!_storage)
   {
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "session storage not initialized");
+    throw Errors::formatEx(Errors::Errc::InternalError, "session storage not initialized");
   }
   return *_storage;
 }
@@ -250,56 +226,44 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
   TC_RETURN(TC_AWAIT(storage().localUserStore.findDeviceKeys()));
 }
 
-tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
-                                           DeviceKeys const& deviceKeys)
+tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId, DeviceKeys const& deviceKeys)
 {
-  auto shareCallback =
-      [&](auto const& session, auto const& users, auto const& groups) {
-        TC_AWAIT(transparentSessionShareImpl(session, users, groups));
-        TC_RETURN();
-      };
+  auto shareCallback = [&](auto const& session, auto const& users, auto const& groups) {
+    TC_AWAIT(transparentSessionShareImpl(session, users, groups));
+    TC_RETURN();
+  };
 
   _httpClient->setDeviceAuthData(deviceId, deviceKeys.signatureKeyPair);
   _accessors = std::make_unique<Accessors>(
       storage(),
       &requesters(),
-      TC_AWAIT(
-          Users::LocalUserAccessor::createAndInit(userId(),
-                                                  trustchainId(),
-                                                  &_requesters,
-                                                  &storage().localUserStore,
-                                                  deviceKeys,
-                                                  deviceId)),
+      TC_AWAIT(Users::LocalUserAccessor::createAndInit(
+          userId(), trustchainId(), &_requesters, &storage().localUserStore, deviceKeys, deviceId)),
       shareCallback);
   setStatus(Status::Ready);
 }
 
 tc::cotask<void> Session::finalizeOpening()
 {
-  auto shareCallback =
-      [&](auto const& session, auto const& users, auto const& groups) {
-        TC_AWAIT(transparentSessionShareImpl(session, users, groups));
-        TC_RETURN();
-      };
+  auto shareCallback = [&](auto const& session, auto const& users, auto const& groups) {
+    TC_AWAIT(transparentSessionShareImpl(session, users, groups));
+    TC_RETURN();
+  };
   _accessors = std::make_unique<Accessors>(
       storage(),
       &requesters(),
-      TC_AWAIT(Users::LocalUserAccessor::create(
-          userId(), trustchainId(), &_requesters, &storage().localUserStore)),
+      TC_AWAIT(Users::LocalUserAccessor::create(userId(), trustchainId(), &_requesters, &storage().localUserStore)),
       shareCallback);
-  _httpClient->setDeviceAuthData(
-      TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
+  _httpClient->setDeviceAuthData(TC_AWAIT(storage().localUserStore.getDeviceId()),
+                                 TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
   setStatus(Status::Ready);
 }
 
-tc::cotask<void> Session::transparentSessionShareImpl(
-    TransparentSession::AccessorResult const& session,
-    std::vector<SPublicIdentity> const& users,
-    std::vector<SGroupId> const& groups)
+tc::cotask<void> Session::transparentSessionShareImpl(TransparentSession::AccessorResult const& session,
+                                                      std::vector<SPublicIdentity> const& users,
+                                                      std::vector<SGroupId> const& groups)
 {
-  auto selfIdentity = SPublicIdentity(
-      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()}));
+  auto selfIdentity = SPublicIdentity(to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()}));
   if (std::find(users.begin(), users.end(), selfIdentity) != users.end())
     TC_AWAIT(storage().resourceKeyStore.putKey(session.id, session.key));
 

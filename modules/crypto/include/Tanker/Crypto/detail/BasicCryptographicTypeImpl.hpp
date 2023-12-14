@@ -1,8 +1,7 @@
 #pragma once
 
 #ifndef TANKER_CRYPTO_INCLUDED_BY_BASIC_CRYPTOGRAPHIC_TYPE
-#error \
-    "Thou shall not include this file directly, include Tanker/Crypto/BasicCryptographicType.hpp instead!"
+#error "Thou shall not include this file directly, include Tanker/Crypto/BasicCryptographicType.hpp instead!"
 #endif
 
 #include <Tanker/Crypto/Errors/Errc.hpp>
@@ -27,10 +26,9 @@ namespace Crypto
 namespace detail
 {
 template <typename IS, typename O>
-std::pair<O, mgs::ssize_t> read_at_most(
-    mgs::codecs::input_source<IS, O>& is,
-    mgs::meta::output_iterator<O, typename IS::element_type> o,
-    mgs::ssize_t n)
+std::pair<O, mgs::ssize_t> read_at_most(mgs::codecs::input_source<IS, O>& is,
+                                        mgs::meta::output_iterator<O, typename IS::element_type> o,
+                                        mgs::ssize_t n)
 {
   auto total_read = static_cast<mgs::ssize_t>(0);
   while (n != 0)
@@ -47,37 +45,33 @@ std::pair<O, mgs::ssize_t> read_at_most(
 }
 
 template <typename T, std::size_t S>
-BasicCryptographicType<T, S>::BasicCryptographicType(
-    gsl::span<std::uint8_t const> data)
+BasicCryptographicType<T, S>::BasicCryptographicType(gsl::span<std::uint8_t const> data)
   : BasicCryptographicType(data.begin(), data.end())
 {
 }
 
 template <typename T, std::size_t S>
 template <typename InputIterator, typename Sentinel>
-BasicCryptographicType<T, S>::BasicCryptographicType(
-    mgs::meta::input_iterator<InputIterator> begin,
-    mgs::meta::sentinel_for<Sentinel, InputIterator> end)
+BasicCryptographicType<T, S>::BasicCryptographicType(mgs::meta::input_iterator<InputIterator> begin,
+                                                     mgs::meta::sentinel_for<Sentinel, InputIterator> end)
 {
   auto is = mgs::codecs::make_iterator_sentinel_source(begin, end);
   auto const [it, total_read] = detail::read_at_most(is, this->data(), S);
   if (total_read < static_cast<mgs::ssize_t>(S))
   {
-    throw Errors::formatEx(
-        Errc::InvalidBufferSize,
-        FMT_STRING("invalid size for {:s}: got {:d}, expected {:d}"),
-        typeid(T).name(),
-        total_read,
-        this->size());
+    throw Errors::formatEx(Errc::InvalidBufferSize,
+                           FMT_STRING("invalid size for {:s}: got {:d}, expected {:d}"),
+                           typeid(T).name(),
+                           total_read,
+                           this->size());
   }
   // make sure there is no additional data
   if (detail::read_at_most(is, this->data(), 1).second != 0)
   {
-    throw Errors::formatEx(
-        Errc::InvalidBufferSize,
-        FMT_STRING("invalid size for {:s}: larger than expected {:d}"),
-        typeid(T).name(),
-        this->size());
+    throw Errors::formatEx(Errc::InvalidBufferSize,
+                           FMT_STRING("invalid size for {:s}: larger than expected {:d}"),
+                           typeid(T).name(),
+                           this->size());
   }
 }
 
@@ -112,43 +106,37 @@ bool BasicCryptographicType<T, S>::is_null() const noexcept
 }
 
 template <typename T, std::size_t S>
-bool operator<(BasicCryptographicType<T, S> const& lhs,
-               BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator<(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return lhs.base() < rhs.base();
 }
 
 template <typename T, std::size_t S>
-bool operator>(BasicCryptographicType<T, S> const& lhs,
-               BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator>(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return lhs.base() > rhs.base();
 }
 
 template <typename T, std::size_t S>
-bool operator<=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator<=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return lhs.base() <= rhs.base();
 }
 
 template <typename T, std::size_t S>
-bool operator>=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator>=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return lhs.base() >= rhs.base();
 }
 
 template <typename T, std::size_t S>
-bool operator==(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator==(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return lhs.base() == rhs.base();
 }
 
 template <typename T, std::size_t S>
-bool operator!=(BasicCryptographicType<T, S> const& lhs,
-                BasicCryptographicType<T, S> const& rhs) noexcept
+bool operator!=(BasicCryptographicType<T, S> const& lhs, BasicCryptographicType<T, S> const& rhs) noexcept
 {
   return !(lhs == rhs);
 }

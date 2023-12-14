@@ -29,13 +29,10 @@ TEST_CASE("Padding utilities tests")
 
   SECTION("paddedFromClearSize returns the right values")
   {
-    CHECK(Padding::paddedFromClearSize(0, std::nullopt) ==
-          Padding::minimalPadding() + 1);
+    CHECK(Padding::paddedFromClearSize(0, std::nullopt) == Padding::minimalPadding() + 1);
     // padme(20) == 20
-    CHECK(Padding::paddedFromClearSize(20, std::nullopt) ==
-          Padding::padme(20) + 1);
-    CHECK(Padding::paddedFromClearSize(21, std::nullopt) ==
-          Padding::padme(21) + 1);
+    CHECK(Padding::paddedFromClearSize(20, std::nullopt) == Padding::padme(20) + 1);
+    CHECK(Padding::paddedFromClearSize(21, std::nullopt) == Padding::padme(21) + 1);
 
     CHECK(Padding::paddedFromClearSize(0, Padding::Off) == 2);
     CHECK(Padding::paddedFromClearSize(1, Padding::Off) == 2);
@@ -51,8 +48,7 @@ TEST_CASE("Padding utilities tests")
   {
     auto const trueAsBytes = make_buffer("true");
     auto const actual = Padding::padClearData(trueAsBytes, std::nullopt);
-    auto const expected = std::vector<uint8_t>{
-        0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    auto const expected = std::vector<uint8_t>{0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     CHECK(actual == expected);
   }
 
@@ -60,29 +56,16 @@ TEST_CASE("Padding utilities tests")
   {
     auto const empty = make_buffer("");
     auto const actual = Padding::padClearData(empty, std::nullopt);
-    auto const expected = std::vector<uint8_t>{
-        0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    auto const expected = std::vector<uint8_t>{0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     CHECK(actual == expected);
   }
 
   SECTION("padClearData uses the padme algorithm")
   {
-    auto const empty = std::vector<uint8_t>{
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
+    auto const empty = std::vector<uint8_t>{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10};
     auto const actual = Padding::padClearData(empty, std::nullopt);
-    auto const expected = std::vector<uint8_t>{0x00,
-                                               0x01,
-                                               0x02,
-                                               0x03,
-                                               0x04,
-                                               0x05,
-                                               0x06,
-                                               0x07,
-                                               0x08,
-                                               0x09,
-                                               0x10,
-                                               0x80,
-                                               0x00};
+    auto const expected =
+        std::vector<uint8_t>{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x80, 0x00};
     CHECK(actual == expected);
   }
 
@@ -95,8 +78,7 @@ TEST_CASE("Padding utilities tests")
                              {0x74, 0x72, 0x75, 0x65, 0x80, 0x42},
                              {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00},
                              {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x42}})
-      TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(data),
-                                    Errors::Errc::DecryptionFailed);
+      TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(data), Errors::Errc::DecryptionFailed);
   }
 
   SECTION("unpaddedSize should return the right values")
@@ -115,8 +97,7 @@ TEST_CASE("Padding utilities tests")
         7u,
     };
 
-    for (auto const [i, data, expected] :
-         ranges::views::zip(ranges::views::iota(0), samples, expectations))
+    for (auto const [i, data, expected] : ranges::views::zip(ranges::views::iota(0), samples, expectations))
     {
       // extra assignation required by doctest/clang to allow the capture
       auto const index = i;

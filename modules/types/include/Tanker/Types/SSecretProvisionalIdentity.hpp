@@ -3,6 +3,5 @@
 
 namespace Tanker
 {
-using SSecretProvisionalIdentity =
-    StringWrapper<struct SecretProvisionalIndentityTag>;
+using SSecretProvisionalIdentity = StringWrapper<struct SecretProvisionalIndentityTag>;
 }

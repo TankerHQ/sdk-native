@@ -22,8 +22,7 @@ namespace
 {
 void myLogHandler(Tanker::Log::Record const& s)
 {
-  std::cout << " this my log handler " << static_cast<std::uint32_t>(s.level)
-            << " \"" << s.message << '"';
+  std::cout << " this my log handler " << static_cast<std::uint32_t>(s.level) << " \"" << s.message << '"';
 }
 }
 
@@ -71,10 +70,8 @@ TEST_CASE("print a formated log")
 
   SECTION("Print a status")
   {
-    CHECK(fmt::format("this is is a Status {:e}", Tanker::Status::Ready) ==
-          R"!(this is is a Status 1 Ready)!");
-    CHECK(fmt::format("this is is a Status {}", Tanker::Status::Ready) ==
-          R"!(this is is a Status 1 Ready)!");
+    CHECK(fmt::format("this is is a Status {:e}", Tanker::Status::Ready) == R"!(this is is a Status 1 Ready)!");
+    CHECK(fmt::format("this is is a Status {}", Tanker::Status::Ready) == R"!(this is is a Status 1 Ready)!");
   }
 
   SECTION("Print a Nature")
@@ -90,10 +87,8 @@ TEST_CASE("print a formated log")
 
   SECTION("It format a ResourceId")
   {
-    auto resourceId =
-        Tanker::make<Tanker::Crypto::SimpleResourceId>("awesome, isn't it?");
-    REQUIRE(
-        fmt::format("my resourceId is {}", mgs::base64::encode(resourceId)) ==
-        fmt::format("my resourceId is {}", resourceId));
+    auto resourceId = Tanker::make<Tanker::Crypto::SimpleResourceId>("awesome, isn't it?");
+    REQUIRE(fmt::format("my resourceId is {}", mgs::base64::encode(resourceId)) ==
+            fmt::format("my resourceId is {}", resourceId));
   }
 }

@@ -21,14 +21,12 @@ struct SecretPermanentIdentity
 };
 
 void from_json(nlohmann::json const& j, SecretPermanentIdentity& result);
-void to_json(nlohmann::ordered_json& j,
-             SecretPermanentIdentity const& identity);
+void to_json(nlohmann::ordered_json& j, SecretPermanentIdentity const& identity);
 std::string to_string(SecretPermanentIdentity const& identity);
 
-SecretPermanentIdentity createIdentity(
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-    Trustchain::UserId const& userId);
+SecretPermanentIdentity createIdentity(Trustchain::TrustchainId const& trustchainId,
+                                       Crypto::PrivateSignatureKey const& trustchainPrivateKey,
+                                       Trustchain::UserId const& userId);
 
 std::string createIdentity(std::string const& trustchainId,
                            std::string const& trustchainPrivateKey,

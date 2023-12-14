@@ -2,11 +2,10 @@
 
 namespace Tanker::ProvisionalUsers
 {
-PublicUser::PublicUser(
-    Crypto::PublicSignatureKey const& appSignaturePublicKey,
-    Crypto::PublicEncryptionKey const& appEncryptionPublicKey,
-    Crypto::PublicSignatureKey const& tankerSignaturePublicKey,
-    Crypto::PublicEncryptionKey const& tankerEncryptionPublicKey)
+PublicUser::PublicUser(Crypto::PublicSignatureKey const& appSignaturePublicKey,
+                       Crypto::PublicEncryptionKey const& appEncryptionPublicKey,
+                       Crypto::PublicSignatureKey const& tankerSignaturePublicKey,
+                       Crypto::PublicEncryptionKey const& tankerEncryptionPublicKey)
   : _appSignaturePublicKey(appSignaturePublicKey),
     _appEncryptionPublicKey(appEncryptionPublicKey),
     _tankerSignaturePublicKey(tankerSignaturePublicKey),
@@ -44,10 +43,9 @@ bool operator==(PublicUser const& lhs, PublicUser const& rhs)
   return std::tie(lhs.appSignaturePublicKey(),
                   lhs.appEncryptionPublicKey(),
                   lhs.tankerSignaturePublicKey(),
-                  lhs.tankerEncryptionPublicKey()) ==
-         std::tie(lhs.appSignaturePublicKey(),
-                  lhs.appEncryptionPublicKey(),
-                  lhs.tankerSignaturePublicKey(),
-                  lhs.tankerEncryptionPublicKey());
+                  lhs.tankerEncryptionPublicKey()) == std::tie(lhs.appSignaturePublicKey(),
+                                                               lhs.appEncryptionPublicKey(),
+                                                               lhs.tankerSignaturePublicKey(),
+                                                               lhs.tankerEncryptionPublicKey());
 }
 }

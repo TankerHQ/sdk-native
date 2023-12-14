@@ -7,15 +7,12 @@ namespace Tanker
 
 DeviceKeys DeviceKeys::create()
 {
-  return DeviceKeys{Crypto::makeSignatureKeyPair(),
-                    Crypto::makeEncryptionKeyPair()};
+  return DeviceKeys{Crypto::makeSignatureKeyPair(), Crypto::makeEncryptionKeyPair()};
 }
 
-DeviceKeys DeviceKeys::create(Crypto::PrivateSignatureKey const& sigKey,
-                              Crypto::PrivateEncryptionKey const& encKey)
+DeviceKeys DeviceKeys::create(Crypto::PrivateSignatureKey const& sigKey, Crypto::PrivateEncryptionKey const& encKey)
 {
-  return DeviceKeys{Crypto::makeSignatureKeyPair(sigKey),
-                    Crypto::makeEncryptionKeyPair(encKey)};
+  return DeviceKeys{Crypto::makeSignatureKeyPair(sigKey), Crypto::makeEncryptionKeyPair(encKey)};
 }
 
 bool DeviceKeys::operator==(DeviceKeys const& other) const

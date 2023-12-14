@@ -28,18 +28,15 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES  \
-  (trustchainId, TrustchainId), (groupId, GroupId),               \
-      (previousGroupBlockHash, Crypto::Hash),                     \
-      (selfSignature, Crypto::Signature), (author, Crypto::Hash), \
-      (signature, Crypto::Signature)
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES                            \
+  (trustchainId, TrustchainId), (groupId, GroupId), (previousGroupBlockHash, Crypto::Hash), \
+      (selfSignature, Crypto::Signature), (author, Crypto::Hash), (signature, Crypto::Signature)
 
 class UserGroupAddition
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
-      UserGroupAddition,
-      (UserGroupAddition1, UserGroupAddition2, UserGroupAddition3),
-      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(UserGroupAddition,
+                                                  (UserGroupAddition1, UserGroupAddition2, UserGroupAddition3),
+                                                  TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
 
 public:
   using v1 = UserGroupAddition1;

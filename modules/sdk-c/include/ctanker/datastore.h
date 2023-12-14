@@ -42,33 +42,28 @@ typedef void (*tanker_datastore_open_t)(tanker_datastore_error_handle_t* h,
                                         char const* cache_path);
 typedef void (*tanker_datastore_close_t)(tanker_datastore_t* db);
 
-typedef void (*tanker_datastore_device_nuke_t)(
-    tanker_datastore_t* datastore, tanker_datastore_error_handle_t* h);
+typedef void (*tanker_datastore_device_nuke_t)(tanker_datastore_t* datastore, tanker_datastore_error_handle_t* h);
 
-typedef void (*tanker_datastore_put_serialized_device_t)(
-    tanker_datastore_t* datastore,
-    tanker_datastore_error_handle_t* h,
-    uint8_t const* device,
-    uint32_t device_size);
-typedef void (*tanker_datastore_find_serialized_device_t)(
-    tanker_datastore_t* datastore,
-    tanker_datastore_device_get_result_handle_t* h);
+typedef void (*tanker_datastore_put_serialized_device_t)(tanker_datastore_t* datastore,
+                                                         tanker_datastore_error_handle_t* h,
+                                                         uint8_t const* device,
+                                                         uint32_t device_size);
+typedef void (*tanker_datastore_find_serialized_device_t)(tanker_datastore_t* datastore,
+                                                          tanker_datastore_device_get_result_handle_t* h);
 
-typedef void (*tanker_datastore_put_cache_values_t)(
-    tanker_datastore_t* datastore,
-    tanker_datastore_error_handle_t* h,
-    uint8_t const* const* keys,
-    uint32_t const* key_sizes,
-    uint8_t const* const* values,
-    uint32_t const* value_sizes,
-    uint32_t elem_count,
-    uint8_t onconflict);
-typedef void (*tanker_datastore_find_cache_values_t)(
-    tanker_datastore_t* datastore,
-    tanker_datastore_device_get_result_handle_t* h,
-    uint8_t const* const* keys,
-    uint32_t const* key_sizes,
-    uint32_t elem_count);
+typedef void (*tanker_datastore_put_cache_values_t)(tanker_datastore_t* datastore,
+                                                    tanker_datastore_error_handle_t* h,
+                                                    uint8_t const* const* keys,
+                                                    uint32_t const* key_sizes,
+                                                    uint8_t const* const* values,
+                                                    uint32_t const* value_sizes,
+                                                    uint32_t elem_count,
+                                                    uint8_t onconflict);
+typedef void (*tanker_datastore_find_cache_values_t)(tanker_datastore_t* datastore,
+                                                     tanker_datastore_device_get_result_handle_t* h,
+                                                     uint8_t const* const* keys,
+                                                     uint32_t const* key_sizes,
+                                                     uint32_t elem_count);
 
 struct tanker_datastore_options
 {
@@ -84,15 +79,12 @@ struct tanker_datastore_options
 
 typedef struct tanker_datastore_options tanker_datastore_options_t;
 
-uint8_t* tanker_datastore_allocate_device_buffer(
-    tanker_datastore_device_get_result_handle_t* result_handle, uint32_t size);
-void tanker_datastore_allocate_cache_buffer(
-    tanker_datastore_cache_get_result_handle_t* result_handle,
-    uint8_t** out_ptrs,
-    uint32_t* sizes);
-void tanker_datastore_report_error(tanker_datastore_error_handle_t* handle,
-                                   uint8_t error_code,
-                                   char const* message);
+uint8_t* tanker_datastore_allocate_device_buffer(tanker_datastore_device_get_result_handle_t* result_handle,
+                                                 uint32_t size);
+void tanker_datastore_allocate_cache_buffer(tanker_datastore_cache_get_result_handle_t* result_handle,
+                                            uint8_t** out_ptrs,
+                                            uint32_t* sizes);
+void tanker_datastore_report_error(tanker_datastore_error_handle_t* handle, uint8_t error_code, char const* message);
 
 #ifdef __cplusplus
 }

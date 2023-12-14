@@ -28,20 +28,16 @@ namespace
 static constexpr auto oneMiB = 1024 * 1024;
 
 template <typename T>
-std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
-                               gsl::span<uint8_t const> encryptedData)
+std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key, gsl::span<uint8_t const> encryptedData)
 {
   std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-  auto const decryptedSize = AWAIT(
-      T::decrypt(decryptedData, Encryptor::fixedKeyFinder(key), encryptedData));
+  auto const decryptedSize = AWAIT(T::decrypt(decryptedData, Encryptor::fixedKeyFinder(key), encryptedData));
   decryptedData.resize(decryptedSize);
   return decryptedData;
 }
 
 template <typename T>
-void testEncryptDecrypt(TestContext<T> ctx,
-                        std::string const& testTitle,
-                        std::vector<uint8_t> const& clearData)
+void testEncryptDecrypt(TestContext<T> ctx, std::string const& testTitle, std::vector<uint8_t> const& clearData)
 {
   DYNAMIC_SECTION(testTitle)
   {
@@ -63,8 +59,7 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
     // This helps stream tests, and is irrelevant for other encryptors
     // (It writes a fake header with the chunk size field filled)
     for (auto i = 1; i + sizeof(uint32_t) < buf.size(); i += sizeof(uint32_t))
-      Serialization::serialize<uint32_t>(
-          buf.data() + i, Streams::Header::defaultEncryptedChunkSize);
+      Serialization::serialize<uint32_t>(buf.data() + i, Streams::Header::defaultEncryptedChunkSize);
 
     CHECK(T::decryptedSize(buf) == 0);
     buf.resize(ctx.encryptedSize(42));
@@ -78,8 +73,7 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
     std::vector<uint8_t> buf(1);
     buf[0] = T::version();
 
-    TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
-                                  Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf), Errc::InvalidArgument);
   }
 }
 
@@ -89,13 +83,11 @@ void transparentEncryptorTests(TestContext<T> ctx)
   SECTION("composite resource ID has expected type")
   {
     auto const& testVector = ctx.testVectors[0];
-    CompositeResourceId resourceId =
-        T::extractResourceId(testVector.encryptedData);
+    CompositeResourceId resourceId = T::extractResourceId(testVector.encryptedData);
     CHECK(resourceId.type() == CompositeResourceId::transparentSessionType());
   }
 
-  for (auto const& [i, testVector] :
-       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
+  for (auto const& [i, testVector] : ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
   {
     DYNAMIC_SECTION(
         fmt::format("decrypt test vector #{} with the individual resource key "
@@ -106,18 +98,14 @@ void transparentEncryptorTests(TestContext<T> ctx)
       auto const resourceId = T::extractResourceId(encrypted);
 
       // Derive individual resource key manually
-      auto constexpr bufLen =
-          Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
+      auto constexpr bufLen = Crypto::SymmetricKey::arraySize + Crypto::SubkeySeed::arraySize;
       std::array<std::uint8_t, bufLen> hashBuf;
       std::copy(testVector.key.begin(), testVector.key.end(), hashBuf.data());
       std::copy(encrypted.begin() + 1 + SimpleResourceId::arraySize,
-                encrypted.begin() + 1 + SimpleResourceId::arraySize +
-                    Crypto::SubkeySeed::arraySize,
+                encrypted.begin() + 1 + SimpleResourceId::arraySize + Crypto::SubkeySeed::arraySize,
                 hashBuf.data() + Crypto::SymmetricKey::arraySize);
-      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(
-          gsl::make_span(hashBuf));
-      auto keyFinder = [=](SimpleResourceId const& id)
-          -> Encryptor::ResourceKeyFinder::result_type {
+      auto const key = Tanker::Crypto::generichash<Crypto::SymmetricKey>(gsl::make_span(hashBuf));
+      auto keyFinder = [=](SimpleResourceId const& id) -> Encryptor::ResourceKeyFinder::result_type {
         if (id == resourceId.individualResourceId())
           TC_RETURN(key);
         else
@@ -125,8 +113,7 @@ void transparentEncryptorTests(TestContext<T> ctx)
       };
 
       std::vector<uint8_t> decrypted(T::decryptedSize(encrypted));
-      auto const decryptedSize =
-          AWAIT(T::decrypt(decrypted, keyFinder, encrypted));
+      auto const decryptedSize = AWAIT(T::decrypt(decrypted, keyFinder, encrypted));
       decrypted.resize(decryptedSize);
 
       CHECK(decrypted == testVector.clearData);
@@ -140,38 +127,30 @@ void commonEncryptorTests(TestContext<T> ctx)
   SECTION("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
-    TANKER_CHECK_THROWS_WITH_CODE(T::decryptedSize(truncatedBuffer),
-                                  Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(T::decryptedSize(truncatedBuffer), Errc::InvalidArgument);
   }
 
   SECTION("encrypt/decrypt should work with all buffer sizes")
   {
-    auto const buffers = {{},
-                          {0x80},
-                          make_buffer("small"),
-                          make_buffer("this is the data to encrypt")};
+    auto const buffers = {{}, {0x80}, make_buffer("small"), make_buffer("this is the data to encrypt")};
 
     auto const names = {"empty", "one char", "small", "medium"};
 
     for (auto const& [buffer, name] : ranges::views::zip(buffers, names))
     {
-      auto const title =
-          fmt::format("encrypt/decrypt should work with a {} buffer", name);
+      auto const title = fmt::format("encrypt/decrypt should work with a {} buffer", name);
 
       testEncryptDecrypt(ctx, title, buffer);
     }
   }
 
-  for (auto const& [i, testVector] :
-       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
+  for (auto const& [i, testVector] : ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
   {
     DYNAMIC_SECTION(fmt::format("decrypt should work with test vector #{}", i))
     {
-      auto const decryptedData =
-          doDecrypt<T>(testVector.key, testVector.encryptedData);
+      auto const decryptedData = doDecrypt<T>(testVector.key, testVector.encryptedData);
 
-      CHECK(T::extractResourceId(testVector.encryptedData) ==
-            testVector.resourceId);
+      CHECK(T::extractResourceId(testVector.encryptedData) == testVector.resourceId);
       CHECK(decryptedData == testVector.clearData);
     }
   }
@@ -187,11 +166,9 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(encryptedData1 != encryptedData2);
   }
 
-  for (auto const& [i, testVector] :
-       ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
+  for (auto const& [i, testVector] : ranges::views::zip(ranges::views::iota(0), ctx.testVectors))
   {
-    DYNAMIC_SECTION(
-        fmt::format("decrypt should not work with corrupted buffer #{}", i))
+    DYNAMIC_SECTION(fmt::format("decrypt should not work with corrupted buffer #{}", i))
     {
       // These tests try to corrupt buffers at arbitrary positions
 
@@ -217,9 +194,7 @@ void commonEncryptorTests(TestContext<T> ctx)
         testVector.encryptedData.back()++;
       }
 
-      TANKER_CHECK_THROWS_WITH_CODE(
-          doDecrypt<T>(testVector.key, testVector.encryptedData),
-          Errc::DecryptionFailed);
+      TANKER_CHECK_THROWS_WITH_CODE(doDecrypt<T>(testVector.key, testVector.encryptedData), Errc::DecryptionFailed);
     }
   }
 
@@ -230,15 +205,13 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
-    using ResIdType = std::invoke_result_t<decltype(&T::extractResourceId),
-                                           gsl::span<std::uint8_t const>>;
+    using ResIdType = std::invoke_result_t<decltype(&T::extractResourceId), gsl::span<std::uint8_t const>>;
     if constexpr (std::is_same_v<ResIdType, SimpleResourceId>)
       CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
     else if constexpr (std::is_same_v<ResIdType, CompositeResourceId>)
       // The encrypt metadata's resourceId is the one we want to save in store,
       // for composite resourceIds that's always the sessionId
-      CHECK(T::extractResourceId(encryptedData).sessionId() ==
-            metadata.resourceId);
+      CHECK(T::extractResourceId(encryptedData).sessionId() == metadata.resourceId);
     else
       static_assert(!sizeof(ResIdType), "Unexpected resource ID type");
   }
@@ -302,8 +275,7 @@ void paddedEncryptorTests(TestContext<T> ctx)
 TEST_CASE("decryptedSize should throw when called with an empty buffer")
 {
   auto encryptedData = make_buffer("");
-  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::decryptedSize(encryptedData),
-                                Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::decryptedSize(encryptedData), Errc::InvalidArgument);
 }
 
 TEST_CASE("decrypt should throw when called with an empty buffer")
@@ -312,16 +284,13 @@ TEST_CASE("decrypt should throw when called with an empty buffer")
   Crypto::SymmetricKey key;
   auto keyFinder = Encryptor::fixedKeyFinder(key);
   auto encryptedData = make_buffer("");
-  TANKER_CHECK_THROWS_WITH_CODE(
-      Encryptor::decrypt(decryptedData, keyFinder, encryptedData),
-      Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::decrypt(decryptedData, keyFinder, encryptedData), Errc::InvalidArgument);
 }
 
 TEST_CASE("extractResourceId should throw when called with an empty buffer")
 {
   auto encryptedData = make_buffer("");
-  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
-                                Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData), Errc::InvalidArgument);
 }
 
 TEST_CASE("EncryptorV2 tests")
@@ -362,33 +331,27 @@ TEST_CASE("EncryptorV3 tests")
     std::vector<uint8_t> clearData(oneMiB);
     Crypto::randomFill(clearData);
 
-    std::vector<uint8_t> encryptedData(
-        EncryptorV4::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(EncryptorV4::encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
     // Only take the first chunk
-    std::vector<uint8_t> truncatedData(encryptedData.begin(),
-                                       encryptedData.begin() + oneMiB);
+    std::vector<uint8_t> truncatedData(encryptedData.begin(), encryptedData.begin() + oneMiB);
 
     SECTION("decryptedSize throws")
     {
-      TANKER_CHECK_THROWS_WITH_CODE(EncryptorV4::decryptedSize(truncatedData),
-                                    Errc::InvalidArgument);
+      TANKER_CHECK_THROWS_WITH_CODE(EncryptorV4::decryptedSize(truncatedData), Errc::InvalidArgument);
     }
 
     SECTION("decrypt throws")
     {
       // decryptedSize throws on the truncatedData, so do it on encryptedData
       // just to allocate enough room
-      std::vector<uint8_t> decryptedData(
-          EncryptorV4::decryptedSize(encryptedData));
+      std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
-      TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(EncryptorV4::decrypt(
-                                        decryptedData,
-                                        Encryptor::fixedKeyFinder(metadata.key),
-                                        truncatedData)),
-                                    Errc::DecryptionFailed);
+      TANKER_CHECK_THROWS_WITH_CODE(
+          AWAIT_VOID(EncryptorV4::decrypt(decryptedData, Encryptor::fixedKeyFinder(metadata.key), truncatedData)),
+          Errc::DecryptionFailed);
     }
   }
 }
@@ -401,14 +364,11 @@ TEST_CASE("EncryptorV4 tests")
 
   SECTION("encryptedSize should return the right size")
   {
-    CHECK(EncryptorV4::encryptedSize(0) ==
-          Streams::Header::serializedSize + Crypto::Mac::arraySize);
-    CHECK(EncryptorV4::encryptedSize(1) ==
-          Streams::Header::serializedSize + Crypto::Mac::arraySize + 1);
+    CHECK(EncryptorV4::encryptedSize(0) == Streams::Header::serializedSize + Crypto::Mac::arraySize);
+    CHECK(EncryptorV4::encryptedSize(1) == Streams::Header::serializedSize + Crypto::Mac::arraySize + 1);
     auto const bigSize = 2 * Streams::Header::defaultEncryptedChunkSize + 5;
     CHECK(EncryptorV4::encryptedSize(bigSize) ==
-          bigSize +
-              3 * (Streams::Header::serializedSize + Crypto::Mac::arraySize));
+          bigSize + 3 * (Streams::Header::serializedSize + Crypto::Mac::arraySize));
   }
 }
 
@@ -425,10 +385,8 @@ TEST_CASE("EncryptorV5 tests")
     constexpr auto ResourceIdSize = SimpleResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     constexpr auto MacSize = SimpleResourceId::arraySize;
-    CHECK(EncryptorV5::encryptedSize(0) ==
-          versionSize + ResourceIdSize + IvSize + 0 + MacSize);
-    CHECK(EncryptorV5::encryptedSize(1) ==
-          versionSize + ResourceIdSize + IvSize + 1 + MacSize);
+    CHECK(EncryptorV5::encryptedSize(0) == versionSize + ResourceIdSize + IvSize + 0 + MacSize);
+    CHECK(EncryptorV5::encryptedSize(1) == versionSize + ResourceIdSize + IvSize + 1 + MacSize);
   }
 }
 
@@ -485,38 +443,29 @@ TEST_CASE("EncryptorV11 tests")
   SECTION("encryptedSize should return the right size with paddingStep 1")
   {
     // NOTE: Empty data with padding step 1 is still rounded up to 1
-    CHECK(EncryptorV11::encryptedSize(0, 1) ==
-          Streams::TransparentSessionHeader::serializedSize +
-              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
+    CHECK(EncryptorV11::encryptedSize(0, 1) == Streams::TransparentSessionHeader::serializedSize +
+                                                   EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
 
-    CHECK(EncryptorV11::encryptedSize(1, 1) ==
-          Streams::TransparentSessionHeader::serializedSize +
-              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
-    auto const bigSize =
-        2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 5;
-    CHECK(EncryptorV11::encryptedSize(bigSize, 1) ==
-          Streams::TransparentSessionHeader::serializedSize + bigSize +
-              3 * (EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize));
+    CHECK(EncryptorV11::encryptedSize(1, 1) == Streams::TransparentSessionHeader::serializedSize +
+                                                   EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize + 1);
+    auto const bigSize = 2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 5;
+    CHECK(EncryptorV11::encryptedSize(bigSize, 1) == Streams::TransparentSessionHeader::serializedSize + bigSize +
+                                                         3 * (EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize));
   }
 
   SECTION("encryptedSize should return the right size with large padding")
   {
-    auto const bigSize =
-        2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 128;
-    auto const paddingStep =
-        Streams::TransparentSessionHeader::defaultEncryptedChunkSize - 128;
+    auto const bigSize = 2 * Streams::TransparentSessionHeader::defaultEncryptedChunkSize + 128;
+    auto const paddingStep = Streams::TransparentSessionHeader::defaultEncryptedChunkSize - 128;
 
-    CHECK(EncryptorV11::encryptedSize(0, paddingStep) ==
-          Streams::TransparentSessionHeader::serializedSize +
-              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
-              Padding::paddedFromClearSize(0, paddingStep) - 1);
-    CHECK(EncryptorV11::encryptedSize(1, paddingStep) ==
-          Streams::TransparentSessionHeader::serializedSize +
-              EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
-              Padding::paddedFromClearSize(1, paddingStep) - 1);
+    CHECK(EncryptorV11::encryptedSize(0, paddingStep) == Streams::TransparentSessionHeader::serializedSize +
+                                                             EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
+                                                             Padding::paddedFromClearSize(0, paddingStep) - 1);
+    CHECK(EncryptorV11::encryptedSize(1, paddingStep) == Streams::TransparentSessionHeader::serializedSize +
+                                                             EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize +
+                                                             Padding::paddedFromClearSize(1, paddingStep) - 1);
     CHECK(EncryptorV11::encryptedSize(bigSize, paddingStep) ==
-          Streams::TransparentSessionHeader::serializedSize +
-              Padding::paddedFromClearSize(bigSize, paddingStep) - 1 +
+          Streams::TransparentSessionHeader::serializedSize + Padding::paddedFromClearSize(bigSize, paddingStep) - 1 +
               3 * (EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize));
   }
 }

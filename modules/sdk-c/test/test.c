@@ -47,8 +47,7 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
 #endif
   tanker_t* tanker = future_get(tanker_create(&options));
 
-  char const* identity =
-      future_get(tanker_create_identity(app->id, app->private_key, userId));
+  char const* identity = future_get(tanker_create_identity(app->id, app->private_key, userId));
 
   tanker_verification_t verification = TANKER_VERIFICATION_INIT;
   verification.verification_method_type = TANKER_VERIFICATION_METHOD_PASSPHRASE;
@@ -64,12 +63,9 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
 
 int main(int argc, char* argv[])
 {
-  tanker_admin_t* admin =
-      future_get(tanker_admin_connect(get_config_app_management_url(),
-                                      get_config_app_management_token(),
-                                      get_config_environment_name()));
-  tanker_app_descriptor_t* app =
-      future_get(tanker_admin_create_app(admin, "sdk-native-sdk-c-tests"));
+  tanker_admin_t* admin = future_get(tanker_admin_connect(
+      get_config_app_management_url(), get_config_app_management_token(), get_config_environment_name()));
+  tanker_app_descriptor_t* app = future_get(tanker_admin_create_app(admin, "sdk-native-sdk-c-tests"));
 
   test_sign_up_sign_in(app);
 

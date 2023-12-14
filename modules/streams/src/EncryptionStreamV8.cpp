@@ -21,14 +21,12 @@ EncryptionStreamV8::EncryptionStreamV8(InputSource cb,
 {
 }
 
-EncryptionStreamV8::EncryptionStreamV8(
-    InputSource cb,
-    Crypto::SimpleResourceId const& resourceId,
-    Crypto::SymmetricKey const& key,
-    std::optional<std::uint32_t> padding,
-    std::uint32_t encryptedChunkSize)
-  : EncryptionStream(cb, resourceId, key, encryptedChunkSize),
-    _paddingStep(padding)
+EncryptionStreamV8::EncryptionStreamV8(InputSource cb,
+                                       Crypto::SimpleResourceId const& resourceId,
+                                       Crypto::SymmetricKey const& key,
+                                       std::optional<std::uint32_t> padding,
+                                       std::uint32_t encryptedChunkSize)
+  : EncryptionStream(cb, resourceId, key, encryptedChunkSize), _paddingStep(padding)
 {
 }
 
@@ -43,32 +41,24 @@ tc::cotask<void> EncryptionStreamV8::encryptChunk()
     // If we reached the end of input
     if (clearInput.size() < currentClearChunkSize)
     {
-      auto const totalClearSize =
-          _chunkIndex * currentClearChunkSize + clearInput.size();
-      _paddingLeftToAdd =
-          Padding::paddedFromClearSize(totalClearSize, _paddingStep) - 1 -
-          totalClearSize;
+      auto const totalClearSize = _chunkIndex * currentClearChunkSize + clearInput.size();
+      _paddingLeftToAdd = Padding::paddedFromClearSize(totalClearSize, _paddingStep) - 1 - totalClearSize;
     }
   }
   clearInput.push_back(0x80);
   if (_paddingLeftToAdd && clearInput.size() - 1 < currentClearChunkSize)
   {
-    auto const paddingForCurrentChunk = std::min<std::int64_t>(
-        currentClearChunkSize - (clearInput.size() - 1), *_paddingLeftToAdd);
+    auto const paddingForCurrentChunk =
+        std::min<std::int64_t>(currentClearChunkSize - (clearInput.size() - 1), *_paddingLeftToAdd);
     clearInput.resize(clearInput.size() + paddingForCurrentChunk, 0x00);
     *_paddingLeftToAdd -= paddingForCurrentChunk;
-    if (*_paddingLeftToAdd == 0 &&
-        clearInput.size() - 1 < currentClearChunkSize)
+    if (*_paddingLeftToAdd == 0 && clearInput.size() - 1 < currentClearChunkSize)
       endOutputStream();
   }
 
-  auto output = prepareWrite(Header::serializedSize +
-                             Crypto::encryptedSize(clearInput.size()));
+  auto output = prepareWrite(Header::serializedSize + Crypto::encryptedSize(clearInput.size()));
 
-  Header const header(8u,
-                      _encryptedChunkSize,
-                      _resourceId,
-                      Crypto::getRandom<Crypto::AeadIv>());
+  Header const header(8u, _encryptedChunkSize, _resourceId, Crypto::getRandom<Crypto::AeadIv>());
   Serialization::serialize(output.data(), header);
   auto const associatedData = output.subspan(0, Header::serializedSize);
   auto const iv = Crypto::deriveIv(header.seed(), _chunkIndex);

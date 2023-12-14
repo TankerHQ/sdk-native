@@ -16,44 +16,38 @@
 
 namespace Tanker::Users
 {
-Trustchain::Actions::DeviceCreation1 createDeviceV1Action(
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::Hash const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey);
+Trustchain::Actions::DeviceCreation1 createDeviceV1Action(Trustchain::TrustchainId const& trustchainId,
+                                                          Crypto::Hash const& author,
+                                                          Identity::Delegation const& delegation,
+                                                          Crypto::PublicSignatureKey const& signatureKey,
+                                                          Crypto::PublicEncryptionKey const& encryptionKey);
 
-Trustchain::Actions::DeviceCreation3 createNewUserAction(
-    Trustchain::TrustchainId const& trustchainId,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys);
+Trustchain::Actions::DeviceCreation3 createNewUserAction(Trustchain::TrustchainId const& trustchainId,
+                                                         Identity::Delegation const& delegation,
+                                                         Crypto::PublicSignatureKey const& signatureKey,
+                                                         Crypto::PublicEncryptionKey const& encryptionKey,
+                                                         Crypto::EncryptionKeyPair const& userEncryptionKeys);
 
-Trustchain::Actions::DeviceCreation3 createNewDeviceAction(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys);
+Trustchain::Actions::DeviceCreation3 createNewDeviceAction(Trustchain::TrustchainId const& trustchainId,
+                                                           Trustchain::DeviceId const& author,
+                                                           Identity::Delegation const& delegation,
+                                                           Crypto::PublicSignatureKey const& signatureKey,
+                                                           Crypto::PublicEncryptionKey const& encryptionKey,
+                                                           Crypto::EncryptionKeyPair const& userEncryptionKeys);
 
-Trustchain::Actions::DeviceCreation3 createNewGhostDeviceAction(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys);
+Trustchain::Actions::DeviceCreation3 createNewGhostDeviceAction(Trustchain::TrustchainId const& trustchainId,
+                                                                Trustchain::DeviceId const& author,
+                                                                Identity::Delegation const& delegation,
+                                                                Crypto::PublicSignatureKey const& signatureKey,
+                                                                Crypto::PublicEncryptionKey const& encryptionKey,
+                                                                Crypto::EncryptionKeyPair const& userEncryptionKeys);
 
-Trustchain::Actions::SessionCertificate createSessionCertificate(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Verification::Verification const& verification,
-    Crypto::PrivateSignatureKey const& signatureKey);
+Trustchain::Actions::SessionCertificate createSessionCertificate(Trustchain::TrustchainId const& trustchainId,
+                                                                 Trustchain::DeviceId const& deviceId,
+                                                                 Verification::Verification const& verification,
+                                                                 Crypto::PrivateSignatureKey const& signatureKey);
 
-Trustchain::Actions::ProvisionalIdentityClaim
-createProvisionalIdentityClaimAction(
+Trustchain::Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -61,8 +55,7 @@ createProvisionalIdentityClaimAction(
     ProvisionalUsers::SecretUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair);
 
-Trustchain::Actions::KeyPublishToProvisionalUser
-createKeyPublishToProvisionalUserAction(
+Trustchain::Actions::KeyPublishToProvisionalUser createKeyPublishToProvisionalUserAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,

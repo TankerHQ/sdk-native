@@ -5,9 +5,7 @@
 
 namespace Tanker::Streams
 {
-DecryptionStreamV8::DecryptionStreamV8(InputSource cb,
-                                       Header header,
-                                       Crypto::SymmetricKey key)
+DecryptionStreamV8::DecryptionStreamV8(InputSource cb, Header header, Crypto::SymmetricKey key)
   : DecryptionStream(std::move(cb), header, key)
 {
 }
@@ -37,8 +35,7 @@ tc::cotask<void> DecryptionStreamV8::decryptChunk()
   if (_onlyPaddingLeft)
   {
     if (unpaddedSize != 0)
-      throw Errors::formatEx(Errors::Errc::DecryptionFailed,
-                             "unable to remove padding");
+      throw Errors::formatEx(Errors::Errc::DecryptionFailed, "unable to remove padding");
   }
   else
   {
@@ -52,8 +49,8 @@ tc::cotask<void> DecryptionStreamV8::decryptChunk()
     endOutputStream();
 }
 
-tc::cotask<std::optional<Crypto::SymmetricKey>> DecryptionStreamV8::tryGetKey(
-    ResourceKeyFinder const& finder, Header const& header)
+tc::cotask<std::optional<Crypto::SymmetricKey>> DecryptionStreamV8::tryGetKey(ResourceKeyFinder const& finder,
+                                                                              Header const& header)
 {
   TC_RETURN(TC_AWAIT(finder(header.resourceId())));
 }

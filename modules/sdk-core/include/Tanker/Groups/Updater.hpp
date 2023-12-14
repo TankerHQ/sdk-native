@@ -17,28 +17,24 @@ namespace Tanker
 {
 namespace GroupUpdater
 {
-tc::cotask<Group> applyUserGroupCreation(
-    Users::ILocalUserAccessor& localUserAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    Trustchain::GroupAction const& action);
+tc::cotask<Group> applyUserGroupCreation(Users::ILocalUserAccessor& localUserAccessor,
+                                         ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                         Trustchain::GroupAction const& action);
 
-tc::cotask<Group> applyUserGroupAddition(
-    Users::ILocalUserAccessor& localUserAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    std::optional<Group> previousGroup,
-    Trustchain::GroupAction const& action);
+tc::cotask<Group> applyUserGroupAddition(Users::ILocalUserAccessor& localUserAccessor,
+                                         ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                         std::optional<Group> previousGroup,
+                                         Trustchain::GroupAction const& action);
 
-tc::cotask<Group> applyUserGroupUpdate(
-    Users::ILocalUserAccessor& localUserAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    std::optional<Group> previousGroup,
-    Trustchain::GroupAction const& action);
+tc::cotask<Group> applyUserGroupUpdate(Users::ILocalUserAccessor& localUserAccessor,
+                                       ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                       std::optional<Group> previousGroup,
+                                       Trustchain::GroupAction const& action);
 
-tc::cotask<std::optional<Group>> processGroupEntries(
-    Users::ILocalUserAccessor& localUserAccessor,
-    Users::IUserAccessor& userAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    std::optional<Group> const& previousGroup,
-    gsl::span<Trustchain::GroupAction const> entries);
+tc::cotask<std::optional<Group>> processGroupEntries(Users::ILocalUserAccessor& localUserAccessor,
+                                                     Users::IUserAccessor& userAccessor,
+                                                     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                                     std::optional<Group> const& previousGroup,
+                                                     gsl::span<Trustchain::GroupAction const> entries);
 }
 }

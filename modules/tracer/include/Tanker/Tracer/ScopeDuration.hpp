@@ -33,8 +33,6 @@ private:
 #define SCOPE_DURATION_(TEXT, COROTYPE)
 #endif
 
-#define SCOPE_DURATION_T(TEXT, COROTYPE) \
-  SCOPE_DURATION_(TEXT, ::Tanker::Tracer::COROTYPE)
+#define SCOPE_DURATION_T(TEXT, COROTYPE) SCOPE_DURATION_(TEXT, ::Tanker::Tracer::COROTYPE)
 
-#define FUNC_DURATION(COROTYPE) \
-  SCOPE_DURATION_(__func__, ::Tanker::Tracer::COROTYPE)
+#define FUNC_DURATION(COROTYPE) SCOPE_DURATION_(__func__, ::Tanker::Tracer::COROTYPE)

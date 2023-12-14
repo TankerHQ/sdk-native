@@ -71,16 +71,15 @@ using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      PreverifiedEmail,
                                                      PreverifiedPhoneNumber>;
 
-using RequestVerificationPayload =
-    boost::variant2::variant<VerificationKey,
-                             EncryptedEmailVerification,
-                             Trustchain::HashedPassphrase,
-                             Trustchain::HashedE2ePassphrase,
-                             OidcIdToken,
-                             OidcIdTokenWithChallenge,
-                             EncryptedPhoneNumberVerification,
-                             EncryptedPreverifiedEmailVerification,
-                             EncryptedPreverifiedPhoneNumberVerification>;
+using RequestVerificationPayload = boost::variant2::variant<VerificationKey,
+                                                            EncryptedEmailVerification,
+                                                            Trustchain::HashedPassphrase,
+                                                            Trustchain::HashedE2ePassphrase,
+                                                            OidcIdToken,
+                                                            OidcIdTokenWithChallenge,
+                                                            EncryptedPhoneNumberVerification,
+                                                            EncryptedPreverifiedEmailVerification,
+                                                            EncryptedPreverifiedPhoneNumberVerification>;
 
 struct RequestWithVerif
 {
@@ -100,21 +99,18 @@ struct SetVerifMethodRequest
 
 void to_json(nlohmann::json&, SetVerifMethodRequest const&);
 
-RequestWithVerif makeRequestWithVerif(
-    RequestVerification const& verification,
-    Crypto::SymmetricKey const& userSecret,
-    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
-    std::optional<std::string> const& withTokenNonce = std::nullopt);
+RequestWithVerif makeRequestWithVerif(RequestVerification const& verification,
+                                      Crypto::SymmetricKey const& userSecret,
+                                      std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+                                      std::optional<std::string> const& withTokenNonce = std::nullopt);
 
-RequestWithVerif makeRequestWithVerif(
-    Verification const& verification,
-    Crypto::SymmetricKey const& userSecret,
-    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
-    std::optional<std::string> const& withTokenNonce = std::nullopt);
+RequestWithVerif makeRequestWithVerif(Verification const& verification,
+                                      Crypto::SymmetricKey const& userSecret,
+                                      std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+                                      std::optional<std::string> const& withTokenNonce = std::nullopt);
 
-std::vector<RequestWithVerif> makeRequestWithVerifs(
-    std::vector<Verification> const& verification,
-    Crypto::SymmetricKey const& userSecret);
+std::vector<RequestWithVerif> makeRequestWithVerifs(std::vector<Verification> const& verification,
+                                                    Crypto::SymmetricKey const& userSecret);
 
 struct EmailSessionRequest
 {
@@ -128,8 +124,7 @@ struct PhoneNumberSessionRequest
   Crypto::Hash provisionalSalt;
 };
 
-using SessionRequestValue =
-    boost::variant2::variant<EmailSessionRequest, PhoneNumberSessionRequest>;
+using SessionRequestValue = boost::variant2::variant<EmailSessionRequest, PhoneNumberSessionRequest>;
 
 struct RequestWithSession
 {
@@ -139,9 +134,8 @@ struct RequestWithSession
 
 void to_json(nlohmann::json&, RequestWithSession const&);
 
-RequestWithSession makeRequestWithSession(
-    Identity::SecretProvisionalIdentity const& identity,
-    Crypto::SymmetricKey const& userSecret);
+RequestWithSession makeRequestWithSession(Identity::SecretProvisionalIdentity const& identity,
+                                          Crypto::SymmetricKey const& userSecret);
 }
 
 namespace nlohmann
@@ -149,23 +143,16 @@ namespace nlohmann
 template <typename SFINAE>
 struct adl_serializer<Tanker::Verification::RequestVerificationPayload, SFINAE>
 {
-  static void to_json(
-      nlohmann::json& j,
-      Tanker::Verification::RequestVerificationPayload const& request);
+  static void to_json(nlohmann::json& j, Tanker::Verification::RequestVerificationPayload const& request);
 
-  static void from_json(
-      nlohmann::json const& j,
-      Tanker::Verification::RequestVerificationPayload& request) = delete;
+  static void from_json(nlohmann::json const& j, Tanker::Verification::RequestVerificationPayload& request) = delete;
 };
 
 template <typename SFINAE>
 struct adl_serializer<Tanker::Verification::SessionRequestValue, SFINAE>
 {
-  static void to_json(nlohmann::json& j,
-                      Tanker::Verification::SessionRequestValue const& request);
+  static void to_json(nlohmann::json& j, Tanker::Verification::SessionRequestValue const& request);
 
-  static void from_json(nlohmann::json const& j,
-                        Tanker::Verification::SessionRequestValue& request) =
-      delete;
+  static void from_json(nlohmann::json const& j, Tanker::Verification::SessionRequestValue& request) = delete;
 };
 }

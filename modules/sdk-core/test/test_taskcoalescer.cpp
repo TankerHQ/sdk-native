@@ -10,13 +10,10 @@
 
 #include <map>
 
-#define DEFER_AWAIT(code)                                               \
-  tc::async_resumable(                                                  \
-      [&]() ->                                                          \
-      typename test_helpers_detail::cotask_type<decltype(code)>::type { \
-        TC_RETURN(TC_AWAIT(code));                                      \
-      })                                                                \
-      .to_shared()
+#define DEFER_AWAIT(code)                                                                        \
+  tc::async_resumable([&]() -> typename test_helpers_detail::cotask_type<decltype(code)>::type { \
+    TC_RETURN(TC_AWAIT(code));                                                                   \
+  }).to_shared()
 
 namespace
 {
@@ -40,8 +37,7 @@ using taskIds_type = std::vector<int>;
 using result_type = tc::shared_future<std::vector<Value>>;
 using taskIdsArgs_type = std::vector<taskIds_type>;
 
-tc::cotask<void> checkReturns(std::vector<result_type> const& results,
-                              std::vector<std::vector<int>> const& expected)
+tc::cotask<void> checkReturns(std::vector<result_type> const& results, std::vector<std::vector<int>> const& expected)
 {
   for (auto i = 0ul; i < results.size(); i++)
   {
@@ -50,9 +46,7 @@ tc::cotask<void> checkReturns(std::vector<result_type> const& results,
   }
 }
 
-void checkCounts(std::map<int, int> const& counts,
-                 taskIds_type const& ids,
-                 int nbCalls = 1)
+void checkCounts(std::map<int, int> const& counts, taskIds_type const& ids, int nbCalls = 1)
 {
   for (auto const& id : ids)
   {
@@ -109,12 +103,10 @@ TEST_CASE("TaskCoalescer")
   SECTION("forwards task errors")
   {
     taskIds_type ids{0, 1, 2};
-    auto alwaysError =
-        [](taskIds_type const&) -> tc::cotask<std::vector<Value>> {
+    auto alwaysError = [](taskIds_type const&) -> tc::cotask<std::vector<Value>> {
       throw formatEx(Tanker::Errors::Errc::InvalidArgument, "an error");
     };
-    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(coalescer.run(alwaysError, ids)),
-                                  Tanker::Errors::Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(coalescer.run(alwaysError, ids)), Tanker::Errors::Errc::InvalidArgument);
   }
 
   SECTION("forwards errors from already in-progress task")
@@ -122,8 +114,7 @@ TEST_CASE("TaskCoalescer")
     taskIds_type ids{0, 1, 2};
     SyncState state{1};
 
-    auto alwaysError =
-        [&](taskIds_type const&) -> tc::cotask<std::vector<Value>> {
+    auto alwaysError = [&](taskIds_type const&) -> tc::cotask<std::vector<Value>> {
       TC_AWAIT(state.syncStart());
 
       throw formatEx(Tanker::Errors::Errc::InvalidArgument, "an error");
@@ -141,15 +132,13 @@ TEST_CASE("TaskCoalescer")
     AWAIT_VOID(state.awaitReady());
     unblockAll(state.blockedHandler);
 
-    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(fromPending),
-                                  Tanker::Errors::Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(fromPending), Tanker::Errors::Errc::InvalidArgument);
   }
 
   SECTION("omits unresolved ids from resulting array")
   {
     taskIds_type ids{0, 1, 2};
-    auto handle =
-        [](taskIds_type const& keys) -> tc::cotask<std::vector<Value>> {
+    auto handle = [](taskIds_type const& keys) -> tc::cotask<std::vector<Value>> {
       TC_RETURN(keys | ranges::views::drop(1) | ranges::to<std::vector<Value>>);
     };
     auto result = AWAIT(coalescer.run(handle, ids));
@@ -161,15 +150,13 @@ TEST_CASE("TaskCoalescer")
   {
     struct TestState : public SyncState
     {
-      TestState(coalescer_type& coalescer, taskIdsArgs_type const& taskIdsArgs)
-        : SyncState{taskIdsArgs.size()}
+      TestState(coalescer_type& coalescer, taskIdsArgs_type const& taskIdsArgs) : SyncState{taskIdsArgs.size()}
       {
         for (auto const& taskIds : taskIdsArgs)
           results.emplace_back(DEFER_AWAIT(coalescer.run(handle, taskIds)));
       }
 
-      coalescer_type::task_handler_type handle =
-          [&](taskIds_type const& ids) -> tc::cotask<std::vector<Value>> {
+      coalescer_type::task_handler_type handle = [&](taskIds_type const& ids) -> tc::cotask<std::vector<Value>> {
         TC_AWAIT(this->syncStart());
 
         handledIds.push_back(ids);
@@ -240,8 +227,7 @@ TEST_CASE("TaskCoalescer")
       checkCounts(state.counts, {1, 2, 3});
     }
 
-    SECTION(
-        "calls tasksHandler with ids again once previous tasks are resolved")
+    SECTION("calls tasksHandler with ids again once previous tasks are resolved")
     {
       taskIdsArgs_type taskIdsArgs{
           {1, 2},

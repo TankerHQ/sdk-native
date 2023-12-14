@@ -13,8 +13,7 @@ Crypto::Hash computeHash(Actions::Nature nature,
                          gsl::span<std::uint8_t const> serializedPayload)
 {
   auto const natureInt = static_cast<unsigned>(nature);
-  std::vector<std::uint8_t> buffer(Serialization::varint_size(natureInt) +
-                                   author.size() + serializedPayload.size());
+  std::vector<std::uint8_t> buffer(Serialization::varint_size(natureInt) + author.size() + serializedPayload.size());
   auto it = buffer.data();
   it = Serialization::varint_write(it, natureInt);
   it = Serialization::serialize(it, author);

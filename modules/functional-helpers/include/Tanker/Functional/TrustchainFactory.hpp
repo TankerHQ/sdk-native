@@ -28,17 +28,14 @@ public:
   static tc::cotask<Ptr> create();
 
   static TrustchainConfig loadTrustchainConfig(std::string const& path);
-  static void saveTrustchainConfig(std::string const& path,
-                                   TrustchainConfig const& config);
+  static void saveTrustchainConfig(std::string const& path, TrustchainConfig const& config);
 
   tc::cotask<void> deleteTrustchain(Tanker::Trustchain::TrustchainId const& ic);
   tc::cotask<Trustchain::Ptr> createTrustchain(std::string const& name);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
-  tc::cotask<void> enablePSCOidc(Tanker::Trustchain::TrustchainId const& id,
-                                 PSCProvider const& provider);
-  tc::cotask<void> setUserEnrollmentEnabled(
-      Tanker::Trustchain::TrustchainId const& id, bool state = true);
+  tc::cotask<void> enablePSCOidc(Tanker::Trustchain::TrustchainId const& id, PSCProvider const& provider);
+  tc::cotask<void> setUserEnrollmentEnabled(Tanker::Trustchain::TrustchainId const& id, bool state = true);
 
 private:
   std::unique_ptr<Admin::Client> _admin;

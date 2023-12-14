@@ -12,8 +12,7 @@ using namespace Tanker;
 TEST_CASE("it can unserialize a GhostDevice")
 {
   GhostDevice gd{
-      make<Crypto::PrivateSignatureKey>(
-          "sig  keysig  keysig  keysig  keysig  keysig  keysig  keysig  key"),
+      make<Crypto::PrivateSignatureKey>("sig  keysig  keysig  keysig  keysig  keysig  keysig  keysig  key"),
       make<Crypto::PrivateEncryptionKey>("enc  keyenc  keyenc  keyenc  key"),
   };
 
@@ -32,6 +31,5 @@ TEST_CASE("it can serialize and deserialize a GhostDevice")
       make<Crypto::PrivateEncryptionKey>("enc key"),
   };
 
-  CHECK(nlohmann::json::parse(nlohmann::json(gd).dump()).get<GhostDevice>() ==
-        gd);
+  CHECK(nlohmann::json::parse(nlohmann::json(gd).dump()).get<GhostDevice>() == gd);
 }

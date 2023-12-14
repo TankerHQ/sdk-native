@@ -67,101 +67,82 @@ public:
   tc::future<void> destroy();
 
   tc::future<Status> start(std::string const& identity);
-  tc::future<void> enrollUser(
-      std::string const& identity,
-      std::vector<Verification::Verification> const& verifications);
+  tc::future<void> enrollUser(std::string const& identity,
+                              std::vector<Verification::Verification> const& verifications);
   tc::future<void> stop();
 
-  tc::future<std::optional<std::string>> registerIdentity(
-      Verification::Verification const& verification,
-      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
-  tc::future<std::optional<std::string>> verifyIdentity(
-      Verification::Verification const& verification,
-      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
+  tc::future<std::optional<std::string>> registerIdentity(Verification::Verification const& verification,
+                                                          Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
+  tc::future<std::optional<std::string>> verifyIdentity(Verification::Verification const& verification,
+                                                        Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
 
   tc::future<Oidc::Nonce> createOidcNonce();
   tc::future<void> setOidcTestNonce(Oidc::Nonce const& nonce);
 
-  tc::future<std::string> getSessionToken(
-      Verification::Verification const& verification,
-      std::string const& withTokenNonce);
+  tc::future<std::string> getSessionToken(Verification::Verification const& verification,
+                                          std::string const& withTokenNonce);
 
   Tanker::Status status() const;
 
-  tc::future<void> encrypt(
-      gsl::span<uint8_t> encryptedData,
-      gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
-      std::optional<uint32_t> paddingStep = std::nullopt);
-  tc::future<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
-                               gsl::span<uint8_t const> encryptedData);
+  tc::future<void> encrypt(gsl::span<uint8_t> encryptedData,
+                           gsl::span<uint8_t const> clearData,
+                           std::vector<SPublicIdentity> const& publicIdentities = {},
+                           std::vector<SGroupId> const& groupIds = {},
+                           Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+                           std::optional<uint32_t> paddingStep = std::nullopt);
+  tc::future<uint64_t> decrypt(gsl::span<uint8_t> decryptedData, gsl::span<uint8_t const> encryptedData);
 
-  tc::future<std::vector<uint8_t>> encrypt(
-      gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
-      std::optional<uint32_t> paddingStep = std::nullopt);
-  tc::future<std::vector<uint8_t>> decrypt(
-      gsl::span<uint8_t const> encryptedData);
+  tc::future<std::vector<uint8_t>> encrypt(gsl::span<uint8_t const> clearData,
+                                           std::vector<SPublicIdentity> const& publicIdentities = {},
+                                           std::vector<SGroupId> const& groupIds = {},
+                                           Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+                                           std::optional<uint32_t> paddingStep = std::nullopt);
+  tc::future<std::vector<uint8_t>> decrypt(gsl::span<uint8_t const> encryptedData);
 
   tc::future<void> share(std::vector<SResourceId> const& resourceId,
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
   tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
-  tc::future<void> updateGroupMembers(
-      SGroupId const& groupId,
-      std::vector<SPublicIdentity> const& usersToAdd,
-      std::vector<SPublicIdentity> const& usersToRemove);
+  tc::future<void> updateGroupMembers(SGroupId const& groupId,
+                                      std::vector<SPublicIdentity> const& usersToAdd,
+                                      std::vector<SPublicIdentity> const& usersToRemove);
 
   tc::future<VerificationKey> generateVerificationKey();
 
   tc::future<std::optional<std::string>> setVerificationMethod(
       Verification::Verification const& method,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No,
-      Core::AllowE2eMethodSwitch allowE2eSwitch =
-          Core::AllowE2eMethodSwitch::No);
-  tc::future<std::vector<Verification::VerificationMethod>>
-  getVerificationMethods();
+      Core::AllowE2eMethodSwitch allowE2eSwitch = Core::AllowE2eMethodSwitch::No);
+  tc::future<std::vector<Verification::VerificationMethod>> getVerificationMethods();
 
-  tc::future<AttachResult> attachProvisionalIdentity(
-      SSecretProvisionalIdentity const& sidentity);
-  tc::future<void> verifyProvisionalIdentity(
-      Verification::Verification const& verification);
+  tc::future<AttachResult> attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity);
+  tc::future<void> verifyProvisionalIdentity(Verification::Verification const& verification);
 
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();
 
   static void setLogHandler(Log::LogHandler handler);
 
-  static uint64_t encryptedSize(
-      uint64_t clearSize, std::optional<uint32_t> paddingStep = std::nullopt);
+  static uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep = std::nullopt);
 
-  static expected<uint64_t> decryptedSize(
-      gsl::span<uint8_t const> encryptedData);
+  static expected<uint64_t> decryptedSize(gsl::span<uint8_t const> encryptedData);
 
-  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-  makeEncryptionStream(
+  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>> makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
       std::optional<uint32_t> paddingStep = std::nullopt);
 
-  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>>
-      makeDecryptionStream(Streams::InputSource);
+  tc::future<std::tuple<Streams::InputSource, Crypto::ResourceId>> makeDecryptionStream(Streams::InputSource);
 
-  tc::future<EncryptionSession> makeEncryptionSession(
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
-      std::optional<uint32_t> paddingStep = std::nullopt);
+  tc::future<EncryptionSession> makeEncryptionSession(std::vector<SPublicIdentity> const& publicIdentities = {},
+                                                      std::vector<SGroupId> const& groupIds = {},
+                                                      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+                                                      std::optional<uint32_t> paddingStep = std::nullopt);
 
-  static expected<SResourceId> getResourceId(
-      gsl::span<uint8_t const> encryptedData);
+  static expected<SResourceId> getResourceId(gsl::span<uint8_t const> encryptedData);
 
   static std::string const& version();
   SdkInfo const& sdkInfo();

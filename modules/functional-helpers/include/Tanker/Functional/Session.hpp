@@ -21,10 +21,7 @@ public:
   Functional::AsyncCorePtr session;
 
   UserSession(Functional::Trustchain& t)
-    : trustchain(t),
-      user(trustchain.makeUser()),
-      device(user.makeDevice()),
-      session(AWAIT(device.open()))
+    : trustchain(t), user(trustchain.makeUser()), device(user.makeDevice()), session(AWAIT(device.open()))
   {
   }
 
@@ -32,10 +29,7 @@ public:
               Functional::User user,
               Functional::Device device,
               Functional::AsyncCorePtr session)
-    : trustchain(t),
-      user(std::move(user)),
-      device(std::move(device)),
-      session(std::move(session))
+    : trustchain(t), user(std::move(user)), device(std::move(device)), session(std::move(session))
   {
   }
 
@@ -57,8 +51,7 @@ class ProvisionalUserSession : public UserSession
 public:
   Functional::AppProvisionalUser provisionalUser;
 
-  ProvisionalUserSession(Functional::Trustchain& t,
-                         ProvisionalUserType type = ProvisionalUserType::Email)
+  ProvisionalUserSession(Functional::Trustchain& t, ProvisionalUserType type = ProvisionalUserType::Email)
     : UserSession(t), provisionalUser(t.makeProvisionalUser(type))
   {
   }
@@ -77,14 +70,11 @@ public:
 template <typename... T>
 std::vector<SPublicIdentity> getPublicIdentities(T const&... userSessions)
 {
-  return ranges::views::concat(
-             (userSessions |
-              ranges::views::transform(&UserSession::spublicIdentity))...) |
+  return ranges::views::concat((userSessions | ranges::views::transform(&UserSession::spublicIdentity))...) |
          ranges::to<std::vector>;
 }
 
-inline tc::cotask<void> attachProvisionalIdentities(
-    gsl::span<ProvisionalUserSession> userSessions)
+inline tc::cotask<void> attachProvisionalIdentities(gsl::span<ProvisionalUserSession> userSessions)
 {
   for (auto& p : userSessions)
     TC_AWAIT(p.attach());
@@ -100,9 +90,7 @@ std::vector<T> generate(Functional::Trustchain& trustchain, int nb)
 }
 
 template <typename T>
-std::vector<T> generate(Functional::Trustchain& trustchain,
-                        int nbEmail,
-                        int nbPhoneNumber)
+std::vector<T> generate(Functional::Trustchain& trustchain, int nbEmail, int nbPhoneNumber)
 {
   std::vector<T> users;
   for (int i = 0; i < nbEmail; ++i)

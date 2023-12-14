@@ -15,8 +15,7 @@
 
 namespace Tanker
 {
-EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession,
-                                     std::optional<std::uint32_t> paddingStep)
+EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession, std::optional<std::uint32_t> paddingStep)
   : _tankerSession(tankerSession),
     _taskCanceler{std::make_shared<tc::task_canceler>()},
     _sessionKey{Crypto::makeSymmetricKey()},
@@ -28,11 +27,10 @@ EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession,
 void EncryptionSession::assertSession(char const* action) const
 {
   if (_tankerSession.expired())
-    throw Errors::formatEx(
-        Errors::Errc::PreconditionFailed,
-        FMT_STRING("can't call EncryptionSession::{:s} after the Tanker "
-                   "session has been closed"),
-        action);
+    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
+                           FMT_STRING("can't call EncryptionSession::{:s} after the Tanker "
+                                      "session has been closed"),
+                           action);
 }
 
 Crypto::SimpleResourceId const& EncryptionSession::resourceId() const
@@ -70,42 +68,33 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
   }
 }
 
-tconcurrent::cotask<Tanker::EncryptCacheMetadata> EncryptionSession::encrypt(
-    gsl::span<std::uint8_t> encryptedData,
-    gsl::span<const std::uint8_t> clearData)
+tconcurrent::cotask<Tanker::EncryptCacheMetadata> EncryptionSession::encrypt(gsl::span<std::uint8_t> encryptedData,
+                                                                             gsl::span<const std::uint8_t> clearData)
 {
   assertSession("encrypt");
   if (Encryptor::isHugeClearData(clearData.size(), _paddingStep))
   {
     if (_paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey)));
+      TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData, _resourceId, _sessionKey)));
     else
-      TC_RETURN(TC_AWAIT(EncryptorV8::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
+      TC_RETURN(TC_AWAIT(EncryptorV8::encrypt(encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
   }
   else
   {
     if (_paddingStep == Padding::Off)
-      TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey)));
+      TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(encryptedData, clearData, _resourceId, _sessionKey)));
     else
-      TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(
-          encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
+      TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
   }
 }
 
-std::tuple<Streams::InputSource, Crypto::SimpleResourceId>
-EncryptionSession::makeEncryptionStream(Streams::InputSource cb)
+std::tuple<Streams::InputSource, Crypto::SimpleResourceId> EncryptionSession::makeEncryptionStream(
+    Streams::InputSource cb)
 {
   if (_paddingStep == Padding::Off)
-    return std::make_tuple(
-        Streams::EncryptionStreamV4(std::move(cb), _resourceId, _sessionKey),
-        _resourceId);
+    return std::make_tuple(Streams::EncryptionStreamV4(std::move(cb), _resourceId, _sessionKey), _resourceId);
   else
-    return std::make_tuple(
-        Streams::EncryptionStreamV8(
-            std::move(cb), _resourceId, _sessionKey, _paddingStep),
-        _resourceId);
+    return std::make_tuple(Streams::EncryptionStreamV8(std::move(cb), _resourceId, _sessionKey, _paddingStep),
+                           _resourceId);
 }
 }

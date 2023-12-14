@@ -34,22 +34,18 @@ public:
           ProvisionalUserKeysStore* provisionalUserKeysStore,
           Trustchain::TrustchainId const& trustchainId);
 
-  tc::cotask<AttachResult> attachProvisionalIdentity(
-      SSecretProvisionalIdentity const& sidentity,
-      Crypto::SymmetricKey const& userSecret);
+  tc::cotask<AttachResult> attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity,
+                                                     Crypto::SymmetricKey const& userSecret);
 
-  tc::cotask<void> verifyProvisionalIdentity(
-      Verification::RequestWithVerif const& unlockRequest);
+  tc::cotask<void> verifyProvisionalIdentity(Verification::RequestWithVerif const& unlockRequest);
 
-  std::optional<Identity::SecretProvisionalIdentity> const&
-  provisionalIdentity() const;
+  std::optional<Identity::SecretProvisionalIdentity> const& provisionalIdentity() const;
 
 private:
   tc::cotask<std::optional<ProvisionalUserKeys>> fetchProvisionalKeys(
       Identity::SecretProvisionalIdentity const& provisionalIdentity);
-  tc::cotask<AttachResult> claimProvisionalIdentity(
-      Identity::SecretProvisionalIdentity const& provisionalIdentity,
-      Crypto::SymmetricKey const& userSecret);
+  tc::cotask<AttachResult> claimProvisionalIdentity(Identity::SecretProvisionalIdentity const& provisionalIdentity,
+                                                    Crypto::SymmetricKey const& userSecret);
   tc::cotask<AttachResult> claimProvisionalIdentityWithMethod(
       Identity::SecretProvisionalIdentity const& provisionalIdentity,
       Verification::VerificationMethod const& method,

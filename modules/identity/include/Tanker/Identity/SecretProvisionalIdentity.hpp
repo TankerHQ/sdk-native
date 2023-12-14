@@ -24,21 +24,16 @@ struct SecretProvisionalIdentity
 };
 
 void from_json(nlohmann::json const& j, SecretProvisionalIdentity& result);
-void to_json(nlohmann::ordered_json& j,
-             SecretProvisionalIdentity const& identity);
+void to_json(nlohmann::ordered_json& j, SecretProvisionalIdentity const& identity);
 std::string to_string(SecretProvisionalIdentity const& identity);
 
-SecretProvisionalIdentity createProvisionalIdentity(
-    Trustchain::TrustchainId const& trustchainId, Email const& email);
+SecretProvisionalIdentity createProvisionalIdentity(Trustchain::TrustchainId const& trustchainId, Email const& email);
 
-SecretProvisionalIdentity createProvisionalIdentity(
-    Trustchain::TrustchainId const& trustchainId,
-    PhoneNumber const& phoneNumber);
+SecretProvisionalIdentity createProvisionalIdentity(Trustchain::TrustchainId const& trustchainId,
+                                                    PhoneNumber const& phoneNumber);
 
-std::string createProvisionalIdentity(std::string const& trustchainId,
-                                      Email const& email);
+std::string createProvisionalIdentity(std::string const& trustchainId, Email const& email);
 
-std::string createProvisionalIdentity(std::string const& trustchainId,
-                                      PhoneNumber const& phoneNumber);
+std::string createProvisionalIdentity(std::string const& trustchainId, PhoneNumber const& phoneNumber);
 }
 }

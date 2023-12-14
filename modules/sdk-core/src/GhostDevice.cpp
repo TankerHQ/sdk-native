@@ -11,40 +11,31 @@
 
 namespace Tanker
 {
-DeviceKeys generateGhostDeviceKeys(
-    std::optional<Verification::Verification> const& verification)
+DeviceKeys generateGhostDeviceKeys(std::optional<Verification::Verification> const& verification)
 {
-  if (verification &&
-      boost::variant2::holds_alternative<VerificationKey>(*verification))
+  if (verification && boost::variant2::holds_alternative<VerificationKey>(*verification))
   {
-    return GhostDevice::create(
-               boost::variant2::get<VerificationKey>(*verification))
-        .toDeviceKeys();
+    return GhostDevice::create(boost::variant2::get<VerificationKey>(*verification)).toDeviceKeys();
   }
   return DeviceKeys::create();
 }
 
-GeneratedGhostDevice generateGhostDevice(
-    Identity::SecretPermanentIdentity const& identity,
-    DeviceKeys const& ghostDeviceKeys)
+GeneratedGhostDevice generateGhostDevice(Identity::SecretPermanentIdentity const& identity,
+                                         DeviceKeys const& ghostDeviceKeys)
 {
   auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
 
   auto const userKeyPair = Crypto::makeEncryptionKeyPair();
-  auto const userCreationEntry =
-      Users::createNewUserAction(identity.trustchainId,
-                                 identity.delegation,
-                                 ghostDeviceKeys.signatureKeyPair.publicKey,
-                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
-                                 userKeyPair);
+  auto const userCreationEntry = Users::createNewUserAction(identity.trustchainId,
+                                                            identity.delegation,
+                                                            ghostDeviceKeys.signatureKeyPair.publicKey,
+                                                            ghostDeviceKeys.encryptionKeyPair.publicKey,
+                                                            userKeyPair);
 
   auto const verificationKeyToSend = ghostDevice.toVerificationKey();
-  std::vector<uint8_t> encryptedVerificationKey(
-      EncryptorV2::encryptedSize(verificationKeyToSend.size()));
+  std::vector<uint8_t> encryptedVerificationKey(EncryptorV2::encryptedSize(verificationKeyToSend.size()));
   EncryptorV2::encryptSync(
-      encryptedVerificationKey,
-      gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
-      identity.userSecret);
+      encryptedVerificationKey, gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(), identity.userSecret);
 
   return {
       userCreationEntry,
@@ -61,20 +52,17 @@ try
 }
 catch (std::exception const& e)
 {
-  throw Errors::Exception(make_error_code(Errors::Errc::InvalidVerification),
-                          "invalid verification key");
+  throw Errors::Exception(make_error_code(Errors::Errc::InvalidVerification), "invalid verification key");
 }
 
 GhostDevice GhostDevice::create(DeviceKeys const& keys)
 {
-  return GhostDevice{keys.signatureKeyPair.privateKey,
-                     keys.encryptionKeyPair.privateKey};
+  return GhostDevice{keys.signatureKeyPair.privateKey, keys.encryptionKeyPair.privateKey};
 }
 
 DeviceKeys GhostDevice::toDeviceKeys() const
 {
-  return DeviceKeys::create(this->privateSignatureKey,
-                            this->privateEncryptionKey);
+  return DeviceKeys::create(this->privateSignatureKey, this->privateEncryptionKey);
 }
 
 VerificationKey GhostDevice::toVerificationKey() const

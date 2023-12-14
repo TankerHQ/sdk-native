@@ -18,16 +18,16 @@ TEST_CASE("it can convert a ghost device to unlock key")
       make<Crypto::PrivateSignatureKey>("sigkey"),
       make<Crypto::PrivateEncryptionKey>("enckey"),
   };
-  auto const gotGhostDevice = GhostDevice::create(
-      VerificationKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
-                      "BQUFBQUFBQUFBQUFBQUFBQU"
-                      "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
-                      "lY1QUFBQUFBQUFBQUFBQUFB"
-                      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUF"
-                      "BQUFBQUFBQUFBQUFBQUFBQU"
-                      "FBQUFBQUFBQUFBPT0iLCJwcml2YXRlRW5jcnlwdGlvbktle"
-                      "SI6IlpXNWphMlY1QUFBQUFB"
-                      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9In0="});
+  auto const gotGhostDevice =
+      GhostDevice::create(VerificationKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
+                                          "BQUFBQUFBQUFBQUFBQUFBQU"
+                                          "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
+                                          "lY1QUFBQUFBQUFBQUFBQUFB"
+                                          "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUF"
+                                          "BQUFBQUFBQUFBQUFBQUFBQU"
+                                          "FBQUFBQUFBQUFBPT0iLCJwcml2YXRlRW5jcnlwdGlvbktle"
+                                          "SI6IlpXNWphMlY1QUFBQUFB"
+                                          "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9In0="});
   CHECK(ghostDevice == gotGhostDevice);
 }
 
@@ -35,22 +35,18 @@ TEST_CASE("verificationKey")
 {
   SECTION("extract")
   {
-    TANKER_CHECK_THROWS_WITH_CODE(GhostDevice::create(VerificationKey{"plop"}),
-                                  Errors::Errc::InvalidVerification);
+    TANKER_CHECK_THROWS_WITH_CODE(GhostDevice::create(VerificationKey{"plop"}), Errors::Errc::InvalidVerification);
   }
 
   auto ghostDeviceKeys = DeviceKeys::create();
-  auto const verificationKey =
-      GhostDevice::create(ghostDeviceKeys).toVerificationKey();
+  auto const verificationKey = GhostDevice::create(ghostDeviceKeys).toVerificationKey();
   REQUIRE(!verificationKey.empty());
 
   SECTION("generate")
   {
     REQUIRE_NOTHROW(GhostDevice::create(verificationKey));
     auto const gh = GhostDevice::create(verificationKey);
-    CHECK(gh.privateEncryptionKey ==
-          ghostDeviceKeys.encryptionKeyPair.privateKey);
-    CHECK(gh.privateSignatureKey ==
-          ghostDeviceKeys.signatureKeyPair.privateKey);
+    CHECK(gh.privateEncryptionKey == ghostDeviceKeys.encryptionKeyPair.privateKey);
+    CHECK(gh.privateSignatureKey == ghostDeviceKeys.signatureKeyPair.privateKey);
   }
 }

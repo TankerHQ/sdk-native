@@ -8,15 +8,12 @@ namespace Tanker
 {
 namespace Tracer
 {
-void func_trace(std::string msg,
-                CoroState state,
-                CoroType type = CoroType::Proc);
+void func_trace(std::string msg, CoroState state, CoroType type = CoroType::Proc);
 }
 }
 
 #define FUNC_TRACE_(TEXT, STATE, COROTYPE) \
-  ::Tanker::Tracer::func_trace(            \
-      (TEXT), (::Tanker::Tracer::STATE), (::Tanker::Tracer::COROTYPE))
+  ::Tanker::Tracer::func_trace((TEXT), (::Tanker::Tracer::STATE), (::Tanker::Tracer::COROTYPE))
 #else
 #define FUNC_TRACE_(TEXT, STATE, COROTYPE)
 #endif

@@ -7,14 +7,11 @@ using namespace Tanker::Crypto;
 
 namespace Tanker::Streams
 {
-DecryptionStreamV11::DecryptionStreamV11(InputSource cb,
-                                         TransparentSessionHeader header,
-                                         Crypto::SymmetricKey key)
+DecryptionStreamV11::DecryptionStreamV11(InputSource cb, TransparentSessionHeader header, Crypto::SymmetricKey key)
   : DecryptionStream(std::move(cb), header, key),
-    _associatedData(EncryptorV11::makeMacData(
-        header.resourceId().sessionId(),
-        SubkeySeed{header.resourceId().individualResourceId()},
-        header.encryptedChunkSize())),
+    _associatedData(EncryptorV11::makeMacData(header.resourceId().sessionId(),
+                                              SubkeySeed{header.resourceId().individualResourceId()},
+                                              header.encryptedChunkSize())),
     _onlyPaddingLeft(false)
 {
 }
@@ -23,8 +20,7 @@ tc::cotask<void> DecryptionStreamV11::decryptChunk()
 {
   auto const input = TC_AWAIT(readInputSource(_header.encryptedChunkSize()));
   if (input.size() < EncryptorV11::chunkOverhead)
-    throw Exception(make_error_code(Errors::Errc::DecryptionFailed),
-                    "truncated buffer: missing chunk metadata");
+    throw Exception(make_error_code(Errors::Errc::DecryptionFailed), "truncated buffer: missing chunk metadata");
 
   auto const sessId = _header.resourceId().sessionId();
   AeadIv seedIv{};
@@ -34,13 +30,10 @@ tc::cotask<void> DecryptionStreamV11::decryptChunk()
   auto output = prepareWrite(decryptedSize(input.size()));
   decryptAead(_key, iv, output, input, _associatedData);
 
-  auto const paddingSize = Serialization::deserialize<uint32_t>(
-      output.subspan(0, EncryptorV11::paddingSizeSize));
+  auto const paddingSize = Serialization::deserialize<uint32_t>(output.subspan(0, EncryptorV11::paddingSizeSize));
   if (input.size() < EncryptorV11::chunkOverhead + paddingSize)
-    throw Exception(make_error_code(Errors::Errc::DecryptionFailed),
-                    "invalid padding size value");
-  auto const unpadded =
-      output.subspan(EncryptorV11::paddingSizeSize + paddingSize);
+    throw Exception(make_error_code(Errors::Errc::DecryptionFailed), "invalid padding size value");
+  auto const unpadded = output.subspan(EncryptorV11::paddingSizeSize + paddingSize);
 
   if (_onlyPaddingLeft && unpadded.size() != 0)
     throw Errors::formatEx(Errors::Errc::DecryptionFailed, "invalid padding");
@@ -54,8 +47,8 @@ tc::cotask<void> DecryptionStreamV11::decryptChunk()
     endOutputStream();
 }
 
-tc::cotask<std::optional<SymmetricKey>> DecryptionStreamV11::tryGetKey(
-    ResourceKeyFinder const& finder, TransparentSessionHeader const& header)
+tc::cotask<std::optional<SymmetricKey>> DecryptionStreamV11::tryGetKey(ResourceKeyFinder const& finder,
+                                                                       TransparentSessionHeader const& header)
 {
   auto const resId = header.resourceId().individualResourceId();
   if (auto key = TC_AWAIT(finder(header.resourceId().sessionId())); key)

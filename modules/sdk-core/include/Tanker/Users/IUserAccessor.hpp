@@ -19,14 +19,11 @@ public:
   using UserPullResult = BasicPullResult<User, Trustchain::UserId>;
   using DevicePullResult = BasicPullResult<Device, Trustchain::DeviceId>;
 
-  virtual tc::cotask<UserPullResult> pull(
-      std::vector<Trustchain::UserId> userIds,
-      IRequester::IsLight isLight = IRequester::IsLight::No) = 0;
-  virtual tc::cotask<DevicePullResult> pull(
-      std::vector<Trustchain::DeviceId> deviceIds,
-      IRequester::IsLight isLight = IRequester::IsLight::No) = 0;
+  virtual tc::cotask<UserPullResult> pull(std::vector<Trustchain::UserId> userIds,
+                                          IRequester::IsLight isLight = IRequester::IsLight::No) = 0;
+  virtual tc::cotask<DevicePullResult> pull(std::vector<Trustchain::DeviceId> deviceIds,
+                                            IRequester::IsLight isLight = IRequester::IsLight::No) = 0;
   virtual tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
-      std::vector<Identity::PublicProvisionalIdentity>
-          appProvisionalIdentities) = 0;
+      std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities) = 0;
 };
 }

@@ -12,15 +12,12 @@ class GroupId;
 
 namespace Crypto
 {
-extern template class BasicCryptographicType<Trustchain::GroupId,
-                                             PublicSignatureKey::arraySize>;
+extern template class BasicCryptographicType<Trustchain::GroupId, PublicSignatureKey::arraySize>;
 }
 
 namespace Trustchain
 {
-class GroupId
-  : public Crypto::BasicCryptographicType<GroupId,
-                                          Crypto::PublicSignatureKey::arraySize>
+class GroupId : public Crypto::BasicCryptographicType<GroupId, Crypto::PublicSignatureKey::arraySize>
 {
   using base_t::base_t;
 };

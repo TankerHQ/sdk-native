@@ -25,8 +25,7 @@ class Backend
 public:
   virtual ~Backend() = default;
 
-  virtual std::unique_ptr<DataStore> open(std::string const& dataPath,
-                                          std::string const& cachePath) = 0;
+  virtual std::unique_ptr<DataStore> open(std::string const& dataPath, std::string const& cachePath) = 0;
 };
 
 class DataStore
@@ -42,9 +41,7 @@ public:
   virtual void putSerializedDevice(gsl::span<uint8_t const> device) = 0;
   virtual std::optional<std::vector<uint8_t>> findSerializedDevice() = 0;
 
-  virtual void putCacheValues(gsl::span<std::pair<Key, Value> const> keyValues,
-                              OnConflict onConflict) = 0;
-  virtual std::vector<std::optional<std::vector<uint8_t>>> findCacheValues(
-      gsl::span<Key const> keys) = 0;
+  virtual void putCacheValues(gsl::span<std::pair<Key, Value> const> keyValues, OnConflict onConflict) = 0;
+  virtual std::vector<std::optional<std::vector<uint8_t>>> findCacheValues(gsl::span<Key const> keys) = 0;
 };
 }

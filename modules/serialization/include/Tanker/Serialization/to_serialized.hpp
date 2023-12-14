@@ -49,9 +49,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, std::map<K, V> const& vals)
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
 std::uint8_t* to_serialized(std::uint8_t* it, T number)
 {
-  return std::copy(reinterpret_cast<char const*>(&number),
-                   reinterpret_cast<char const*>(&number) + sizeof(number),
-                   it);
+  return std::copy(reinterpret_cast<char const*>(&number), reinterpret_cast<char const*>(&number) + sizeof(number), it);
 }
 
 template <typename T>
@@ -63,18 +61,15 @@ std::uint8_t* to_serialized(std::uint8_t* it, std::optional<T> const& opt)
 }
 
 template <typename... Args>
-std::uint8_t* to_serialized(std::uint8_t* it,
-                            boost::variant2::variant<Args...> const& v)
+std::uint8_t* to_serialized(std::uint8_t* it, boost::variant2::variant<Args...> const& v)
 {
-  return boost::variant2::visit(
-      [it](auto const& a) { return to_serialized(it, a); }, v);
+  return boost::variant2::visit([it](auto const& a) { return to_serialized(it, a); }, v);
 }
 
 struct to_serialized_fn
 {
   template <typename T>
-  std::uint8_t* operator()(std::uint8_t* it, T const& val) const
-      noexcept(noexcept(to_serialized(it, val)))
+  std::uint8_t* operator()(std::uint8_t* it, T const& val) const noexcept(noexcept(to_serialized(it, val)))
   {
     return to_serialized(it, val);
   }
@@ -83,8 +78,7 @@ struct to_serialized_fn
 
 namespace
 {
-constexpr auto const& to_serialized =
-    detail::static_const<detail::to_serialized_fn>::value;
+constexpr auto const& to_serialized = detail::static_const<detail::to_serialized_fn>::value;
 }
 }
 }

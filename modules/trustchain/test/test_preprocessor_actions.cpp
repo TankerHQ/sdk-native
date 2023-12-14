@@ -40,9 +40,7 @@ class PreprocessorTest
 class VariantTest
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(VariantTest,
-                                                  (std::string,
-                                                   std::vector<char>,
-                                                   CustomType),
+                                                  (std::string, std::vector<char>, CustomType),
                                                   (front, char),
                                                   (back, char))
 };

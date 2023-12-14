@@ -21,9 +21,8 @@ Accessor::Accessor(Store* store, SessionShareCallback shareCallback)
 {
 }
 
-tc::cotask<AccessorResult> Accessor::getOrCreateTransparentSession(
-    std::vector<SPublicIdentity> const& users,
-    std::vector<SGroupId> const& groups)
+tc::cotask<AccessorResult> Accessor::getOrCreateTransparentSession(std::vector<SPublicIdentity> const& users,
+                                                                   std::vector<SGroupId> const& groups)
 {
   auto const hash = Store::hashRecipients(users, groups);
 
@@ -35,10 +34,8 @@ tc::cotask<AccessorResult> Accessor::getOrCreateTransparentSession(
           // Enforce expiration of transparent session
           // Drop sessions in the future, since their real age is unknown
           auto const now = secondsSinceEpoch();
-          if (sess->creationTimestamp <= now &&
-              now < sess->creationTimestamp + SESSION_EXPIRATION_SECONDS)
-            TC_RETURN((AccessorResults{
-                AccessorResult{hash, sess->sessionId, sess->sessionKey}}));
+          if (sess->creationTimestamp <= now && now < sess->creationTimestamp + SESSION_EXPIRATION_SECONDS)
+            TC_RETURN((AccessorResults{AccessorResult{hash, sess->sessionId, sess->sessionKey}}));
         }
 
         auto id = Crypto::getRandom<Crypto::SimpleResourceId>();

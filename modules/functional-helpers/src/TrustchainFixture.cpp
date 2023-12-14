@@ -27,8 +27,7 @@ tc::cotask<void> createTrustchain()
 {
   assert(!testState.trustchain);
   testState.trustchain =
-      TC_AWAIT(TrustchainFixtureSimple::trustchainFactory().createTrustchain(
-          "sdk-native-functional-tests"));
+      TC_AWAIT(TrustchainFixtureSimple::trustchainFactory().createTrustchain("sdk-native-functional-tests"));
 
   // If you add something here, you might need to delete it in
   // deleteTrustchain() below
@@ -51,10 +50,8 @@ tc::cotask<void> deleteTrustchain()
 
   // Destroy everything. We do not want to rely on static destruction, it
   // crashes on windows and I don't want to investigate.
-  testState.aliceSession = testState.aliceSession2 = testState.bobSession =
-      testState.charlieSession = nullptr;
-  testState.aliceDevice = testState.aliceDevice2 = testState.bobDevice =
-      testState.charlieDevice = std::nullopt;
+  testState.aliceSession = testState.aliceSession2 = testState.bobSession = testState.charlieSession = nullptr;
+  testState.aliceDevice = testState.aliceDevice2 = testState.bobDevice = testState.charlieDevice = std::nullopt;
   testState.alice = testState.bob = testState.charlie = std::nullopt;
 
   // keep it because we will delete it
@@ -64,8 +61,7 @@ tc::cotask<void> deleteTrustchain()
 }
 }
 
-TrustchainFixtureSimple::TrustchainFixtureSimple()
-  : trustchain(*testState.trustchain)
+TrustchainFixtureSimple::TrustchainFixtureSimple() : trustchain(*testState.trustchain)
 {
 }
 
@@ -91,8 +87,7 @@ tc::cotask<void> TrustchainFixtureSimple::tearDown()
   _trustchainFactory.reset();
 }
 
-tc::cotask<VerificationKey> TrustchainFixtureSimple::registerUser(
-    Functional::User& user)
+tc::cotask<VerificationKey> TrustchainFixtureSimple::registerUser(Functional::User& user)
 {
   auto device0 = user.makeDevice();
   auto dummy = device0.createCore();
@@ -105,16 +100,14 @@ tc::cotask<VerificationKey> TrustchainFixtureSimple::registerUser(
   TC_RETURN(verificationKey);
 }
 
-tc::cotask<void> TrustchainFixtureSimple::attachProvisionalIdentity(
-    AsyncCore& session, AppProvisionalUser const& prov)
+tc::cotask<void> TrustchainFixtureSimple::attachProvisionalIdentity(AsyncCore& session, AppProvisionalUser const& prov)
 {
   TC_AWAIT(trustchain.attachProvisionalIdentity(session, prov));
 }
 
-tc::cotask<void> TrustchainFixtureSimple::injectStoreResourceKey(
-    AsyncCore& session,
-    Crypto::SimpleResourceId const& id,
-    Crypto::SymmetricKey const& key)
+tc::cotask<void> TrustchainFixtureSimple::injectStoreResourceKey(AsyncCore& session,
+                                                                 Crypto::SimpleResourceId const& id,
+                                                                 Crypto::SymmetricKey const& key)
 {
   Session::Storage& storage = session._core._session->storage();
   TC_AWAIT(storage.resourceKeyStore.putKey(id, key));
@@ -125,8 +118,7 @@ Trustchain TrustchainFixtureSimple::createOtherTrustchain()
   Tanker::Trustchain::TrustchainId trustchainId;
   Crypto::randomFill(trustchainId);
   auto keyPair = Crypto::makeSignatureKeyPair();
-  return Trustchain(
-      "tcp://other.trustchain:1234", trustchainId, keyPair.privateKey);
+  return Trustchain("tcp://other.trustchain:1234", trustchainId, keyPair.privateKey);
 }
 
 tc::cotask<void> TrustchainFixtureSimple::enableOidc()
@@ -134,8 +126,7 @@ tc::cotask<void> TrustchainFixtureSimple::enableOidc()
   TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));
 }
 
-tc::cotask<void> TrustchainFixtureSimple::enablePSCOidc(
-    PSCProvider const& provider)
+tc::cotask<void> TrustchainFixtureSimple::enablePSCOidc(PSCProvider const& provider)
 {
   TC_AWAIT(trustchainFactory().enablePSCOidc(trustchain.id, provider));
 }

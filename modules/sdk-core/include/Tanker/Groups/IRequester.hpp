@@ -23,14 +23,11 @@ public:
   virtual tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) = 0;
 
-  virtual tc::cotask<void> createGroup(
-      Trustchain::Actions::UserGroupCreation const& groupCreation) = 0;
-  virtual tc::cotask<void> updateGroup(
-      Trustchain::Actions::UserGroupAddition const& groupAddition) = 0;
+  virtual tc::cotask<void> createGroup(Trustchain::Actions::UserGroupCreation const& groupCreation) = 0;
+  virtual tc::cotask<void> updateGroup(Trustchain::Actions::UserGroupAddition const& groupAddition) = 0;
   virtual tc::cotask<void> softUpdateGroup(
       Trustchain::Actions::UserGroupRemoval const& groupRemoval,
-      std::optional<Trustchain::Actions::UserGroupAddition> const&
-          groupAddition) = 0;
+      std::optional<Trustchain::Actions::UserGroupAddition> const& groupAddition) = 0;
 
   virtual ~IRequester() = default;
 };

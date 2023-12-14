@@ -28,33 +28,28 @@ void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
   if (encryptedData.size() < overheadSize)
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "truncated encrypted buffer");
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "truncated encrypted buffer");
   }
 
   assert(encryptedData[0] == EncryptorV6::version());
 }
 }
 
-std::uint64_t EncryptorV6::encryptedSize(
-    std::uint64_t clearSize, std::optional<std::uint32_t> paddingStep)
+std::uint64_t EncryptorV6::encryptedSize(std::uint64_t clearSize, std::optional<std::uint32_t> paddingStep)
 {
-  return versionSize + Crypto::encryptedSize(Padding::paddedFromClearSize(
-                           clearSize, paddingStep));
+  return versionSize + Crypto::encryptedSize(Padding::paddedFromClearSize(clearSize, paddingStep));
 }
 
-std::uint64_t EncryptorV6::decryptedSize(
-    gsl::span<std::uint8_t const> encryptedData)
+std::uint64_t EncryptorV6::decryptedSize(gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   return encryptedData.size() - overheadSize;
 }
 
-tc::cotask<EncryptCacheMetadata> EncryptorV6::encrypt(
-    gsl::span<std::uint8_t> encryptedData,
-    gsl::span<std::uint8_t const> clearData,
-    std::optional<std::uint32_t> paddingStep)
+tc::cotask<EncryptCacheMetadata> EncryptorV6::encrypt(gsl::span<std::uint8_t> encryptedData,
+                                                      gsl::span<std::uint8_t const> clearData,
+                                                      std::optional<std::uint32_t> paddingStep)
 {
   encryptedData[0] = version();
   auto const key = Crypto::makeSymmetricKey();
@@ -62,16 +57,14 @@ tc::cotask<EncryptCacheMetadata> EncryptorV6::encrypt(
   auto const cipherText = encryptedData.subspan(versionSize);
   auto const paddedData = Padding::padClearData(clearData, paddingStep);
   auto const additionalData = encryptedData.subspan(0, versionSize);
-  auto const resourceId =
-      Crypto::encryptAead(key, iv, cipherText, paddedData, additionalData);
+  auto const resourceId = Crypto::encryptAead(key, iv, cipherText, paddedData, additionalData);
 
   TC_RETURN((EncryptCacheMetadata{SimpleResourceId(resourceId), key}));
 }
 
-tc::cotask<std::uint64_t> EncryptorV6::decrypt(
-    gsl::span<uint8_t> decryptedData,
-    Encryptor::ResourceKeyFinder const& keyFinder,
-    gsl::span<std::uint8_t const> encryptedData)
+tc::cotask<std::uint64_t> EncryptorV6::decrypt(gsl::span<uint8_t> decryptedData,
+                                               Encryptor::ResourceKeyFinder const& keyFinder,
+                                               gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
@@ -80,14 +73,12 @@ tc::cotask<std::uint64_t> EncryptorV6::decrypt(
   auto const cipherText = encryptedData.subspan(versionSize);
   auto const iv = Crypto::AeadIv{};
   auto const additionalData = encryptedData.subspan(0, versionSize);
-  Crypto::tryDecryptAead(
-      key, resourceId, iv, decryptedData, cipherText, additionalData);
+  Crypto::tryDecryptAead(key, resourceId, iv, decryptedData, cipherText, additionalData);
 
   TC_RETURN(Padding::unpaddedSize(decryptedData));
 }
 
-SimpleResourceId EncryptorV6::extractResourceId(
-    gsl::span<std::uint8_t const> encryptedData)
+SimpleResourceId EncryptorV6::extractResourceId(gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 

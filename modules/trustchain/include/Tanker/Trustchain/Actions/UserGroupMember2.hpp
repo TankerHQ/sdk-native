@@ -25,12 +25,9 @@ struct RawUserGroupMember2
 
 class UserGroupMember2
 {
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
-      UserGroupMember2,
-      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_MEMBER_V2_ATTRIBUTES)
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(UserGroupMember2, TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_MEMBER_V2_ATTRIBUTES)
 
-  friend void from_serialized(Serialization::SerializedSource& ss,
-                              UserGroupMember2& k);
+  friend void from_serialized(Serialization::SerializedSource& ss, UserGroupMember2& k);
 };
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupMember2)

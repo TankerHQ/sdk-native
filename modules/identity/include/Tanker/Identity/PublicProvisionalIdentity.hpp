@@ -26,12 +26,10 @@ struct PublicProvisionalIdentity
 };
 
 HashedEmail hashProvisionalEmail(std::string const& value);
-HashedPhoneNumber hashProvisionalPhoneNumber(
-    SecretProvisionalIdentity const& value);
+HashedPhoneNumber hashProvisionalPhoneNumber(SecretProvisionalIdentity const& value);
 
 void from_json(nlohmann::json const& j, PublicProvisionalIdentity& result);
-void to_json(nlohmann::ordered_json& j,
-             PublicProvisionalIdentity const& identity);
+void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity);
 std::string to_string(PublicProvisionalIdentity const& identity);
 }
 }

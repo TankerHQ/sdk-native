@@ -25,8 +25,7 @@ TEST_CASE("encryptedSize and decryptedSize are correct")
 {
   CHECK((10 + 16) == encryptedSize(10));
   CHECK(10 == decryptedSize(10 + 16));
-  TANKER_CHECK_THROWS_WITH_CODE(decryptedSize(2),
-                                Errc::InvalidEncryptedDataSize);
+  TANKER_CHECK_THROWS_WITH_CODE(decryptedSize(2), Errc::InvalidEncryptedDataSize);
 }
 
 TEST_CASE("makeSymmetricKey should generate a key")
@@ -37,8 +36,7 @@ TEST_CASE("makeSymmetricKey should generate a key")
 
 TEST_CASE("aead")
 {
-  auto const buf =
-      gsl::make_span("This is a test buffer").as_span<uint8_t const>();
+  auto const buf = gsl::make_span("This is a test buffer").as_span<uint8_t const>();
   auto const key = makeSymmetricKey();
 
   SECTION("it should encrypt/decrypt an empty buffer")
@@ -72,8 +70,7 @@ TEST_CASE("aead")
     auto aead = makeAeadBuffer<uint8_t>(aeadBufferData);
 
     // we copy the encrypted data
-    std::vector<uint8_t> enc(aead.encryptedData.begin(),
-                             aead.encryptedData.end());
+    std::vector<uint8_t> enc(aead.encryptedData.begin(), aead.encryptedData.end());
 
     auto paf = decryptAead(key, aeadBufferData, {});
 
@@ -89,15 +86,13 @@ TEST_CASE("aead")
     ++encryptedBuffer[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    TANKER_CHECK_THROWS_WITH_CODE(
-        decryptAead(key, iv, decryptedBuffer, encryptedBuffer, {}),
-        Errc::AeadDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(decryptAead(key, iv, decryptedBuffer, encryptedBuffer, {}),
+                                  Errc::AeadDecryptionFailed);
   }
 
   SECTION("it should encrypt/decrypt a buffer and verify additional data")
   {
-    auto const additional =
-        gsl::make_span("Another test buffer").as_span<const uint8_t>();
+    auto const additional = gsl::make_span("Another test buffer").as_span<const uint8_t>();
 
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
@@ -112,9 +107,7 @@ TEST_CASE("aead")
   SECTION("it should fail to verify corrupted additional data")
   {
     auto additionals = std::string("Another test buffer");
-    auto const additional =
-        gsl::make_span(additionals.data(), additionals.size())
-            .as_span<uint8_t const>();
+    auto const additional = gsl::make_span(additionals.data(), additionals.size()).as_span<uint8_t const>();
 
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
@@ -123,9 +116,8 @@ TEST_CASE("aead")
     ++additionals[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    TANKER_CHECK_THROWS_WITH_CODE(
-        decryptAead(key, iv, decryptedBuffer, encryptedBuffer, additional),
-        Errc::AeadDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(decryptAead(key, iv, decryptedBuffer, encryptedBuffer, additional),
+                                  Errc::AeadDecryptionFailed);
   }
 
   SECTION("it should be able to derive an IV")
@@ -144,17 +136,14 @@ TEST_CASE("aead")
 
 TEST_CASE("asymmetric")
 {
-  auto const buf =
-      gsl::make_span("Yet another test buffer").as_span<uint8_t const>();
+  auto const buf = gsl::make_span("Yet another test buffer").as_span<uint8_t const>();
   auto const aliceKeyPair = makeEncryptionKeyPair();
   auto const bobKeyPair = makeEncryptionKeyPair();
 
   SECTION("it should encrypt/decrypt a buffer")
   {
-    auto const enc =
-        asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
-    auto const dec =
-        asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey);
+    auto const enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
+    auto const dec = asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey);
 
     CHECK(gsl::make_span(dec) == buf);
   }
@@ -163,17 +152,15 @@ TEST_CASE("asymmetric")
   {
     auto enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
     ++enc[8];
-    TANKER_CHECK_THROWS_WITH_CODE(
-        asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
-        Errc::AsymmetricDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
+                                  Errc::AsymmetricDecryptionFailed);
   }
 
   SECTION("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
-        Errc::InvalidEncryptedDataSize);
+    TANKER_CHECK_THROWS_WITH_CODE(asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
+                                  Errc::InvalidEncryptedDataSize);
   }
 
   SECTION("it should fail to decrypt with the wrong key")
@@ -181,15 +168,13 @@ TEST_CASE("asymmetric")
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
     auto enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        asymDecrypt(enc, aliceKeyPair.publicKey, charlieKeyPair.privateKey),
-        Errc::AsymmetricDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(asymDecrypt(enc, aliceKeyPair.publicKey, charlieKeyPair.privateKey),
+                                  Errc::AsymmetricDecryptionFailed);
   }
 
   SECTION("it should make encryption keypair from private encryption key")
   {
-    auto const privateKey =
-        make<PrivateEncryptionKey>("This is a private encryption key");
+    auto const privateKey = make<PrivateEncryptionKey>("This is a private encryption key");
     auto kp = makeEncryptionKeyPair(privateKey);
     CHECK(kp.privateKey == privateKey);
   }
@@ -247,15 +232,13 @@ TEST_CASE("asymmetric seal")
   {
     auto enc = sealEncrypt(buf, bobKeyPair.publicKey);
     ++enc[8];
-    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair),
-                                  Errc::SealedDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair), Errc::SealedDecryptionFailed);
   }
 
   SECTION("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
-    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair),
-                                  Errc::InvalidSealedDataSize);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair), Errc::InvalidSealedDataSize);
   }
 
   SECTION("it should fail to decrypt with the wrong key")
@@ -263,8 +246,7 @@ TEST_CASE("asymmetric seal")
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
     auto enc = sealEncrypt(buf, bobKeyPair.publicKey);
-    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, charlieKeyPair),
-                                  Errc::SealedDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, charlieKeyPair), Errc::SealedDecryptionFailed);
   }
 }
 
@@ -278,8 +260,7 @@ TEST_CASE("prehashPassword")
   SECTION("should match our test vector")
   {
     auto const input = "super secretive password";
-    auto const expected = mgs::base64::decode<Hash>(
-        "UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
+    auto const expected = mgs::base64::decode<Hash>("UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
 
     CHECK(prehashPassword(input) == expected);
   }
@@ -290,8 +271,7 @@ TEST_CASE("prehashPassword")
     char const input[] =
         "\x74\x65\x73\x74\x20\xc3\xa9\xc3\xa5\x20\xed\x95\x9c\xea\xb5\xad\xec"
         "\x96\xb4\x20\xf0\x9f\x98\x83";
-    auto const expected = mgs::base64::decode<Hash>(
-        "Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
+    auto const expected = mgs::base64::decode<Hash>("Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
 
     CHECK(prehashPassword(input) == expected);
   }

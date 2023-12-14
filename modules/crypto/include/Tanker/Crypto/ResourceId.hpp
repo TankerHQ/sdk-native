@@ -11,12 +11,10 @@
 
 namespace Tanker::Crypto
 {
-class ResourceId
-  : public boost::variant2::variant<SimpleResourceId, CompositeResourceId>
+class ResourceId : public boost::variant2::variant<SimpleResourceId, CompositeResourceId>
 {
 public:
-  using base_t =
-      boost::variant2::variant<SimpleResourceId, CompositeResourceId>;
+  using base_t = boost::variant2::variant<SimpleResourceId, CompositeResourceId>;
   using const_iter_t = std::uint8_t const*;
 
   ResourceId() = default;
@@ -37,18 +35,14 @@ public:
 
   SimpleResourceId individualResourceId() const
   {
-    return boost::variant2::visit(
-        overloaded{[&](SimpleResourceId const& e) { return e; },
-                   [&](CompositeResourceId const& e) {
-                     return e.individualResourceId();
-                   }},
-        *this);
+    return boost::variant2::visit(overloaded{[&](SimpleResourceId const& e) { return e; },
+                                             [&](CompositeResourceId const& e) { return e.individualResourceId(); }},
+                                  *this);
   }
 
   const_iter_t begin() const
   {
-    return boost::variant2::visit([&](auto const& e) { return &*e.begin(); },
-                                  *this);
+    return boost::variant2::visit([&](auto const& e) { return &*e.begin(); }, *this);
   }
 
   const_iter_t end() const
@@ -58,8 +52,7 @@ public:
 
   std::size_t size() const
   {
-    return boost::variant2::visit([&](auto const& e) { return e.size(); },
-                                  *this);
+    return boost::variant2::visit([&](auto const& e) { return e.size(); }, *this);
   }
 };
 
@@ -73,22 +66,19 @@ ResourceId::ResourceId(mgs::meta::input_iterator<InputIterator> begin,
 
   auto is = mgs::codecs::make_iterator_sentinel_source(begin, end);
   CompositeResourceId::array_t data;
-  auto const [it, total_read] =
-      Crypto::detail::read_at_most(is, data.data(), data.size());
+  auto const [it, total_read] = Crypto::detail::read_at_most(is, data.data(), data.size());
   // Make sure there is no additional data
   if (is.read(data.data(), 1).second != 0)
   {
-    throw Errors::formatEx(
-        Crypto::Errc::InvalidBufferSize,
-        FMT_STRING("invalid size for {:s}: larger than max expected {:d}"),
-        typeid(ResourceId).name(),
-        CompositeResourceId::arraySize);
+    throw Errors::formatEx(Crypto::Errc::InvalidBufferSize,
+                           FMT_STRING("invalid size for {:s}: larger than max expected {:d}"),
+                           typeid(ResourceId).name(),
+                           CompositeResourceId::arraySize);
   }
 
   if (total_read == SimpleResourceId::arraySize)
   {
-    emplace<SimpleResourceId>(data.begin(),
-                              data.begin() + SimpleResourceId::arraySize);
+    emplace<SimpleResourceId>(data.begin(), data.begin() + SimpleResourceId::arraySize);
   }
   else if (total_read == CompositeResourceId::arraySize)
   {
@@ -96,13 +86,12 @@ ResourceId::ResourceId(mgs::meta::input_iterator<InputIterator> begin,
   }
   else
   {
-    throw Errors::formatEx(
-        Crypto::Errc::InvalidBufferSize,
-        FMT_STRING("invalid size for {:s}: got {:d}, expected {:d} or {:d}"),
-        typeid(ResourceId).name(),
-        total_read,
-        SimpleResourceId::arraySize,
-        CompositeResourceId::arraySize);
+    throw Errors::formatEx(Crypto::Errc::InvalidBufferSize,
+                           FMT_STRING("invalid size for {:s}: got {:d}, expected {:d} or {:d}"),
+                           typeid(ResourceId).name(),
+                           total_read,
+                           SimpleResourceId::arraySize,
+                           CompositeResourceId::arraySize);
   }
 }
 }

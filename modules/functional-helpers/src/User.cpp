@@ -22,14 +22,10 @@ auto createRandomUserId()
 }
 }
 
-User::User(std::string trustchainUrl,
-           std::string trustchainId,
-           std::string trustchainPrivateSignatureKey)
+User::User(std::string trustchainUrl, std::string trustchainId, std::string trustchainPrivateSignatureKey)
   : trustchainUrl(std::move(trustchainUrl)),
     trustchainId(std::move(trustchainId)),
-    identity(Identity::createIdentity(this->trustchainId,
-                                      trustchainPrivateSignatureKey,
-                                      createRandomUserId()))
+    identity(Identity::createIdentity(this->trustchainId, trustchainPrivateSignatureKey, createRandomUserId()))
 {
 }
 
@@ -42,8 +38,7 @@ tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
 {
   std::vector<Device> devices;
   devices.reserve(nb);
-  std::generate_n(
-      std::back_inserter(devices), nb, [&] { return makeDevice(); });
+  std::generate_n(std::back_inserter(devices), nb, [&] { return makeDevice(); });
   auto session = TC_AWAIT(devices.front().open());
   for (auto device = ++devices.begin(); device != devices.end(); ++device)
     TC_AWAIT(device->open());
@@ -57,14 +52,12 @@ SPublicIdentity User::spublicIdentity() const
 
 Tanker::Trustchain::UserId User::userId() const
 {
-  return Identity::extract<Identity::SecretPermanentIdentity>(identity)
-      .delegation.userId;
+  return Identity::extract<Identity::SecretPermanentIdentity>(identity).delegation.userId;
 }
 
 Crypto::SymmetricKey User::userSecret() const
 {
-  return Identity::extract<Identity::SecretPermanentIdentity>(identity)
-      .userSecret;
+  return Identity::extract<Identity::SecretPermanentIdentity>(identity).userSecret;
 }
 
 void to_json(nlohmann::json& j, User const& user)

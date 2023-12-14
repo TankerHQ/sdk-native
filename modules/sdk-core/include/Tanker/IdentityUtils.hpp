@@ -18,19 +18,15 @@ struct PartitionedIdentities
   std::vector<Identity::PublicProvisionalIdentity> publicProvisionalIdentities;
 };
 
-Identity::PublicIdentity extractPublicIdentity(
-    SPublicIdentity const& spublicIdentity);
+Identity::PublicIdentity extractPublicIdentity(SPublicIdentity const& spublicIdentity);
 
-PartitionedIdentities partitionIdentities(
-    std::vector<Identity::PublicIdentity> const& identities);
+PartitionedIdentities partitionIdentities(std::vector<Identity::PublicIdentity> const& identities);
 
-std::vector<SPublicIdentity> mapIdentitiesToStrings(
-    std::vector<Trustchain::UserId> const& errorIds,
-    std::vector<SPublicIdentity> const& sIds,
-    std::vector<Identity::PublicIdentity> const& ids);
+std::vector<SPublicIdentity> mapIdentitiesToStrings(std::vector<Trustchain::UserId> const& errorIds,
+                                                    std::vector<SPublicIdentity> const& sIds,
+                                                    std::vector<Identity::PublicIdentity> const& ids);
 
-std::vector<SPublicIdentity> mapIdentitiesToStrings(
-    std::vector<Trustchain::ProvisionalUserId> const& errorIds,
-    std::vector<SPublicIdentity> const& sIds,
-    std::vector<Identity::PublicIdentity> const& ids);
+std::vector<SPublicIdentity> mapIdentitiesToStrings(std::vector<Trustchain::ProvisionalUserId> const& errorIds,
+                                                    std::vector<SPublicIdentity> const& sIds,
+                                                    std::vector<Identity::PublicIdentity> const& ids);
 }

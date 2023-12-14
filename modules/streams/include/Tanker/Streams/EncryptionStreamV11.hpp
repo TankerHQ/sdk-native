@@ -12,28 +12,24 @@
 
 namespace Tanker::Streams
 {
-class EncryptionStreamV11
-  : public EncryptionStream<EncryptionStreamV11, Crypto::CompositeResourceId>
+class EncryptionStreamV11 : public EncryptionStream<EncryptionStreamV11, Crypto::CompositeResourceId>
 {
   friend EncryptionStream<EncryptionStreamV11, Crypto::CompositeResourceId>;
 
 public:
-  inline static constexpr auto overhead =
-      EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize;
+  inline static constexpr auto overhead = EncryptorV11::paddingSizeSize + Crypto::Mac::arraySize;
 
   EncryptionStreamV11(InputSource,
                       Crypto::SimpleResourceId const& sessionId,
                       Crypto::SymmetricKey const& sessionKey,
                       std::optional<std::uint32_t> padding,
-                      std::uint32_t encryptedChunkSize =
-                          TransparentSessionHeader::defaultEncryptedChunkSize);
+                      std::uint32_t encryptedChunkSize = TransparentSessionHeader::defaultEncryptedChunkSize);
   EncryptionStreamV11(InputSource,
                       Crypto::SimpleResourceId const& sessionId,
                       Crypto::SymmetricKey const& sessionKey,
                       Crypto::SubkeySeed const& subkeySeed,
                       std::optional<std::uint32_t> padding,
-                      std::uint32_t encryptedChunkSize =
-                          TransparentSessionHeader::defaultEncryptedChunkSize);
+                      std::uint32_t encryptedChunkSize = TransparentSessionHeader::defaultEncryptedChunkSize);
 
 private:
   tc::cotask<void> encryptChunk();

@@ -47,8 +47,7 @@ public:
     return *this;
   }
 
-  void swap(StringWrapper& other) noexcept(
-      noexcept(std::declval<base_t&>().swap(other)))
+  void swap(StringWrapper& other) noexcept(noexcept(std::declval<base_t&>().swap(other)))
   {
     this->base_t::swap(other);
   }
@@ -122,43 +121,37 @@ public:
 };
 
 template <typename T>
-bool operator==(StringWrapper<T> const& lhs,
-                StringWrapper<T> const& rhs) noexcept
+bool operator==(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return lhs.string() == rhs.string();
 }
 
 template <typename T>
-bool operator!=(StringWrapper<T> const& lhs,
-                StringWrapper<T> const& rhs) noexcept
+bool operator!=(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return !(lhs == rhs);
 }
 
 template <typename T>
-bool operator<(StringWrapper<T> const& lhs,
-               StringWrapper<T> const& rhs) noexcept
+bool operator<(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return lhs.string() < rhs.string();
 }
 
 template <typename T>
-bool operator>(StringWrapper<T> const& lhs,
-               StringWrapper<T> const& rhs) noexcept
+bool operator>(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return lhs.string() > rhs.string();
 }
 
 template <typename T>
-bool operator>=(StringWrapper<T> const& lhs,
-                StringWrapper<T> const& rhs) noexcept
+bool operator>=(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return lhs.string() >= rhs.string();
 }
 
 template <typename T>
-bool operator<=(StringWrapper<T> const& lhs,
-                StringWrapper<T> const& rhs) noexcept
+bool operator<=(StringWrapper<T> const& lhs, StringWrapper<T> const& rhs) noexcept
 {
   return lhs.string() <= rhs.string();
 }
@@ -201,14 +194,12 @@ fmt::string_view to_string_view(StringWrapper<T> const& val)
 namespace fmt
 {
 template <typename Tag>
-struct formatter<Tanker::StringWrapper<Tag>, char>
-  : formatter<fmt::basic_string_view<char>, char>
+struct formatter<Tanker::StringWrapper<Tag>, char> : formatter<fmt::basic_string_view<char>, char>
 {
   template <typename FormatContext>
   auto format(Tanker::StringWrapper<Tag> const& str, FormatContext& ctx)
   {
-    return formatter<fmt::basic_string_view<char>, char>::format(
-        to_string_view(str), ctx);
+    return formatter<fmt::basic_string_view<char>, char>::format(to_string_view(str), ctx);
   }
 };
 }
@@ -225,8 +216,7 @@ struct hash<Tanker::StringWrapper<T>>
 };
 
 template <typename T>
-void swap(Tanker::StringWrapper<T>& lhs,
-          Tanker::StringWrapper<T>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(Tanker::StringWrapper<T>& lhs, Tanker::StringWrapper<T>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
   lhs.swap(rhs);
 }

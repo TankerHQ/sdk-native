@@ -66,40 +66,29 @@ class VerificationMethod
   static VerificationMethod from(Verification const& v);
 
 private:
-  friend bool operator<(VerificationMethod const& a,
-                        VerificationMethod const& b);
+  friend bool operator<(VerificationMethod const& a, VerificationMethod const& b);
 };
 
 class EncryptedVerificationMethod
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
       EncryptedVerificationMethod,
-      (EncryptedEmail,
-       EncryptedPhoneNumber,
-       EncryptedPreverifiedEmail,
-       EncryptedPreverifiedPhoneNumber))
+      (EncryptedEmail, EncryptedPhoneNumber, EncryptedPreverifiedEmail, EncryptedPreverifiedPhoneNumber))
 
 private:
-  friend bool operator<(EncryptedVerificationMethod const& a,
-                        EncryptedVerificationMethod const& b);
+  friend bool operator<(EncryptedVerificationMethod const& a, EncryptedVerificationMethod const& b);
 };
 
 tc::cotask<std::vector<VerificationMethod>> decryptMethods(
-    std::vector<boost::variant2::variant<VerificationMethod,
-                                         EncryptedVerificationMethod>>& methods,
+    std::vector<boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>>& methods,
     Crypto::SymmetricKey const& userSecret);
 
 void to_json(nlohmann::json&,
-             boost::variant2::variant<VerificationMethod,
-                                      EncryptedVerificationMethod> const&) =
-    delete;
-void from_json(
-    nlohmann::json const&,
-    boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>&);
+             boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod> const&) = delete;
+void from_json(nlohmann::json const&, boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>&);
 
-void validateVerification(
-    Verification const& verification,
-    Identity::SecretProvisionalIdentity const& provisionalIdentity);
+void validateVerification(Verification const& verification,
+                          Identity::SecretProvisionalIdentity const& provisionalIdentity);
 
 bool isPreverified(Verification const& v);
 

@@ -22,8 +22,7 @@ void User::setUserKey(Crypto::PublicEncryptionKey const& userKey)
   _userKey = userKey;
 }
 
-std::optional<Device> User::findDevice(
-    Trustchain::DeviceId const& deviceId) const
+std::optional<Device> User::findDevice(Trustchain::DeviceId const& deviceId) const
 {
   for (auto const& device : _devices)
     if (device.id() == deviceId)
@@ -56,8 +55,7 @@ std::vector<Device> const& User::devices() const
 
 bool operator==(User const& l, User const& r)
 {
-  return std::tie(l.id(), l.userKey(), l.devices()) ==
-         std::tie(r.id(), r.userKey(), r.devices());
+  return std::tie(l.id(), l.userKey(), l.devices()) == std::tie(r.id(), r.userKey(), r.devices());
 }
 
 bool operator!=(User const& l, User const& r)

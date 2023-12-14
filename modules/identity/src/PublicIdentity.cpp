@@ -16,8 +16,7 @@ namespace Identity
 {
 PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity)
 {
-  return PublicIdentity(PublicPermanentIdentity{identity.trustchainId,
-                                                identity.delegation.userId});
+  return PublicIdentity(PublicPermanentIdentity{identity.trustchainId, identity.delegation.userId});
 }
 
 PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
@@ -43,37 +42,30 @@ PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
   }
   else
   {
-    throw Errors::AssertionError(fmt::format("unsupported target type: {}",
-                                             static_cast<int>(prov.target)));
+    throw Errors::AssertionError(fmt::format("unsupported target type: {}", static_cast<int>(prov.target)));
   }
   return prov;
 }
 
 std::string getPublicIdentity(std::string const& secretIdentity)
 {
-  return to_string(
-      boost::variant2::visit([](auto const& i) { return getPublicIdentity(i); },
-                             extract<SecretIdentity>(secretIdentity)));
+  return to_string(boost::variant2::visit([](auto const& i) { return getPublicIdentity(i); },
+                                          extract<SecretIdentity>(secretIdentity)));
 }
 
-void ensureIdentitiesInTrustchain(
-    std::vector<PublicIdentity> const& publicIdentities,
-    Trustchain::TrustchainId const& trustchainId)
+void ensureIdentitiesInTrustchain(std::vector<PublicIdentity> const& publicIdentities,
+                                  Trustchain::TrustchainId const& trustchainId)
 {
   auto proj = [](auto const& identity) {
     return boost::variant2::visit(
-        [](auto const& identity) -> Trustchain::TrustchainId const& {
-          return identity.trustchainId;
-        },
-        identity);
+        [](auto const& identity) -> Trustchain::TrustchainId const& { return identity.trustchainId; }, identity);
   };
 
   auto pred = ranges::bind_back(std::equal_to{}, trustchainId);
 
   if (!ranges::all_of(publicIdentities, pred, proj))
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           "public identity not in the trustchain");
+    throw Errors::formatEx(Errors::Errc::InvalidArgument, "public identity not in the trustchain");
   }
 }
 
@@ -88,14 +80,12 @@ void from_json(nlohmann::json const& j, PublicIdentity& identity)
 
 void to_json(nlohmann::json& j, PublicIdentity const& identity)
 {
-  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); },
-                         identity);
+  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); }, identity);
 }
 
 std::string to_string(PublicIdentity const& identity)
 {
-  return boost::variant2::visit([](auto const& i) { return to_string(i); },
-                                identity);
+  return boost::variant2::visit([](auto const& i) { return to_string(i); }, identity);
 }
 }
 }

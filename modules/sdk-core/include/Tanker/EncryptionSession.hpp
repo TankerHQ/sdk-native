@@ -17,17 +17,14 @@ class Session;
 class EncryptionSession
 {
 public:
-  EncryptionSession(std::weak_ptr<Session> tankerSession,
-                    std::optional<std::uint32_t> paddingStep = std::nullopt);
+  EncryptionSession(std::weak_ptr<Session> tankerSession, std::optional<std::uint32_t> paddingStep = std::nullopt);
   Crypto::SimpleResourceId const& resourceId() const;
   Crypto::SymmetricKey const& sessionKey() const;
   std::shared_ptr<tc::task_canceler> canceler() const;
   std::uint64_t encryptedSize(std::uint64_t clearSize) const;
-  tc::cotask<EncryptCacheMetadata> encrypt(
-      gsl::span<std::uint8_t> encryptedData,
-      gsl::span<std::uint8_t const> clearData);
-  std::tuple<Streams::InputSource, Crypto::SimpleResourceId>
-  makeEncryptionStream(Streams::InputSource cb);
+  tc::cotask<EncryptCacheMetadata> encrypt(gsl::span<std::uint8_t> encryptedData,
+                                           gsl::span<std::uint8_t const> clearData);
+  std::tuple<Streams::InputSource, Crypto::SimpleResourceId> makeEncryptionStream(Streams::InputSource cb);
 
 private:
   void assertSession(const char* action) const;

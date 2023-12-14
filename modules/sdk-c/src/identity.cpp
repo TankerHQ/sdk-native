@@ -15,25 +15,21 @@ tanker_expected_t* tanker_create_identity(char const* trustchain_id,
                                           char const* user_id)
 {
   return makeFuture(tc::sync([&] {
-    return static_cast<void*>(duplicateString(Tanker::Identity::createIdentity(
-        trustchain_id, trustchain_private_key, Tanker::SUserId{user_id})));
+    return static_cast<void*>(duplicateString(
+        Tanker::Identity::createIdentity(trustchain_id, trustchain_private_key, Tanker::SUserId{user_id})));
   }));
 }
 
-tanker_expected_t* tanker_create_provisional_identity(char const* trustchain_id,
-                                                      char const* email)
+tanker_expected_t* tanker_create_provisional_identity(char const* trustchain_id, char const* email)
 {
   return makeFuture(tc::sync([&] {
     return static_cast<void*>(
-        duplicateString(Tanker::Identity::createProvisionalIdentity(
-            trustchain_id, Tanker::Email{email})));
+        duplicateString(Tanker::Identity::createProvisionalIdentity(trustchain_id, Tanker::Email{email})));
   }));
 }
 
 tanker_expected_t* tanker_get_public_identity(char const* identity)
 {
-  return makeFuture(tc::sync([&] {
-    return static_cast<void*>(
-        duplicateString(Tanker::Identity::getPublicIdentity(identity)));
-  }));
+  return makeFuture(
+      tc::sync([&] { return static_cast<void*>(duplicateString(Tanker::Identity::getPublicIdentity(identity))); }));
 }

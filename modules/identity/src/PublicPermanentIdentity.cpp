@@ -15,9 +15,7 @@ void from_json(nlohmann::json const& j, PublicPermanentIdentity& identity)
   auto const target = j.at("target").get<std::string>();
   if (target != "user")
   {
-    throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
-                           "unsupported permanent identity target: {}",
-                           target);
+    throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget, "unsupported permanent identity target: {}", target);
   }
 
   if (j.find("user_secret") != j.end())

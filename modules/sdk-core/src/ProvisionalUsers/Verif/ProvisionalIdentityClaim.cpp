@@ -16,13 +16,11 @@ namespace Tanker
 {
 namespace Verif
 {
-ProvisionalIdentityClaim verifyProvisionalIdentityClaim(
-    ProvisionalIdentityClaim const& provisionalIdentityClaim,
-    Users::Device const& author)
+ProvisionalIdentityClaim verifyProvisionalIdentityClaim(ProvisionalIdentityClaim const& provisionalIdentityClaim,
+                                                        Users::Device const& author)
 {
-  ensures(Crypto::verify(provisionalIdentityClaim.hash(),
-                         provisionalIdentityClaim.signature(),
-                         author.publicSignatureKey()),
+  ensures(Crypto::verify(
+              provisionalIdentityClaim.hash(), provisionalIdentityClaim.signature(), author.publicSignatureKey()),
           Errc::InvalidSignature,
           "ProvisionalIdentityClaim block must be signed by the author device");
 
@@ -30,8 +28,7 @@ ProvisionalIdentityClaim verifyProvisionalIdentityClaim(
           Errc::InvalidUserId,
           "ProvisionalIdentityClaim's user ID does not match the author's one");
 
-  auto const multiSignedPayload =
-      provisionalIdentityClaim.signatureData(author.id());
+  auto const multiSignedPayload = provisionalIdentityClaim.signatureData(author.id());
   ensures(Crypto::verify(multiSignedPayload,
                          provisionalIdentityClaim.authorSignatureByAppKey(),
                          provisionalIdentityClaim.appSignaturePublicKey()),

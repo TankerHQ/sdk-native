@@ -27,11 +27,10 @@ class Store;
 
 namespace ReceiveKey
 {
-tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
-    ResourceKeys::Store& resourceKeyStore,
-    Users::ILocalUserAccessor& localUserAccessor,
-    Groups::IAccessor& GroupAccessor,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    Trustchain::Actions::KeyPublish const& kp);
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(ResourceKeys::Store& resourceKeyStore,
+                                                       Users::ILocalUserAccessor& localUserAccessor,
+                                                       Groups::IAccessor& GroupAccessor,
+                                                       ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+                                                       Trustchain::Actions::KeyPublish const& kp);
 }
 }

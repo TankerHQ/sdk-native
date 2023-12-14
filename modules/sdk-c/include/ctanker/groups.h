@@ -27,10 +27,9 @@ extern "C" {
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE The group is either empty, or has too
  * many members
  */
-CTANKER_EXPORT tanker_future_t* tanker_create_group(
-    tanker_t* session,
-    char const* const* public_identities_to_add,
-    uint64_t nb_public_identities_to_add);
+CTANKER_EXPORT tanker_future_t* tanker_create_group(tanker_t* session,
+                                                    char const* const* public_identities_to_add,
+                                                    uint64_t nb_public_identities_to_add);
 
 /*!
  * Updates an existing group, referenced by its groupId,
@@ -54,13 +53,12 @@ CTANKER_EXPORT tanker_future_t* tanker_create_group(
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE Too many users were added to the
  * group.
  */
-CTANKER_EXPORT tanker_future_t* tanker_update_group_members(
-    tanker_t* session,
-    char const* group_id,
-    char const* const* public_identities_to_add,
-    uint64_t nb_public_identities_to_add,
-    char const* const* public_identities_to_remove,
-    uint64_t nb_public_identities_to_remove);
+CTANKER_EXPORT tanker_future_t* tanker_update_group_members(tanker_t* session,
+                                                            char const* group_id,
+                                                            char const* const* public_identities_to_add,
+                                                            uint64_t nb_public_identities_to_add,
+                                                            char const* const* public_identities_to_remove,
+                                                            uint64_t nb_public_identities_to_remove);
 
 #ifdef __cplusplus
 }
