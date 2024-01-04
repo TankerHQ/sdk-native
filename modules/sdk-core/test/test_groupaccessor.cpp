@@ -105,7 +105,7 @@ TEST_CASE("GroupAccessor")
     SECTION("request group we are member of")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
-                   pull(std::vector{alice.devices().back().id()}, Users::IRequester::IsLight::Yes))
+                   pull(std::vector{alice.devices().back().id()}))
           .RETURN(makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{{alice.devices().front()}, {}}));
       REQUIRE_CALL(aliceLocalAccessorMock, pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
@@ -146,7 +146,7 @@ TEST_CASE("GroupAccessor")
 
     SECTION("Request group we are *NOT* part of")
     {
-      REQUIRE_CALL(aliceUserAccessorMock, pull(std::vector{bob.devices().back().id()}, Users::IRequester::IsLight::Yes))
+      REQUIRE_CALL(aliceUserAccessorMock, pull(std::vector{bob.devices().back().id()}))
           .RETURN(makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{{bob.devices().front()}, {}}));
       SECTION("it fails request internal groups when are not part of")
       {

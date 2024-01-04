@@ -33,8 +33,7 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
   if (groupIds.empty())
     TC_RETURN(std::vector<Trustchain::GroupAction>{});
   auto const query =
-      nlohmann::json{{"user_group_ids[]", groupIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
-                     {"is_light", "true"}};
+      nlohmann::json{{"user_group_ids[]", groupIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())}};
   TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
 }
 
@@ -42,7 +41,7 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
     Crypto::PublicEncryptionKey const& groupEncryptionKey)
 {
   auto const query = nlohmann::json{
-      {"user_group_public_encryption_key", mgs::base64url_nopad::encode(groupEncryptionKey)}, {"is_light", "true"}};
+      {"user_group_public_encryption_key", mgs::base64url_nopad::encode(groupEncryptionKey)}};
   TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
 }
 

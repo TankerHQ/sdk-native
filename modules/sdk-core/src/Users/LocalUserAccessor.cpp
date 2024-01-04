@@ -16,7 +16,7 @@ tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(IRequester* req
                                                                  DeviceKeys const& deviceKeys)
 {
   auto const [trustchainCreation, actions] =
-      TC_AWAIT(requester->getUsers(gsl::make_span(&deviceId, 1), IRequester::IsLight::Yes));
+      TC_AWAIT(requester->getUsers(gsl::make_span(&deviceId, 1)));
   auto const [context, user, userKeys] =
       Updater::processUserEntries(deviceId, deviceKeys, tId, trustchainCreation, actions);
   auto const selfDevice = user.findDevice(deviceId);

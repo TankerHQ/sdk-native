@@ -41,23 +41,23 @@ UserAccessor::UserAccessor(Trustchain::Context trustchainContext, Users::IReques
 {
 }
 
-auto UserAccessor::pull(std::vector<UserId> userIds, IRequester::IsLight isLight) -> tc::cotask<UserPullResult>
+auto UserAccessor::pull(std::vector<UserId> userIds) -> tc::cotask<UserPullResult>
 {
-  TC_RETURN(TC_AWAIT((pullImpl<UserPullResult, UserId>(std::move(userIds), isLight))));
+  TC_RETURN(TC_AWAIT((pullImpl<UserPullResult, UserId>(std::move(userIds)))));
 }
 
-auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds, IRequester::IsLight isLight)
+auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
     -> tc::cotask<DevicePullResult>
 {
-  TC_RETURN(TC_AWAIT((pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds), isLight))));
+  TC_RETURN(TC_AWAIT((pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds)))));
 }
 
 template <typename Result, typename Id>
-auto UserAccessor::pullImpl(std::vector<Id> requestedIds, IRequester::IsLight isLight) -> tc::cotask<Result>
+auto UserAccessor::pullImpl(std::vector<Id> requestedIds) -> tc::cotask<Result>
 {
   requestedIds |= Actions::deduplicate;
 
-  auto const resultMap = TC_AWAIT(fetch(requestedIds, isLight));
+  auto const resultMap = TC_AWAIT(fetch(requestedIds));
 
   Result ret;
   ret.found.reserve(requestedIds.size());
@@ -252,20 +252,20 @@ tc::cotask<std::vector<ProvisionalUsers::PublicUser>> UserAccessor::pullProvisio
   TC_RETURN(provisionalUsers);
 }
 
-auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds, IRequester::IsLight isLight)
+auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
     -> tc::cotask<UsersMap>
 {
-  TC_RETURN(TC_AWAIT(fetchImpl<UsersMap>(userIds, isLight)));
+  TC_RETURN(TC_AWAIT(fetchImpl<UsersMap>(userIds)));
 }
 
-auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds, IRequester::IsLight isLight)
+auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
     -> tc::cotask<DevicesMap>
 {
-  TC_RETURN(TC_AWAIT(fetchImpl<DevicesMap>(deviceIds, isLight)));
+  TC_RETURN(TC_AWAIT(fetchImpl<DevicesMap>(deviceIds)));
 }
 
 template <typename Result, typename Id>
-auto UserAccessor::fetchImpl(gsl::span<Id const> ids, IRequester::IsLight isLight) -> tc::cotask<Result>
+auto UserAccessor::fetchImpl(gsl::span<Id const> ids) -> tc::cotask<Result>
 {
   Result out;
 
@@ -276,7 +276,7 @@ auto UserAccessor::fetchImpl(gsl::span<Id const> ids, IRequester::IsLight isLigh
   for (unsigned int i = 0; i < ids.size(); i += ChunkSize)
   {
     auto const count = std::min<std::size_t>(ChunkSize, ids.size() - i);
-    auto const [trustchainCreation, actions] = TC_AWAIT(_requester->getUsers(ids.subspan(i, count), isLight));
+    auto const [trustchainCreation, actions] = TC_AWAIT(_requester->getUsers(ids.subspan(i, count)));
     auto currentUsers = std::get<Result>(processUserEntries(_context, actions));
     out.insert(std::make_move_iterator(currentUsers.begin()), std::make_move_iterator(currentUsers.end()));
   }

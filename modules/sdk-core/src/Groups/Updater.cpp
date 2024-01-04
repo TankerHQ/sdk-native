@@ -307,7 +307,7 @@ tc::cotask<std::optional<Group>> processGroupEntries(Users::ILocalUserAccessor& 
       entries |
       ranges::views::transform([](auto const& action) { return Trustchain::DeviceId{Trustchain::getAuthor(action)}; }) |
       ranges::to<std::vector>;
-  auto const devices = TC_AWAIT(userAccessor.pull(std::move(authorIds), Users::IRequester::IsLight::Yes));
+  auto const devices = TC_AWAIT(userAccessor.pull(std::move(authorIds)));
 
   // We are going to process group entries in which there are provisional
   // identities. We can't know in advance if one of these identity is us or
