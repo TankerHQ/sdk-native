@@ -23,8 +23,8 @@ class Requester : public IRequester
 public:
   Requester(Network::HttpClient* httpClient);
 
-  tc::cotask<GetResult> getUsers(gsl::span<Trustchain::UserId const> userIds, IsLight isLight) override;
-  tc::cotask<GetResult> getUsers(gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight) override;
+  tc::cotask<GetResult> getUsers(gsl::span<Trustchain::UserId const> userIds) override;
+  tc::cotask<GetResult> getUsers(gsl::span<Trustchain::DeviceId const> deviceIds) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Crypto::SimpleResourceId const> resourceIds) override;
   tc::cotask<void> postResourceKeys(Share::ShareActions const& resourceKeys) override;

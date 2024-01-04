@@ -130,7 +130,7 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   UserAccessorMock userAccessor;
 
-  REQUIRE_CALL(userAccessor, pull(ANY(std::vector<Trustchain::UserId>), Users::IRequester::IsLight::Yes))
+  REQUIRE_CALL(userAccessor, pull(ANY(std::vector<Trustchain::UserId>)))
       .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
   auto const spublicIdentities = std::vector<SPublicIdentity>{SPublicIdentity{to_string(unknownIdentity)}};

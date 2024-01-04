@@ -44,7 +44,7 @@ ProcessedIdentities processIdentities(Trustchain::TrustchainId const& trustchain
 tc::cotask<MembersToAdd> fetchFutureMembers(Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities)
 {
   auto const memberUsers =
-      TC_AWAIT(userAccessor.pull(identities.partitionedIdentities.userIds, Users::IRequester::IsLight::Yes));
+      TC_AWAIT(userAccessor.pull(identities.partitionedIdentities.userIds));
   if (!memberUsers.notFound.empty())
   {
     auto const notFoundIdentities =

@@ -112,7 +112,7 @@ TEST_CASE("generateRecipientList")
   SECTION("a new user should return their user key")
   {
 
-    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{newUser}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -139,7 +139,7 @@ TEST_CASE("generateRecipientList")
 
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -162,7 +162,7 @@ TEST_CASE("generateRecipientList")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
-    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -193,7 +193,7 @@ TEST_CASE("generateRecipientList")
 
   SECTION("a not-found user should throw")
   {
-    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {newUser.id()}}));
 
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{}))
@@ -213,7 +213,7 @@ TEST_CASE("generateRecipientList")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}, Users::IRequester::IsLight::Yes))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UserPullResult{{}, {}}));
 
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))

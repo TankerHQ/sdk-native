@@ -17,11 +17,11 @@ public:
              tc::cotask<IRequester::GetEncryptionKeyResult>(
                  Trustchain::UserId const& userId, Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey),
              override);
-  MAKE_MOCK2(getUsers,
-             tc::cotask<Users::IRequester::GetResult>(gsl::span<Trustchain::UserId const> userIds, IsLight isLight),
+  MAKE_MOCK1(getUsers,
+             tc::cotask<Users::IRequester::GetResult>(gsl::span<Trustchain::UserId const> userIds),
              override);
-  MAKE_MOCK2(getUsers,
-             tc::cotask<Users::IRequester::GetResult>(gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight),
+  MAKE_MOCK1(getUsers,
+             tc::cotask<Users::IRequester::GetResult>(gsl::span<Trustchain::DeviceId const> deviceIds),
              override);
   MAKE_MOCK1(
       getKeyPublishes,

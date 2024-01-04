@@ -63,19 +63,17 @@ tc::cotask<Requester::GetResult> Requester::getUsersImpl(nlohmann::json const& q
                        fromBlocksToUserActions(response.at("histories").get<std::vector<std::string>>())}));
 }
 
-tc::cotask<Requester::GetResult> Requester::getUsers(gsl::span<Trustchain::UserId const> userIds, IsLight isLight)
+tc::cotask<Requester::GetResult> Requester::getUsers(gsl::span<Trustchain::UserId const> userIds)
 {
   auto const query =
-      nlohmann::json{{"user_ids[]", userIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
-                     {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
+      nlohmann::json{{"user_ids[]", userIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
-tc::cotask<Requester::GetResult> Requester::getUsers(gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight)
+tc::cotask<Requester::GetResult> Requester::getUsers(gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   auto const query =
-      nlohmann::json{{"device_ids[]", deviceIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
-                     {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
+      nlohmann::json{{"device_ids[]", deviceIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
