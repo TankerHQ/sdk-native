@@ -14,3 +14,5 @@ functional_test_list.json
 .venv/
 *.egg-info/
 .vscode/
+.cache/
+compile_commands.json
