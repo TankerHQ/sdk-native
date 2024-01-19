@@ -37,6 +37,7 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo, HttpRequest const& 
   {
     curl_easy_setopt(creq->get_curl(), CURLOPT_POSTFIELDSIZE, long(req.body.size()));
     curl_easy_setopt(creq->get_curl(), CURLOPT_COPYPOSTFIELDS, req.body.data());
+    creq->add_header("Content-type: application/json");
   }
   else
   {
