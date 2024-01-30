@@ -38,7 +38,7 @@ default:
   before_script:
     - poetry run python -m pip install --upgrade pip
     - poetry install
-  image: registry.gitlab.com/tankerhq/docker/native:latest
+  image: registry.gitlab.com/tankerhq/docker/native:tim-ubuntu-upgrade.1646
 
 #########
 # Rules #
