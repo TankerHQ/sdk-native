@@ -50,6 +50,9 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(Verification:
           [](PreverifiedPhoneNumber const& v) -> VerificationMethodType {
             throw Errors::AssertionError("No verification method type for preverified phone number");
           },
+          [](PreverifiedOidc const& v) -> VerificationMethodType {
+            throw Errors::AssertionError("No verification method type for preverified oidc");
+          }
       },
       verification);
 }

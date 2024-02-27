@@ -69,7 +69,8 @@ using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      OidcIdTokenWithChallenge,
                                                      ByPhoneNumber,
                                                      PreverifiedEmail,
-                                                     PreverifiedPhoneNumber>;
+                                                     PreverifiedPhoneNumber,
+                                                     PreverifiedOidc>;
 
 using RequestVerificationPayload = boost::variant2::variant<VerificationKey,
                                                             EncryptedEmailVerification,
@@ -79,7 +80,8 @@ using RequestVerificationPayload = boost::variant2::variant<VerificationKey,
                                                             OidcIdTokenWithChallenge,
                                                             EncryptedPhoneNumberVerification,
                                                             EncryptedPreverifiedEmailVerification,
-                                                            EncryptedPreverifiedPhoneNumberVerification>;
+                                                            EncryptedPreverifiedPhoneNumberVerification,
+                                                            PreverifiedOidc>;
 
 struct RequestWithVerif
 {

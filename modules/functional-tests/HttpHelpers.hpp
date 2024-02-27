@@ -25,5 +25,5 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
                                           std::string const& sessionToken,
                                           std::string const& allowedMethod);
 
-tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig, std::string userName);
+tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig const& oidcConfig, std::string userName);
 }

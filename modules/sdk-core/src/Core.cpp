@@ -400,15 +400,17 @@ tc::cotask<void> Core::enrollUser(std::string const& b64Identity,
   uint64_t nbPhones = ranges::count_if(verifications, [](auto const& verif) {
     return boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verif);
   });
+  uint64_t nbOidc = ranges::count_if(
+      verifications, [](auto const& verif) { return boost::variant2::holds_alternative<PreverifiedOidc>(verif); });
 
-  if (nbEmails + nbPhones != verifications.size())
+  if (nbEmails + nbPhones + nbOidc != verifications.size())
   {
     throw formatEx(Errc::InvalidArgument,
                    "verifications: can only enroll user with preverified "
                    "verification methods");
   }
 
-  if (nbEmails > 1 || nbPhones > 1)
+  if (nbEmails > 1 || nbPhones > 1 || nbOidc > 1)
   {
     throw formatEx(Errc::InvalidArgument,
                    "verifications: contains at most one of each preverified "
@@ -486,8 +488,7 @@ tc::cotask<std::optional<std::string>> Core::registerIdentity(Verification::Veri
   {
     throw formatEx(Errc::InvalidArgument, "cannot get a session token with a verification key");
   }
-  if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
-      boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
+  if (Verification::isPreverified(verification))
   {
     throw formatEx(Errc::InvalidArgument, "cannot register identity with preverified methods");
   }
@@ -556,8 +557,7 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(Verification::Verifi
     assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   }
 
-  if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
-      boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
+  if (Verification::isPreverified(verification))
   {
     throw formatEx(Errc::InvalidArgument, "cannot verify identity with preverified methods");
   }

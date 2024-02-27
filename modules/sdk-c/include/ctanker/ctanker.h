@@ -40,6 +40,7 @@ enum tanker_verification_method_type
   TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL,
   TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER,
   TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE,
+  TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC,
 
   TANKER_VERIFICATION_METHOD_LAST,
 };
@@ -56,6 +57,7 @@ typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_phone_number_verification tanker_phone_number_verification_t;
+typedef struct tanker_preverified_oidc_verification tanker_preverified_oidc_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_verification_list tanker_verification_list_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
@@ -166,6 +168,18 @@ struct tanker_phone_number_verification
     1, NULL, NULL                             \
   }
 
+struct tanker_preverified_oidc_verification
+{
+  uint8_t version;
+  char const* subject;
+  char const* provider_id;
+};
+
+#define TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT \
+  {                                               \
+    1, NULL, NULL                                 \
+  }
+
 struct tanker_verification
 {
   uint8_t version;
@@ -180,11 +194,13 @@ struct tanker_verification
   tanker_phone_number_verification_t phone_number_verification;
   char const* preverified_email;
   char const* preverified_phone_number;
+  tanker_preverified_oidc_verification_t preverified_oidc_verification;
 };
 
-#define TANKER_VERIFICATION_INIT                                                                                    \
-  {                                                                                                                 \
-    6, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL \
+#define TANKER_VERIFICATION_INIT                                                                               \
+  {                                                                                                            \
+    7, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, \
+    NULL, TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT                                                            \
   }
 
 struct tanker_verification_method

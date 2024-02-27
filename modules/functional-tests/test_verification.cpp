@@ -25,6 +25,7 @@
 
 #include "CheckDecrypt.hpp"
 #include "HttpHelpers.hpp"
+#include "OidcHelpers.hpp"
 
 #include "TestSuite.hpp"
 
@@ -36,25 +37,6 @@ using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
-std::string oidcProviderId(Tanker::Trustchain::TrustchainId const& appId,
-                           std::string const& issuer,
-                           std::string const& clientId)
-{
-  auto normalizedIssuer = issuer;
-  if (issuer == "accounts.google.com")
-    normalizedIssuer = "https://accounts.google.com";
-
-  auto hashedIssuer = Crypto::generichash(gsl::make_span(normalizedIssuer).as_span<std::uint8_t const>());
-  auto hashedClientId = Crypto::generichash(gsl::make_span(clientId).as_span<std::uint8_t const>());
-
-  std::vector<std::uint8_t> toHash;
-  toHash.insert(toHash.end(), appId.begin(), appId.end());
-  toHash.insert(toHash.end(), hashedIssuer.begin(), hashedIssuer.end());
-  toHash.insert(toHash.end(), hashedClientId.begin(), hashedClientId.end());
-
-  return mgs::base64url_nopad::encode(Crypto::generichash(gsl::make_span(toHash).as_span<std::uint8_t const>()));
-}
-
 void checkVerificationMethods(std::vector<Verification::VerificationMethod> actual,
                               std::vector<Verification::VerificationMethod> expected)
 {
@@ -844,7 +826,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
   SECTION("with Google Oidc provider")
   {
     TC_AWAIT(enableOidc());
-    auto oidcConfig = TestConstants::oidcConfig();
+    auto const oidcConfig = TestConstants::oidcConfig();
     auto const martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
     auto const kevinIdToken = TC_AWAIT(getOidcToken(oidcConfig, "kevin"));
 
@@ -902,11 +884,10 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
         martinePhone->setOidcTestNonce(testNonce);
         REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
 
-        auto const& oidcConf = TestConstants::oidcConfig();
         auto expectedOidc = OidcIdToken{
             {},
-            oidcProviderId(martinePhone->sdkInfo().trustchainId, oidcConf.issuer, oidcConf.clientId),
-            oidcConf.displayName,
+            oidcProviderId(martinePhone->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId),
+            oidcConfig.displayName,
         };
         REQUIRE_NOTHROW(
             checkVerificationMethods(TC_AWAIT(martinePhone->getVerificationMethods()), {Passphrase{}, expectedOidc}));
@@ -981,6 +962,71 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
   }
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified oidc")
+{
+  auto martine = trustchain.makeUser();
+  auto martineDevice = martine.makeDevice();
+  auto martineLaptop = martineDevice.createCore();
+  REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) == Status::IdentityRegistrationNeeded);
+
+  auto martineDevice2 = martine.makeDevice();
+  auto martinePhone = martineDevice2.createCore();
+
+  auto const email = makeEmail();
+  auto providerID = "test";
+  auto subject = "a subject";
+
+  SECTION("registerIdentity throws when verification method is preverified oidc")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martineLaptop->registerIdentity(PreverifiedOidc{providerID, subject})),
+                                  Errc::InvalidArgument);
+    REQUIRE(martineLaptop->status() == Status::IdentityRegistrationNeeded);
+  }
+
+  SECTION("verifyIdentity throws when verification method is preverified oidc")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        martineLaptop->registerIdentity(Verification::Verification{Verification::ByEmail{email, verificationCode}})));
+
+    CHECK_NOTHROW(checkVerificationMethods(TC_AWAIT(martineLaptop->getVerificationMethods()), {email}));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(alice.identity)) == Status::IdentityVerificationNeeded);
+
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(PreverifiedOidc{providerID, subject})),
+                                  Errc::InvalidArgument);
+
+    REQUIRE(martinePhone->status() == Status::IdentityVerificationNeeded);
+  }
+
+  SECTION("setVerificationMethod adds preverified oidc as a new verification method")
+  {
+    TC_AWAIT(enableOidc());
+    auto const oidcConfig = TestConstants::oidcConfig();
+    auto const providerId =
+        oidcProviderId(martinePhone->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+    auto const martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
+    auto const subject = getOidcSubject(martineIdToken);
+
+    auto const pass = Passphrase{"******"};
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->setVerificationMethod(PreverifiedOidc{providerId, subject})));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    auto testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+    martinePhone->setOidcTestNonce(testNonce);
+    REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
+
+    auto expectedOidc = OidcIdToken{
+        {},
+        providerId,
+        oidcConfig.displayName,
+    };
+    REQUIRE_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(martinePhone->getVerificationMethods()), {Passphrase{}, expectedOidc}));
+  }
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment throws when the feature is not enabled")
 {
   auto serverUser = trustchain.makeUser();
@@ -991,6 +1037,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment throws when the feature is 
   auto const emailVerification = Verification::Verification{email};
   auto const phoneNumber = PreverifiedPhoneNumber{"+33639982233"};
   auto const phoneNumberVerification = Verification::Verification{phoneNumber};
+  auto const oidcVerification = PreverifiedOidc{"provider_id", "subject"};
 
   auto enrolledUser = trustchain.makeUser();
 
@@ -1000,6 +1047,9 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment throws when the feature is 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(server->enrollUser(enrolledUser.identity, {phoneNumberVerification})),
                                 AppdErrc::FeatureNotEnabled);
 
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(server->enrollUser(enrolledUser.identity, {oidcVerification})),
+                                AppdErrc::FeatureNotEnabled);
+
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification})),
       AppdErrc::FeatureNotEnabled);
@@ -1007,14 +1057,21 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment throws when the feature is 
 
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
 {
+  TC_AWAIT(enableOidc());
   auto serverUser = trustchain.makeUser();
   auto sDevice = serverUser.makeDevice();
   auto server = sDevice.createCore();
+
+  auto const oidcConfig = TestConstants::oidcConfig();
+  auto const martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
 
   auto const email = PreverifiedEmail{"kirby@tanker.io"};
   auto const emailVerification = Verification::Verification{email};
   auto const phoneNumber = PreverifiedPhoneNumber{"+33639982233"};
   auto const phoneNumberVerification = Verification::Verification{phoneNumber};
+  auto const providerId = oidcProviderId(server->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+  auto const subject = getOidcSubject(martineIdToken);
+  auto const oidcVerification = PreverifiedOidc{providerId, subject};
 
   auto enrolledUser = trustchain.makeUser();
 
@@ -1056,9 +1113,12 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
         {},
         {Verification::ByEmail{Email(email.string()), ""}},
         {Verification::ByPhoneNumber{PhoneNumber(phoneNumber.string()), ""}},
+        {PreverifiedOidc{providerId, ""}},
+        {PreverifiedOidc{"", subject}},
         {emailVerification, Verification::Verification{Passphrase("********")}},
         {emailVerification, emailVerification},
         {phoneNumberVerification, phoneNumberVerification},
+        {oidcVerification, oidcVerification},
     };
 
     for (auto const& verifications : badPreverifiedVerifications)
@@ -1092,9 +1152,14 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
 
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
 {
+  TC_AWAIT(enableOidc());
   auto serverUser = trustchain.makeUser();
   auto sDevice = serverUser.makeDevice();
   auto server = sDevice.createCore();
+
+  auto const oidcConfig = TestConstants::oidcConfig();
+  auto const martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
+
   auto const provisionalIdentity = trustchain.makeEmailProvisionalUser();
   auto const verifEmail = boost::variant2::get<Email>(provisionalIdentity.value);
   auto const email = PreverifiedEmail{verifEmail.string()};
@@ -1102,6 +1167,9 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
   auto const verifPhoneNumber = makePhoneNumber();
   auto const phoneNumber = PreverifiedPhoneNumber{verifPhoneNumber.string()};
   auto const phoneNumberVerification = Verification::Verification{phoneNumber};
+  auto const providerId = oidcProviderId(server->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+  auto const subject = getOidcSubject(martineIdToken);
+  auto const oidcVerification = PreverifiedOidc{providerId, subject};
 
   auto enrolledUser = trustchain.makeUser();
 
@@ -1119,10 +1187,15 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
       REQUIRE_NOTHROW(TC_AWAIT(server->enrollUser(enrolledUser.identity, {phoneNumberVerification})));
     }
 
-    SECTION("enrolls a user with both an email address and a phone number")
+    SECTION("enrolls a user with oidc")
     {
-      REQUIRE_NOTHROW(
-          TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification})));
+      REQUIRE_NOTHROW(TC_AWAIT(server->enrollUser(enrolledUser.identity, {oidcVerification})));
+    }
+
+    SECTION("enrolls a user with every preverified verification method")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(
+          server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification})));
     }
 
     SECTION("stays STOPPED after enrolling a user")
@@ -1139,7 +1212,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
     auto device1 = enrolledUser.makeDevice();
     auto enrolledUserLaptop = device1.createCore();
 
-    TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification}));
+    TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification}));
     auto verificationCode = TC_AWAIT(getVerificationCode(verifEmail));
 
     auto const disposableIdentity = trustchain.makeUser();
@@ -1151,6 +1224,8 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
     {
       auto device2 = enrolledUser.makeDevice();
       auto enrolledUserPhone = device2.createCore();
+      auto device3 = enrolledUser.makeDevice();
+      auto enrolledUserTablet = device3.createCore();
 
       REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) == Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(
@@ -1160,6 +1235,11 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
       REQUIRE(TC_AWAIT(enrolledUserPhone->start(enrolledUser.identity)) == Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(
           TC_AWAIT(enrolledUserPhone->verifyIdentity(Verification::ByPhoneNumber{verifPhoneNumber, verificationCode})));
+
+      REQUIRE(TC_AWAIT(enrolledUserTablet->start(enrolledUser.identity)) == Status::IdentityVerificationNeeded);
+      auto testNonce = TC_AWAIT(enrolledUserTablet->createOidcNonce());
+      enrolledUserTablet->setOidcTestNonce(testNonce);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserTablet->verifyIdentity(martineIdToken)));
     }
 
     SECTION("can attache a provisional identity")

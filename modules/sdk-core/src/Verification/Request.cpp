@@ -130,6 +130,11 @@ RequestWithVerif makeRequestWithVerif(RequestVerification const& verification,
             return EncryptedPreverifiedPhoneNumberVerification{
                 PhoneNumber{v.string()}, hashField(userSecret), provisionalSalt, std::move(encryptedPhoneNumber)};
           },
+          [&](PreverifiedOidc const& v) -> RequestVerificationPayload {
+            checkNotEmpty(v.provider_id, "oidcProviderID");
+            checkNotEmpty(v.subject, "oidcSubject");
+            return v;
+          },
       },
       verification);
   return {verif, withTokenNonce};
@@ -263,6 +268,11 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
                                  j["provisional_salt"] = *e.provisionalSalt;
                                }
                              },
+                             [&](PreverifiedOidc const& e) {
+                              j["oidc_provider_id"] = e.provider_id;
+                              j["oidc_subject"] = e.subject;
+                              j["is_preverified"] = true;
+                             }
                          },
                          request);
 }

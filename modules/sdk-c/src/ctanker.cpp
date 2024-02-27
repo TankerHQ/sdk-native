@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
   {
     throw formatEx(Errc::InvalidArgument, "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 6)
+  if (cverification->version != 7)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported tanker_verification_t struct version: {}", cverification->version);
@@ -106,6 +106,15 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
     if (!cverification->preverified_phone_number)
       throw formatEx(Errc::InvalidArgument, "preverified phone number field is null");
     verification = PreverifiedPhoneNumber{cverification->preverified_phone_number};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC: {
+    if (!cverification->preverified_oidc_verification.subject)
+      throw formatEx(Errc::InvalidArgument, "oidc subject field is null");
+    if (!cverification->preverified_oidc_verification.provider_id)
+      throw formatEx(Errc::InvalidArgument, "oidc provider id field is null");
+    verification = PreverifiedOidc{cverification->preverified_oidc_verification.provider_id,
+                                   cverification->preverified_oidc_verification.subject};
     break;
   }
   default:
@@ -207,9 +216,10 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN, Verification::Method
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER, Verification::Method::PhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL, Verification::Method::PreverifiedEmail);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER, Verification::Method::PreverifiedPhoneNumber);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC, Verification::Method::PreverifiedOidc);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 9,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 10,
               "Please update the assertions above if you added a new "
               "unlock method");
 
