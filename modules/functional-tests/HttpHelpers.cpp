@@ -48,7 +48,7 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
       checkSessionToken(appId, verificationApiToken, publicIdentity, sessionToken, {{{"type", allowedMethod}}})));
 }
 
-tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig, std::string userName)
+tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig const& oidcConfig, std::string userName)
 {
   auto const payload = nlohmann::json{
       {"client_id", oidcConfig.clientId},

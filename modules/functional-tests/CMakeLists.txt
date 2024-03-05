@@ -7,6 +7,7 @@ set(_main_cpp main_functional.cpp)
 add_executable(test_functional
   ${_main_cpp}
   HttpHelpers.cpp
+  OidcHelpers.cpp
   test_functional.cpp
   test_verification.cpp
   test_groups.cpp
