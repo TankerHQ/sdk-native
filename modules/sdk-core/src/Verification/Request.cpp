@@ -135,6 +135,12 @@ RequestWithVerif makeRequestWithVerif(RequestVerification const& verification,
             checkNotEmpty(v.subject, "oidcSubject");
             return v;
           },
+          [&](OidcAuthorizationCode const& v) -> RequestVerificationPayload {
+            checkNotEmpty(v.provider_id, "oidcProviderID");
+            checkNotEmpty(v.authorization_code, "oidcAuthorizationCode");
+            checkNotEmpty(v.state, "oidcState");
+            return v;
+          } ,
       },
       verification);
   return {verif, withTokenNonce};
@@ -272,6 +278,11 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
                               j["oidc_provider_id"] = e.provider_id;
                               j["oidc_subject"] = e.subject;
                               j["is_preverified"] = true;
+                             },
+                             [&](OidcAuthorizationCode const& o) {
+                              j["oidc_provider_id"] = o.provider_id;
+                              j["oidc_authorization_code"] = o.authorization_code;
+                              j["oidc_state"] = o.state;
                              }
                          },
                          request);

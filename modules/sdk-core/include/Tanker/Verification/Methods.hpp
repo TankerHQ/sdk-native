@@ -18,6 +18,7 @@ enum class Method
   PreverifiedPhoneNumber,
   E2ePassphrase,
   PreverifiedOidc,
+  OidcAuthorizationCode,
 
   Last,
 };

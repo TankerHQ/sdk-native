@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
   {
     throw formatEx(Errc::InvalidArgument, "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 7)
+  if (cverification->version != 8)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported tanker_verification_t struct version: {}", cverification->version);
@@ -115,6 +115,18 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
       throw formatEx(Errc::InvalidArgument, "oidc provider id field is null");
     verification = PreverifiedOidc{cverification->preverified_oidc_verification.provider_id,
                                    cverification->preverified_oidc_verification.subject};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE: {
+    if (!cverification->oidc_authorization_code_verification.provider_id)
+      throw formatEx(Errc::InvalidArgument, "oidc provider id field is null");
+    if (!cverification->oidc_authorization_code_verification.authorization_code)
+      throw formatEx(Errc::InvalidArgument, "oidc authorization_code field is null");
+    if (!cverification->oidc_authorization_code_verification.state)
+      throw formatEx(Errc::InvalidArgument, "oidc state field is null");
+    verification = OidcAuthorizationCode{cverification->oidc_authorization_code_verification.provider_id,
+                                         cverification->oidc_authorization_code_verification.authorization_code,
+                                         cverification->oidc_authorization_code_verification.state};
     break;
   }
   default:
@@ -217,9 +229,10 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER, Verification::Method:
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL, Verification::Method::PreverifiedEmail);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER, Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC, Verification::Method::PreverifiedOidc);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE, Verification::Method::OidcAuthorizationCode);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 10,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 11,
               "Please update the assertions above if you added a new "
               "unlock method");
 

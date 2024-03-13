@@ -53,6 +53,10 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"missing_user_group_members", AppdErrc::MissingUserGroupMembers},
     {"feature_not_enabled", AppdErrc::FeatureNotEnabled},
     {"conflict", AppdErrc::Conflict},
+    {"invalid_authorization_code",AppdErrc::InvalidAuthorizationCode},
+    {"oidc_provider_interaction_required",AppdErrc::OidcProviderInteractionRequired},
+    {"oidc_provider_not_configured",AppdErrc::OidcProviderNotConfigured},
+    {"oidc_provider_not_supported",AppdErrc::OidcProviderNotSupported},
 };
 
 AppdErrc getErrorFromCode(std::string_view code)
