@@ -69,6 +69,18 @@ AppdErrc getErrorFromCode(std::string_view code)
 
 HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
 {
+  if (res.statusCode == 302)
+  {
+    auto const location = res.headers.get(HttpHeader::LOCATION);
+    if (location)
+      return boost::outcome_v2::success(nlohmann::json{{"location", *location}});
+    else
+      throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                             "{} {}, status: 302; missing Location header in the response",
+                             httpMethodToString(req.method),
+                             req.url);
+  }
+
   if (res.statusCode / 100 != 2)
   {
     auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
@@ -287,6 +299,13 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target)
 {
   auto req = makeRequest(HttpMethod::Get, target);
+  TC_RETURN(TC_AWAIT(fetch(std::move(req))));
+}
+
+tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target, std::pair<std::string const, std::string> const& header)
+{
+  auto req = makeRequest(HttpMethod::Get, target);
+  req.headers.set(header);
   TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 

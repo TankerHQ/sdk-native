@@ -11,6 +11,7 @@
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Types/OidcAuthorizationCode.hpp>
 #include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
@@ -118,6 +119,8 @@ public:
 
   tc::cotask<AttachResult> attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity);
   tc::cotask<void> verifyProvisionalIdentity(Verification::Verification const& verification);
+
+  tc::cotask<OidcAuthorizationCode> authenticateWithIdp(std::string const& providerId, std::string const& cookie);
 
   tc::cotask<std::tuple<Streams::InputSource, Crypto::ResourceId>> makeEncryptionStream(
       Streams::InputSource,

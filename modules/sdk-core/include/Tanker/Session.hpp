@@ -7,6 +7,7 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/HttpClient.hpp>
+#include <Tanker/Oidc/Requester.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
@@ -32,7 +33,7 @@ namespace Tanker
 class Session
 {
 public:
-  struct Requesters : Users::Requester, Groups::Requester, ProvisionalUsers::Requester, Verification::Requester
+  struct Requesters : Users::Requester, Groups::Requester, ProvisionalUsers::Requester, Verification::Requester, Oidc::Requester
 
   {
     Requesters(Network::HttpClient*);

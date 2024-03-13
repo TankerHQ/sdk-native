@@ -70,7 +70,8 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
   : Users::Requester(httpClient),
     Groups::Requester(httpClient),
     ProvisionalUsers::Requester(httpClient),
-    Verification::Requester(httpClient)
+    Verification::Requester(httpClient),
+    Oidc::Requester(httpClient)
 {
 }
 

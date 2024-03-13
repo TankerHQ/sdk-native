@@ -948,6 +948,14 @@ tc::cotask<void> Core::verifyProvisionalIdentity(Verification::Verification cons
                                       std::nullopt))));
 }
 
+tc::cotask<OidcAuthorizationCode> Core::authenticateWithIdp(std::string const& providerId, std::string const& cookie)
+{
+  assertStatus({Status::IdentityRegistrationNeeded, Status::IdentityVerificationNeeded, Status::Ready}, "authenticateWithIdp");
+  TC_RETURN(TC_AWAIT(
+    _session->requesters().oidcSignIn(_session->userId(), providerId, cookie)
+  ));
+}
+
 void Core::nukeDatabase()
 {
   if (_session)

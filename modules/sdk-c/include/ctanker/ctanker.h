@@ -605,6 +605,23 @@ CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(tanker_t* ses
 CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(tanker_t* session,
                                                                    tanker_verification_t const* verification);
 
+/*!
+ * Authenticates against a trusted identity provider.
+ * \pre The identity provider must be a OIDC provider configured on the trustchain.
+ *
+ * \warning This API is exposed for testing purposes only.
+ *
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status != TANKER_STATUS_STOPPED
+ * \param provider_id oidc provider id of the trusted identity procvider (as returned by the app managment API)
+ * \param cookie cookie added to the authorization HTTP request
+ *
+ * \return A future of tanker_oidc_authorization_code_verification*
+ *
+ * \throws TANKER_ERROR_OTHER an error occured during OIDC authorization
+ */
+CTANKER_EXPORT tanker_expected_t* tanker_authenticate_with_idp(tanker_t* session, char const* provider_id, char const* cookie);
+
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
 CTANKER_EXPORT void tanker_free_verification_method_list(tanker_verification_method_list_t* list);
