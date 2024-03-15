@@ -47,9 +47,8 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo, HttpRequest const& 
   creq->add_header("Accept: application/json");
   creq->add_header(fmt::format("X-Tanker-SdkType: {}", sdkInfo.sdkType));
   creq->add_header(fmt::format("X-Tanker-SdkVersion: {}", sdkInfo.version));
-  creq->add_header(fmt::format("X-Tanker-Instanceid: {}", req.instanceId));
-  if (!req.authorization.empty())
-    creq->add_header(fmt::format("Authorization: {}", req.authorization));
+  for (auto const& [name, value] : req.headers)
+    creq->add_header(fmt::format("{}: {}", name, value));
 
   return creq;
 }

@@ -11,21 +11,21 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DataStore/Utils.cpp
 )
 
-if(WITH_SQLITE)
+if (WITH_SQLITE)
   set(TANKER_CORE_SQLITE_SRC
     include/Tanker/DataStore/Sqlite/Backend.hpp
     include/Tanker/DataStore/Connection.hpp
     src/DataStore/Sqlite/Backend.cpp
     src/DataStore/Connection.cpp
   )
-endif()
+endif ()
 
 if (WITH_CURL)
   set(TANKER_CORE_HTTP_SRC
     include/Tanker/Network/CurlBackend.hpp
     src/Network/CurlBackend.cpp
   )
-endif()
+endif ()
 
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
@@ -45,6 +45,8 @@ add_library(tankercore STATIC
   include/Tanker/Verification/Requester.hpp
   include/Tanker/Verification/Request.hpp
   include/Tanker/DeviceKeys.hpp
+  include/Tanker/Network/HttpHeader.hpp
+  include/Tanker/Network/HttpHeaderMap.hpp
   include/Tanker/Network/HttpMethod.hpp
   include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
@@ -111,6 +113,7 @@ add_library(tankercore STATIC
   src/Init.cpp
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
+  src/Network/HttpHeaderMap.cpp
   src/Network/HttpClient.cpp
   src/GhostDevice.cpp
   src/Verification/Verification.cpp
@@ -196,13 +199,13 @@ target_link_libraries(tankercore
   date::date
 )
 
-if(WITH_CURL)
+if (WITH_CURL)
   target_link_libraries(tankercore tcurl)
-endif()
+endif ()
 
-if(WITH_SQLITE)
+if (WITH_SQLITE)
   target_link_libraries(tankercore sqlpp11-connector-sqlite3::sqlpp11-connector-sqlite3)
-endif()
+endif ()
 
 install(TARGETS tankercore
   EXPORT tanker
@@ -211,6 +214,6 @@ install(TARGETS tankercore
   ARCHIVE DESTINATION lib
 )
 
-if(BUILD_TESTS)
+if (BUILD_TESTS)
   add_subdirectory(test)
-endif()
+endif ()

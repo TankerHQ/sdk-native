@@ -24,12 +24,14 @@ CTankerBackend::CTankerBackend(tanker_http_options_t const& options) : _options(
 
 tc::cotask<HttpResponse> CTankerBackend::fetch(HttpRequest req)
 {
+  using namespace HttpHeader;
+
   tanker_http_request_internal request{};
   request.request.method = httpMethodToString(req.method);
   request.request.url = req.url.c_str();
-  request.request.instance_id = req.instanceId.c_str();
-  if (!req.authorization.empty())
-    request.request.authorization = req.authorization.c_str();
+  request.request.instance_id = req.headers.get(TANKER_INSTANCE_ID)->c_str();
+  if (auto authorization = req.headers.get(AUTHORIZATION))
+    request.request.authorization = authorization->c_str();
   request.request.body = req.body.c_str();
   request.request.body_size = req.body.size();
 

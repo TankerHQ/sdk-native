@@ -293,29 +293,31 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target, nloh
 
 HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url, nlohmann::json const& data)
 {
-  HttpRequest req;
-  req.method = method;
-  req.url = url;
+  auto req = makeRequest(method, url);
   req.body = data.dump();
-  req.instanceId = _instanceId;
-  req.authorization = _accessToken;
   return req;
 }
 
 HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
 {
+  using namespace HttpHeader;
+
   HttpRequest req;
   req.method = method;
   req.url = url;
-  req.instanceId = _instanceId;
-  req.authorization = _accessToken;
+  req.headers = {{TANKER_INSTANCE_ID, _instanceId}};
+  if (!_accessToken.empty())
+    req.headers.set({AUTHORIZATION, _accessToken});
+
   return req;
 }
 
 tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 {
+  using namespace HttpHeader;
+
   TC_AWAIT(_authenticating);
-  if (req.authorization.empty())
+  if (!req.headers.get(AUTHORIZATION))
   {
     // No access token yet, authenticate before failing the first API call.
     //
@@ -323,7 +325,7 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
     // the recovery process when this API call occurs after a previous
     // re-authentication failure (because authenticate() clears "_accessToken")
     TC_AWAIT(authenticate());
-    req.authorization = _accessToken;
+    req.headers.set(AUTHORIZATION, _accessToken);
   }
 
   auto response = TC_AWAIT(fetch(req));
@@ -337,13 +339,13 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
     if (!_authenticating.is_ready())
       TC_AWAIT(_authenticating);
     // 2. First re-authentication attempt after access token expiration
-    else if (_accessToken == req.authorization)
+    else if (*req.headers.get(AUTHORIZATION) == _accessToken)
       TC_AWAIT(authenticate());
     // (else)
     // 3. Another API call already completed a re-authentication
 
     // We can safely retry now with _accessToken
-    req.authorization = _accessToken;
+    req.headers.set(AUTHORIZATION, _accessToken);
     TC_RETURN(TC_AWAIT(fetch(std::move(req))));
   }
   TC_RETURN(response);
