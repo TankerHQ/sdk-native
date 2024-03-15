@@ -70,10 +70,17 @@ tc::cotask<HttpResponse> CurlBackend::fetch(HttpRequest req)
     curl_easy_getinfo(creq->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
     res.statusCode = httpcode;
 
-    char* pcontenttype;
-    curl_easy_getinfo(creq->get_curl(), CURLINFO_CONTENT_TYPE, &pcontenttype);
-    if (pcontenttype)
-      res.contentType = pcontenttype;
+    struct curl_header* prev = NULL;
+    struct curl_header* h;
+    int last_request = -1;
+    // All headers except HTTP 2/3 pseudo-headers and CONNECT proxy responses
+    unsigned int header_types = CURLH_HEADER | CURLH_1XX | CURLH_TRAILER;
+    while ((h = curl_easy_nextheader(creq->get_curl(), header_types, last_request, prev)))
+    {
+      res.headers.append(h->name, h->value);
+      prev = h;
+    }
+
     res.body = std::string(cres.data.begin(), cres.data.end());
     TC_RETURN(res);
   }

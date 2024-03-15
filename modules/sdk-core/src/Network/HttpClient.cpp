@@ -67,7 +67,8 @@ HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
 {
   if (res.statusCode / 100 != 2)
   {
-    if (boost::algorithm::starts_with(res.contentType, "application/json"))
+    auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
+    if (contentType && boost::algorithm::starts_with(*contentType, "application/json"))
     {
       auto const json = nlohmann::json::parse(res.body);
       auto error = json.at("error").get<HttpError>();

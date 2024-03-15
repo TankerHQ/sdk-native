@@ -66,7 +66,9 @@ void tanker_http_handle_response(tanker_http_request_t* pubRequest, tanker_http_
 
   HttpResponse response;
   response.statusCode = cresponse->status_code;
-  response.contentType = cresponse->content_type ? cresponse->content_type : std::string{};
+  // TODO: This will change next commit when we update the ctanker API :)
+  if (cresponse->content_type)
+    response.headers.set(HttpHeader::CONTENT_TYPE, cresponse->content_type);
   response.body = std::string(cresponse->body, cresponse->body_size);
   crequest->promise.set_value(std::move(response));
 }
