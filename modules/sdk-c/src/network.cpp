@@ -29,11 +29,14 @@ tc::cotask<HttpResponse> CTankerBackend::fetch(HttpRequest req)
   tanker_http_request_internal request{};
   request.request.method = httpMethodToString(req.method);
   request.request.url = req.url.c_str();
-  request.request.instance_id = req.headers.get(TANKER_INSTANCE_ID)->c_str();
-  if (auto authorization = req.headers.get(AUTHORIZATION))
-    request.request.authorization = authorization->c_str();
   request.request.body = req.body.c_str();
   request.request.body_size = req.body.size();
+
+  std::vector<tanker_http_header_t> c_headers;
+  for (auto const& [name, value] : req.headers)
+    c_headers.push_back({name.c_str(), value.c_str()});
+  request.request.headers = c_headers.data();
+  request.request.num_headers = c_headers.size();
 
   // [&] capture is fine because we await the end just below
   tanker_http_request_handle_t* requestHandle;
@@ -66,9 +69,8 @@ void tanker_http_handle_response(tanker_http_request_t* pubRequest, tanker_http_
 
   HttpResponse response;
   response.statusCode = cresponse->status_code;
-  // TODO: This will change next commit when we update the ctanker API :)
-  if (cresponse->content_type)
-    response.headers.set(HttpHeader::CONTENT_TYPE, cresponse->content_type);
+  for (int32_t i = 0; i < cresponse->num_headers; i++)
+    response.headers.append(cresponse->headers[i].name, cresponse->headers[i].value);
   response.body = std::string(cresponse->body, cresponse->body_size);
   crequest->promise.set_value(std::move(response));
 }
