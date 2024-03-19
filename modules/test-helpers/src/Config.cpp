@@ -31,7 +31,9 @@ OidcConfig const& oidcConfig()
       getSafeEnv("TANKER_OIDC_PROVIDER"),
       getSafeEnv("TANKER_OIDC_ISSUER"),
       {{"kevin", {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"), getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
-       {"martine", {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"), getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
+       {"martine", {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"), getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}},
+      getSafeEnv("TANKER_FAKE_OIDC_URL"),
+  };
   return oidc;
 }
 

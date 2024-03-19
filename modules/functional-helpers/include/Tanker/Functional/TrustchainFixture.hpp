@@ -38,6 +38,7 @@ struct TrustchainFixtureSimple
 
   tc::cotask<void> enableOidc();
 
+  tc::cotask<void> enableFakeOidc();
   tc::cotask<void> enablePSCOidc(Functional::PSCProvider const&);
   tc::cotask<void> enableUserEnrollment();
 };

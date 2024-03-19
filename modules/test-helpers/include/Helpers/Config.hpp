@@ -22,6 +22,7 @@ struct OidcConfig
   std::string displayName;
   std::string issuer;
   std::map<std::string, User> users;
+  std::string fakeOidcUrl;
 };
 
 struct AppConfig

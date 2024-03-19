@@ -962,6 +962,87 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
   }
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "authenticateWithIdp is restricted to trusted OIDC providers")
+{
+  auto martine = trustchain.makeUser();
+  auto martineDevice = martine.makeDevice();
+  auto martineLaptop = martineDevice.createCore();
+
+  TC_AWAIT(enableOidc());
+  auto const oidcConfig = TestConstants::oidcConfig();
+  auto const providerId =
+      oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+
+  REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) == Status::IdentityRegistrationNeeded);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=martine")),
+                                Errc::PreconditionFailed);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
+{
+  auto martine = trustchain.makeUser();
+  auto martineDevice = martine.makeDevice();
+  auto martineLaptop = martineDevice.createCore();
+  auto martineDevice2 = martine.makeDevice();
+  auto martinePhone = martineDevice2.createCore();
+
+  auto const subjectCookie = "fake_oidc_subject=martine";
+  auto const oidcConfig = TestConstants::oidcConfig();
+  auto const providerId =
+      oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.fakeOidcUrl + "/issuer", "tanker");
+
+  TC_AWAIT(enableFakeOidc());
+
+  REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) == Status::IdentityRegistrationNeeded);
+
+  SECTION("registers and verifies with an oidc authorization code")
+  {
+    auto const verification1 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+    auto const verification2 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification1)));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(verification2)));
+    REQUIRE(martinePhone->status() == Status::Ready);
+  }
+
+  SECTION("fails to verify an oidc authorization code twice")
+  {
+    auto const verification = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification)));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification)),
+                                  Errc::InvalidVerification);
+  }
+
+  SECTION("fails to verify an oidc authorization code for the wrong user")
+  {
+    auto const verification1 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification1)));
+
+    auto const verification2 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=not-martine"));
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification2)),
+                                  Errc::InvalidVerification);
+  }
+
+  SECTION("updates and verifies with an oidc authorization code")
+  {
+    auto const pass = Passphrase{"******"};
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+    auto const verification1 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->setVerificationMethod(verification1)));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    auto const verification2 = TC_AWAIT(martinePhone->authenticateWithIdp(providerId, subjectCookie));
+    REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(verification2)));
+    REQUIRE(martinePhone->status() == Status::Ready);
+  }
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified oidc")
 {
   auto martine = trustchain.makeUser();

@@ -54,6 +54,19 @@ tc::cotask<void> TrustchainFactory::enableOidc(Tanker::Trustchain::TrustchainId 
   TC_AWAIT(_admin->update(id, options));
 }
 
+tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id)
+{
+  auto const& oidcConfig = TestConstants::oidcConfig();
+  Admin::OidcConfiguration adminOidcConf{};
+  adminOidcConf.displayName = "fake-oidc";
+  adminOidcConf.clientId = "tanker";
+  adminOidcConf.issuer = oidcConfig.fakeOidcUrl + "/issuer";
+
+  Admin::AppUpdateOptions options{};
+  options.oidcProvider = adminOidcConf;
+  TC_AWAIT(_admin->update(id, options));
+}
+
 std::string to_string(PSCProvider provider)
 {
   switch (provider)
