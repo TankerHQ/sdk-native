@@ -950,10 +950,9 @@ tc::cotask<void> Core::verifyProvisionalIdentity(Verification::Verification cons
 
 tc::cotask<OidcAuthorizationCode> Core::authenticateWithIdp(std::string const& providerId, std::string const& cookie)
 {
-  assertStatus({Status::IdentityRegistrationNeeded, Status::IdentityVerificationNeeded, Status::Ready}, "authenticateWithIdp");
-  TC_RETURN(TC_AWAIT(
-    _session->requesters().oidcSignIn(_session->userId(), providerId, cookie)
-  ));
+  assertStatus({Status::IdentityRegistrationNeeded, Status::IdentityVerificationNeeded, Status::Ready},
+               "authenticateWithIdp");
+  TC_RETURN(TC_AWAIT(_session->requesters().oidcSignIn(_session->userId(), providerId, cookie)));
 }
 
 void Core::nukeDatabase()

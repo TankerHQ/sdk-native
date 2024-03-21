@@ -11,8 +11,9 @@ namespace Tanker::Oidc
 class IRequester
 {
 public:
-  virtual tc::cotask<OidcAuthorizationCode>
-  oidcSignIn(Trustchain::UserId const& userId, std::string const& providerId, std::string const& cookie) = 0;
+  virtual tc::cotask<OidcAuthorizationCode> oidcSignIn(Trustchain::UserId const& userId,
+                                                       std::string const& providerId,
+                                                       std::string const& cookie) = 0;
 
   virtual ~IRequester() = default;
 };

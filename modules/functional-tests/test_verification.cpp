@@ -970,8 +970,7 @@ TEST_CASE_METHOD(TrustchainFixture, "authenticateWithIdp is restricted to truste
 
   TC_AWAIT(enableOidc());
   auto const oidcConfig = TestConstants::oidcConfig();
-  auto const providerId =
-      oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+  auto const providerId = oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
 
   REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) == Status::IdentityRegistrationNeeded);
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=martine")),
@@ -1013,8 +1012,7 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
     REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification)));
 
     REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
-    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification)),
-                                  Errc::InvalidVerification);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification)), Errc::InvalidVerification);
   }
 
   SECTION("fails to verify an oidc authorization code for the wrong user")
@@ -1023,10 +1021,10 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
 
     REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification1)));
 
-    auto const verification2 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=not-martine"));
+    auto const verification2 =
+        TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=not-martine"));
     REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
-    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification2)),
-                                  Errc::InvalidVerification);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification2)), Errc::InvalidVerification);
   }
 
   SECTION("updates and verifies with an oidc authorization code")

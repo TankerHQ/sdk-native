@@ -26,8 +26,9 @@ class Requester : public IRequester
 public:
   Requester(Network::HttpClient* httpClient);
 
-  tc::cotask<OidcAuthorizationCode>
-  oidcSignIn(Trustchain::UserId const& userId, std::string const& providerId, std::string const& cookie) override;
+  tc::cotask<OidcAuthorizationCode> oidcSignIn(Trustchain::UserId const& userId,
+                                               std::string const& providerId,
+                                               std::string const& cookie) override;
 
 private:
   Network::HttpClient* _httpClient;

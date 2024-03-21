@@ -11,7 +11,8 @@ struct OidcAuthorizationCode
 
 inline bool operator==(OidcAuthorizationCode const& lhs, OidcAuthorizationCode const& rhs) noexcept
 {
-  return lhs.provider_id == rhs.provider_id && lhs.authorization_code == rhs.authorization_code && lhs.state == rhs.state;
+  return lhs.provider_id == rhs.provider_id && lhs.authorization_code == rhs.authorization_code &&
+         lhs.state == rhs.state;
 }
 
 inline bool operator!=(OidcAuthorizationCode const& lhs, OidcAuthorizationCode const& rhs) noexcept

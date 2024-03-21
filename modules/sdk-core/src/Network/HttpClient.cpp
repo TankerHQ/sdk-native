@@ -53,10 +53,10 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"missing_user_group_members", AppdErrc::MissingUserGroupMembers},
     {"feature_not_enabled", AppdErrc::FeatureNotEnabled},
     {"conflict", AppdErrc::Conflict},
-    {"invalid_authorization_code",AppdErrc::InvalidAuthorizationCode},
-    {"oidc_provider_interaction_required",AppdErrc::OidcProviderInteractionRequired},
-    {"oidc_provider_not_configured",AppdErrc::OidcProviderNotConfigured},
-    {"oidc_provider_not_supported",AppdErrc::OidcProviderNotSupported},
+    {"invalid_authorization_code", AppdErrc::InvalidAuthorizationCode},
+    {"oidc_provider_interaction_required", AppdErrc::OidcProviderInteractionRequired},
+    {"oidc_provider_not_configured", AppdErrc::OidcProviderNotConfigured},
+    {"oidc_provider_not_supported", AppdErrc::OidcProviderNotSupported},
 };
 
 AppdErrc getErrorFromCode(std::string_view code)
@@ -302,7 +302,8 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target)
   TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target, std::pair<std::string const, std::string> const& header)
+tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target,
+                                                  std::pair<std::string const, std::string> const& header)
 {
   auto req = makeRequest(HttpMethod::Get, target);
   req.headers.set(header);

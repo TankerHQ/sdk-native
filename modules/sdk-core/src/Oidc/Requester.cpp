@@ -17,15 +17,18 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
-tc::cotask<OidcAuthorizationCode> Requester::oidcSignIn(Trustchain::UserId const& userId, std::string const& providerId, std::string const& cookie)
+tc::cotask<OidcAuthorizationCode> Requester::oidcSignIn(Trustchain::UserId const& userId,
+                                                        std::string const& providerId,
+                                                        std::string const& cookie)
 {
-  auto const query =
-      nlohmann::json{{"user_id", mgs::base64url_nopad::encode(userId)}};
-  auto signinUrl = _httpClient->makeUrl(fmt::format("oidc/{providerId}/signin", fmt::arg("providerId", providerId)), query);
+  auto const query = nlohmann::json{{"user_id", mgs::base64url_nopad::encode(userId)}};
+  auto signinUrl =
+      _httpClient->makeUrl(fmt::format("oidc/{providerId}/signin", fmt::arg("providerId", providerId)), query);
   auto const signinResponse = TC_AWAIT(_httpClient->asyncUnauthGet(signinUrl)).value();
 
   auto const authorizationLocation = signinResponse.at("location").get<std::string>();
-  auto const authorizationResponse = TC_AWAIT(_httpClient->asyncUnauthGet(authorizationLocation, {"Cookie", cookie})).value();
+  auto const authorizationResponse =
+      TC_AWAIT(_httpClient->asyncUnauthGet(authorizationLocation, {"Cookie", cookie})).value();
 
   auto const callbackLocation = authorizationResponse.at("location").get<std::string>();
   auto const resp = TC_AWAIT(_httpClient->asyncUnauthGet(callbackLocation)).value();

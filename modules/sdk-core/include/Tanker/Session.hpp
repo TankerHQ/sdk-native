@@ -33,7 +33,11 @@ namespace Tanker
 class Session
 {
 public:
-  struct Requesters : Users::Requester, Groups::Requester, ProvisionalUsers::Requester, Verification::Requester, Oidc::Requester
+  struct Requesters : Users::Requester,
+                      Groups::Requester,
+                      ProvisionalUsers::Requester,
+                      Verification::Requester,
+                      Oidc::Requester
 
   {
     Requesters(Network::HttpClient*);
