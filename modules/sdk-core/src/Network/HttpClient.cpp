@@ -295,6 +295,7 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target, nloh
 HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url, nlohmann::json const& data)
 {
   auto req = makeRequest(method, url);
+  req.headers.set({HttpHeader::CONTENT_TYPE, "application/json"});
   req.body = data.dump();
   return req;
 }
