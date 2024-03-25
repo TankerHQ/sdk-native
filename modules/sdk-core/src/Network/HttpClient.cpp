@@ -307,7 +307,7 @@ HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
   HttpRequest req;
   req.method = method;
   req.url = url;
-  req.headers = {{TANKER_INSTANCE_ID, _instanceId}};
+  req.headers = {{TANKER_INSTANCE_ID, _instanceId}, {ACCEPT, "application/json"}};
   if (!_accessToken.empty())
     req.headers.set({AUTHORIZATION, _accessToken});
 
