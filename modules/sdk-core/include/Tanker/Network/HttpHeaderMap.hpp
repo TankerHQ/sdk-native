@@ -37,16 +37,12 @@ public:
 
   // Adds a header, replacing any previous value with the same name.
   void set(HeaderName const& k, HeaderValue const& v);
-  void set(HeaderName&& k, HeaderValue&& v);
   void set(ValueType const& pair);
-  void set(ValueType&& pair);
 
   // Adds a header, appending its value to any previous with the same name.
   // This allows a HTTP header to have multiple values.
   void append(HeaderName const& k, HeaderValue const& v);
-  void append(HeaderName&& k, HeaderValue&& v);
   void append(ValueType const& pair);
-  void append(ValueType&& pair);
 
   // Remove a header (and all its values)
   void erase(HeaderName const& k);

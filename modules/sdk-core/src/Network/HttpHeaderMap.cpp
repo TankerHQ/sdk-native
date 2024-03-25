@@ -1,20 +1,28 @@
 #include <Tanker/Network/HttpHeaderMap.hpp>
 
+#include <boost/algorithm/string.hpp>
+
+using boost::algorithm::to_lower_copy;
+
 namespace Tanker::Network
 {
-HttpHeaderMap::HttpHeaderMap(std::initializer_list<ValueType> list) : headers{list}
+HttpHeaderMap::HttpHeaderMap(std::initializer_list<ValueType> list)
 {
+  for (auto const& elem : list)
+    append(elem);
 }
 
 HttpHeaderMap& HttpHeaderMap::operator=(std::initializer_list<ValueType> list)
 {
-  headers = list;
+  headers = {};
+  for (auto const& elem : list)
+    append(elem);
   return *this;
 }
 
 std::optional<HttpHeaderMap::HeaderValue const> HttpHeaderMap::get(const HeaderName& k) const
 {
-  auto it = headers.find(k);
+  auto it = headers.find(to_lower_copy(k));
   if (it == headers.end())
     return std::nullopt;
   else
@@ -23,56 +31,34 @@ std::optional<HttpHeaderMap::HeaderValue const> HttpHeaderMap::get(const HeaderN
 
 HttpHeaderMap::InnerMap::const_iterator HttpHeaderMap::find_all(const HeaderName& k) const
 {
-  return headers.find(k);
+  return headers.find(to_lower_copy(k));
 }
 
 void HttpHeaderMap::set(HeaderName const& k, HeaderValue const& v)
 {
-  headers.erase(k);
-  headers.insert({k, v});
-}
-
-void HttpHeaderMap::set(HeaderName&& k, HeaderValue&& v)
-{
-  headers.erase(k);
-  headers.insert({std::move(k), std::move(v)});
+  auto lower_key = to_lower_copy(k);
+  headers.erase(lower_key);
+  headers.insert({lower_key, v});
 }
 
 void HttpHeaderMap::set(ValueType const& pair)
 {
-  headers.erase(pair.first);
-  headers.insert(pair);
-}
-
-void HttpHeaderMap::set(ValueType&& pair)
-{
-  headers.erase(pair.first);
-  headers.insert(std::move(pair));
+  set(pair.first, pair.second);
 }
 
 void HttpHeaderMap::append(HeaderName const& k, HeaderValue const& v)
 {
-  headers.insert({k, v});
-}
-
-void HttpHeaderMap::append(HeaderName&& k, HeaderValue&& v)
-{
-  headers.insert({std::move(k), std::move(v)});
+  headers.insert({to_lower_copy(k), v});
 }
 
 void HttpHeaderMap::append(ValueType const& pair)
 {
-  headers.insert(pair);
-}
-
-void HttpHeaderMap::append(ValueType&& pair)
-{
-  headers.insert(std::move(pair));
+  append(pair.first, pair.second);
 }
 
 void HttpHeaderMap::erase(HeaderName const& k)
 {
-  headers.erase(k);
+  headers.erase(to_lower_copy(k));
 }
 
 HttpHeaderMap::InnerMap::const_iterator HttpHeaderMap::begin() const noexcept
