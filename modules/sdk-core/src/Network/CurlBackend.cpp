@@ -42,9 +42,7 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo, HttpRequest const& 
   {
     creq->add_header("Content-Length: 0");
   }
-  
-  creq->add_header(fmt::format("X-Tanker-SdkType: {}", sdkInfo.sdkType));
-  creq->add_header(fmt::format("X-Tanker-SdkVersion: {}", sdkInfo.version));
+
   for (auto const& [name, value] : req.headers)
     creq->add_header(fmt::format("{}: {}", name, value));
 

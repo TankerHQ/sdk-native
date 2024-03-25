@@ -47,7 +47,7 @@ static inline constexpr auto ConcurrentRequestCount = 4;
 class HttpClient
 {
 public:
-  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend);
+  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend, SdkInfo const& info);
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
   HttpClient& operator=(HttpClient const&) = delete;
@@ -78,6 +78,7 @@ private:
   std::string _accessToken;
   Backend* _backend;
   tc::semaphore _semaphore{ConcurrentRequestCount};
+  SdkInfo const& _info;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;

@@ -121,8 +121,8 @@ std::error_code make_error_code(HttpError const& e)
       e.ec, "HTTP error occurred: {} {}: {} {}, traceID: {}", e.method, e.href, e.status, e.message, e.traceId);
 }
 
-HttpClient::HttpClient(std::string baseUrl, std::string instanceId, Backend* backend)
-  : _baseUrl(std::move(baseUrl)), _instanceId(std::move(instanceId)), _backend(backend)
+HttpClient::HttpClient(std::string baseUrl, std::string instanceId, Backend* backend, SdkInfo const& info)
+  : _baseUrl(std::move(baseUrl)), _instanceId(std::move(instanceId)), _backend(backend), _info(info)
 {
   if (!_baseUrl.empty() && _baseUrl.back() != '/')
     _baseUrl += '/';
@@ -307,7 +307,11 @@ HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
   HttpRequest req;
   req.method = method;
   req.url = url;
-  req.headers = {{TANKER_INSTANCE_ID, _instanceId}, {ACCEPT, "application/json"}};
+
+  req.headers = {{ACCEPT, "application/json"},
+                 {TANKER_INSTANCE_ID, _instanceId},
+                 {TANKER_SDK_TYPE, _info.sdkType},
+                 {TANKER_SDK_VERSION, _info.version}};
   if (!_accessToken.empty())
     req.headers.set({AUTHORIZATION, _accessToken});
 
