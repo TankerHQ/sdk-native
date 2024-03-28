@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Oidc/IRequester.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/OidcAuthorizationCode.hpp>
@@ -16,7 +15,7 @@ class HttpClient;
 
 namespace Oidc
 {
-class Requester : public IRequester
+class Requester
 {
   Requester(Requester const&) = delete;
   Requester& operator=(Requester const&) = delete;
@@ -25,10 +24,11 @@ class Requester : public IRequester
 
 public:
   Requester(Network::HttpClient* httpClient);
+  ~Requester() = default;
 
   tc::cotask<OidcAuthorizationCode> oidcSignIn(Trustchain::UserId const& userId,
                                                std::string const& providerId,
-                                               std::string const& cookie) override;
+                                               std::string const& cookie);
 
 private:
   Network::HttpClient* _httpClient;

@@ -613,14 +613,14 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(tanker_t* ses
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status != TANKER_STATUS_STOPPED
- * \param provider_id oidc provider id of the trusted identity procvider (as returned by the app managment API)
- * \param cookie cookie added to the authorization HTTP request
+ * \param provider_id oidc provider id of the trusted identity provider (as returned by the app managment API)
+ * \param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  *
  * \return A future of tanker_oidc_authorization_code_verification*
  *
  * \throws TANKER_ERROR_OTHER an error occured during OIDC authorization
  */
-CTANKER_EXPORT tanker_expected_t* tanker_authenticate_with_idp(tanker_t* session, char const* provider_id, char const* cookie);
+CTANKER_EXPORT tanker_future_t* tanker_authenticate_with_idp(tanker_t* session, char const* provider_id, char const* cookie);
 
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 

@@ -641,7 +641,7 @@ tanker_future_t* tanker_verify_provisional_identity(tanker_t* ctanker, tanker_ve
 tanker_expected_t* tanker_authenticate_with_idp(tanker_t* ctanker, char const* provider_id, char const* cookie)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->authenticateWithIdp(std::string(provider_id), std::string(cookie))
+  return makeFuture(tanker->authenticateWithIdp(provider_id, cookie)
                         .and_then(tc::get_synchronous_executor(), [](OidcAuthorizationCode const& verification) {
                           auto cVerification = new tanker_oidc_authorization_code_verification_t;
                           cVerification->version = 1;

@@ -969,8 +969,8 @@ TEST_CASE_METHOD(TrustchainFixture, "authenticateWithIdp is restricted to truste
   auto martineLaptop = martineDevice.createCore();
 
   TC_AWAIT(enableOidc());
-  auto const oidcConfig = TestConstants::oidcConfig();
-  auto const providerId = oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
+  auto const googleOidcConfig = TestConstants::oidcConfig();
+  auto const providerId = oidcProviderId(martineLaptop->sdkInfo().trustchainId, googleOidcConfig.issuer, googleOidcConfig.clientId);
 
   REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) == Status::IdentityRegistrationNeeded);
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, "fake_oidc_subject=martine")),
@@ -986,9 +986,9 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
   auto martinePhone = martineDevice2.createCore();
 
   auto const subjectCookie = "fake_oidc_subject=martine";
-  auto const oidcConfig = TestConstants::oidcConfig();
+  auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
   auto const providerId =
-      oidcProviderId(martineLaptop->sdkInfo().trustchainId, oidcConfig.fakeOidcUrl + "/issuer", "tanker");
+      oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl, "tanker");
 
   TC_AWAIT(enableFakeOidc());
 

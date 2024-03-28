@@ -56,11 +56,11 @@ tc::cotask<void> TrustchainFactory::enableOidc(Tanker::Trustchain::TrustchainId 
 
 tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id)
 {
-  auto const& oidcConfig = TestConstants::oidcConfig();
+  auto const& fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
   Admin::OidcConfiguration adminOidcConf{};
   adminOidcConf.displayName = "fake-oidc";
   adminOidcConf.clientId = "tanker";
-  adminOidcConf.issuer = oidcConfig.fakeOidcUrl + "/issuer";
+  adminOidcConf.issuer = fakeOidcIssuerUrl;
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;

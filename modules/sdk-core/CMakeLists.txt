@@ -51,7 +51,6 @@ add_library(tankercore STATIC
   include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
   include/Tanker/Network/Backend.hpp
-  include/Tanker/Oidc/IRequester.hpp
   include/Tanker/Oidc/Nonce.hpp
   include/Tanker/Oidc/NonceManager.hpp
   include/Tanker/Oidc/Requester.hpp
