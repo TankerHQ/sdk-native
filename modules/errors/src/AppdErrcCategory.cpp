@@ -78,6 +78,8 @@ std::string AppdErrcCategory::message(int c) const
     return "oidc provider not configured";
   case AppdErrc::OidcProviderNotSupported:
     return "oidc provider not supported";
+  case AppdErrc::_Deprecated_VerificationNeeded:
+    return "deprecated error code";
   }
   return "unknown error";
 }
