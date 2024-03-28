@@ -18,6 +18,7 @@
 #include <tconcurrent/semaphore.hpp>
 
 #include <chrono>
+#include <optional>
 #include <string_view>
 
 namespace Tanker::Network
@@ -61,9 +62,9 @@ public:
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   tc::cotask<HttpResult> asyncUnauthGet(std::string_view target);
-  tc::cotask<HttpResult> asyncUnauthGet(std::string_view target,
-                                        std::pair<std::string const, std::string> const& header);
   tc::cotask<HttpResult> asyncUnauthPost(std::string_view target, nlohmann::json data);
+  tc::cotask<std::string> asyncGetRedirectLocation(std::string_view target,
+                                                   std::optional<std::string> cookie = {});
 
   std::string makeUrl(std::string_view target) const;
   std::string makeUrl(std::string_view target, nlohmann::json const& query) const;

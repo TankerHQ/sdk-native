@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Network/HttpHeaderMap.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -67,39 +68,37 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
-{
-  if (res.statusCode == 302)
+HttpError handleErrorResponse(HttpResponse const& res, HttpRequest const& req) {
+  auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
+
+  if (!(contentType && boost::algorithm::starts_with(*contentType, "application/json")))
   {
-    auto const location = res.headers.get(HttpHeader::LOCATION);
-    if (location)
-      return boost::outcome_v2::success(nlohmann::json{{"location", *location}});
-    else
-      throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                             "{} {}, status: 302; missing Location header in the response",
-                             httpMethodToString(req.method),
-                             req.url);
+    throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                            "{} {}, status: {}",
+                            httpMethodToString(req.method),
+                            req.url,
+                            res.statusCode);
   }
 
-  if (res.statusCode / 100 != 2)
+  try
   {
-    auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
-    if (contentType && boost::algorithm::starts_with(*contentType, "application/json"))
-    {
-      auto const json = nlohmann::json::parse(res.body);
-      auto error = json.at("error").get<HttpError>();
-      error.method = req.method;
-      error.href = req.url;
-      return boost::outcome_v2::failure(std::move(error));
-    }
-    else
-    {
-      throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                             "{} {}, status: {}",
-                             httpMethodToString(req.method),
-                             req.url,
-                             res.statusCode);
-    }
+    auto const json = nlohmann::json::parse(res.body);
+    auto error = json.at("error").get<HttpError>();
+    error.method = req.method;
+    error.href = req.url;
+    return error;
+  }
+  catch (nlohmann::json::exception const& ex)
+  {
+    throw Errors::formatEx(Errors::AppdErrc::InternalError, "invalid {} http response format: {}", res.statusCode, res.body);
+  }
+}
+
+HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
+{
+  if (res.statusCode < 200 || res.statusCode >= 300)
+  {
+    return boost::outcome_v2::failure(handleErrorResponse(res, req));
   }
 
   try
@@ -302,14 +301,6 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target)
   TC_RETURN(TC_AWAIT(fetch(std::move(req))));
 }
 
-tc::cotask<HttpResult> HttpClient::asyncUnauthGet(std::string_view target,
-                                                  std::pair<std::string const, std::string> const& header)
-{
-  auto req = makeRequest(HttpMethod::Get, target);
-  req.headers.set(header);
-  TC_RETURN(TC_AWAIT(fetch(std::move(req))));
-}
-
 tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target, nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Post, target, std::move(data));
@@ -390,5 +381,36 @@ tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
   auto res = TC_AWAIT(_backend->fetch(req));
   TDEBUG("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
   TC_RETURN(handleResponse(std::move(res), req));
+}
+
+tc::cotask<std::string> HttpClient::asyncGetRedirectLocation(std::string_view target,
+                                                             std::optional<std::string> cookie)
+{
+  auto req = makeRequest(HttpMethod::Get, target);
+  if (cookie)
+    req.headers.set(HttpHeader::COOKIE, *cookie);
+
+  auto const lock = TC_AWAIT(_semaphore.get_scope_lock());
+
+  FUNC_TIMER(Net);
+  TDEBUG("{} {}", httpMethodToString(req.method), req.url);
+  auto res = TC_AWAIT(_backend->fetch(req));
+  TDEBUG("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
+
+  if (res.statusCode != 302)
+  {
+    outcome_throw_as_system_error_with_payload(handleErrorResponse(res, req));
+  }
+
+  auto const& location = res.headers.get(HttpHeader::LOCATION);
+  if (!location)
+  {
+    throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                           "{} {}, status: 302; missing Location header in the response",
+                           httpMethodToString(req.method),
+                           req.url);
+  }
+
+  TC_RETURN(*location);
 }
 }

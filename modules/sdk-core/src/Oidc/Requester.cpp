@@ -24,13 +24,11 @@ tc::cotask<OidcAuthorizationCode> Requester::oidcSignIn(Trustchain::UserId const
   auto const query = nlohmann::json{{"user_id", mgs::base64url_nopad::encode(userId)}};
   auto signinUrl =
       _httpClient->makeUrl(fmt::format("oidc/{providerId}/signin", fmt::arg("providerId", providerId)), query);
-  auto const signinResponse = TC_AWAIT(_httpClient->asyncUnauthGet(signinUrl)).value();
+  auto const authorizationLocation = TC_AWAIT(_httpClient->asyncGetRedirectLocation(signinUrl));
 
-  auto const authorizationLocation = signinResponse.at("location").get<std::string>();
-  auto const authorizationResponse =
-      TC_AWAIT(_httpClient->asyncUnauthGet(authorizationLocation, {"Cookie", cookie})).value();
+  auto const callbackLocation =
+      TC_AWAIT(_httpClient->asyncGetRedirectLocation(authorizationLocation, cookie));
 
-  auto const callbackLocation = authorizationResponse.at("location").get<std::string>();
   auto const resp = TC_AWAIT(_httpClient->asyncUnauthGet(callbackLocation)).value();
 
   auto const code = resp.at("code").get<std::string>();
