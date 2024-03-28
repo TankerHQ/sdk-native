@@ -339,7 +339,6 @@ CTANKER_EXPORT tanker_future_t* tanker_destroy(tanker_t* tanker);
 
 /*!
  * Connect to an event.
- * \param tanker A tanker tanker_t* instance.
  * \param event The event to connect.
  * \param data The data to pass to the callback.
  * \return an expected of NULL.
@@ -362,7 +361,6 @@ CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(tanker_t* tanker, enum
 /*!
  * Sign up to Tanker.
  *
- * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
  * \return a future of tanker_status
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p identity is NULL
@@ -375,7 +373,6 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker, char const* ident
 /*!
  * Enrolls a user to Tanker. And assigns its pre-verified verification methods
  *
- * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
  * \param verifications the pre-verified verification methods of the user
  * \return an expected of NULL
@@ -391,7 +388,6 @@ CTANKER_EXPORT tanker_expected_t* tanker_enroll_user(tanker_t* tanker,
 /*!
  * Register a verification method associated with an identity.
  *
- * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user, must not be NULL.
  * \return a future of NULL if with_session_token is false, otherwise a
@@ -410,7 +406,6 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(tanker_t* tanker,
 /*!
  * Verify an identity with provided verification.
  *
- * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user. Must not be NULL.
  * \return a future of NULL if with_session_token is false, otherwise a
@@ -428,7 +423,6 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_identity(tanker_t* tanker,
 
 /*!
  * Close a tanker session.
- * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
  * \pre tanker must be opened with tanker_open().
  */
@@ -436,7 +430,6 @@ CTANKER_EXPORT tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
  * Create a nonce to use in the oidc authorization code flow
- * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
  */
 CTANKER_EXPORT tanker_future_t* tanker_create_oidc_nonce(tanker_t* tanker);
@@ -448,7 +441,6 @@ CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker, cha
 
 /*!
  * The current Tanker status.
- * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
  * \return the current Tanker status.
  */
@@ -456,7 +448,6 @@ CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
  * Generate an verificationKey that can be used to accept a device
- * \param session A tanker tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of char* that must be freed with tanker_free_buffer
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
@@ -467,7 +458,6 @@ CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(tanker_t* sessi
 /*!
  * Registers, or updates, the user's unlock claims,
  * creates an unlock key if necessary
- * \param session a tanker tanker_t* instance
  * \param verification a instance of tanker_verification_t
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of NULL if with_session_token is false, otherwise a
@@ -479,7 +469,6 @@ CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(tanker_t* session
 
 /*!
  * Return all registered verification methods for the current user.
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a tanker_verification_method_list_t*
  */
@@ -515,7 +504,6 @@ CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypte
 
 /*!
  * Encrypt data.
- * \param tanker A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param encrypted_data The container for the encrypted data.
  * \pre encrypted_data must be allocated with a call to
@@ -538,7 +526,6 @@ CTANKER_EXPORT tanker_future_t* tanker_encrypt(tanker_t* tanker,
 /*!
  * Decrypt an encrypted data.
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param decrypted_data Decrypted array of bytes.
  * \pre decrypted_data must be allocated with a call to
@@ -558,7 +545,6 @@ CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
 /*!
  * Share a symetric key of an encrypted data with other users.
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param resource_ids Array of string describing the resources.
  * \param nb_resource_ids The number of resources in resource_ids.
@@ -580,7 +566,6 @@ CTANKER_EXPORT tanker_future_t* tanker_share(tanker_t* session,
 /*!
  * Attach a provisional identity to the current user
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param provisional_identity provisional identity you want to claim.
  *
@@ -593,7 +578,6 @@ CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(tanker_t* ses
 /*!
  * Verify a provisional identity for the current user
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param verification the verification used to verify this provisional
  * identity.
@@ -611,14 +595,14 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(tanker_t* ses
  *
  * \warning This API is exposed for testing purposes only.
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status != TANKER_STATUS_STOPPED
  * \param provider_id oidc provider id of the trusted identity provider (as returned by the app managment API)
  * \param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  *
  * \return A future of tanker_oidc_authorization_code_verification*
  *
- * \throws TANKER_ERROR_OTHER an error occured during OIDC authorization
+ * \throws TANKER_PRECONDITION_FAILED the requested provider is not authorized for the OIDC authorization code flow
+ * \throws TANKER_PRECONDITION_FAILED an error occured during OIDC authorization
  */
 CTANKER_EXPORT tanker_future_t* tanker_authenticate_with_idp(tanker_t* session, char const* provider_id, char const* cookie);
 
