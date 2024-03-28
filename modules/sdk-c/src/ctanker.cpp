@@ -687,6 +687,14 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
   delete result;
 }
 
+void tanker_free_authenticate_with_idp_result(tanker_oidc_authorization_code_verification_t* result)
+{
+  free(const_cast<char*>(result->provider_id));
+  free(const_cast<char*>(result->authorization_code));
+  free(const_cast<char*>(result->state));
+  delete result;
+}
+
 tanker_expected_t* tanker_prehash_password(char const* password)
 {
   return makeFuture(tc::sync([&] {

@@ -628,6 +628,8 @@ CTANKER_EXPORT void tanker_free_verification_method_list(tanker_verification_met
 
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
 
+CTANKER_EXPORT void tanker_free_authenticate_with_idp_result(tanker_oidc_authorization_code_verification_t* result);
+
 /*!
  * Hash a password before sending it to the application server where it will
  * be hashed again.
