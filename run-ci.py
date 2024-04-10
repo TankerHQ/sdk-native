@@ -43,7 +43,7 @@ def test_matcher(profile: Profile) -> None:
     )
 
     tankerci.run(
-        build_path / "bin" / "test_functional",
+        str(build_path / "bin" / "test_functional"),
         "--reporter",
         "test-names",
         "--out",
