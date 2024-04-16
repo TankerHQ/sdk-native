@@ -8,6 +8,7 @@
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/OidcAuthorizationCode.hpp>
 #include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
@@ -118,6 +119,8 @@ public:
 
   tc::future<AttachResult> attachProvisionalIdentity(SSecretProvisionalIdentity const& sidentity);
   tc::future<void> verifyProvisionalIdentity(Verification::Verification const& verification);
+
+  tc::future<OidcAuthorizationCode> authenticateWithIdp(std::string const& providerId, std::string const& cookie);
 
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();

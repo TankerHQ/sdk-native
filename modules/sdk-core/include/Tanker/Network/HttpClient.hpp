@@ -18,6 +18,7 @@
 #include <tconcurrent/semaphore.hpp>
 
 #include <chrono>
+#include <optional>
 #include <string_view>
 
 namespace Tanker::Network
@@ -47,7 +48,7 @@ static inline constexpr auto ConcurrentRequestCount = 4;
 class HttpClient
 {
 public:
-  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend);
+  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend, SdkInfo const& info);
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
   HttpClient& operator=(HttpClient const&) = delete;
@@ -62,6 +63,8 @@ public:
 
   tc::cotask<HttpResult> asyncUnauthGet(std::string_view target);
   tc::cotask<HttpResult> asyncUnauthPost(std::string_view target, nlohmann::json data);
+  tc::cotask<std::string> asyncGetRedirectLocation(std::string_view target,
+                                                   std::optional<std::string> cookie = {});
 
   std::string makeUrl(std::string_view target) const;
   std::string makeUrl(std::string_view target, nlohmann::json const& query) const;
@@ -78,6 +81,7 @@ private:
   std::string _accessToken;
   Backend* _backend;
   tc::semaphore _semaphore{ConcurrentRequestCount};
+  SdkInfo const& _info;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;

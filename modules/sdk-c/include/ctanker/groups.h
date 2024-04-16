@@ -15,7 +15,6 @@ extern "C" {
  * Create a group containing the given users.
  * Share a symetric key of an encrypted data with other users.
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param public_identities_to_add Array of the group members' public
  * identities. \param nb_public_identities_to_add The number of members in
@@ -35,7 +34,6 @@ CTANKER_EXPORT tanker_future_t* tanker_create_group(tanker_t* session,
  * Updates an existing group, referenced by its groupId,
  * adding the user identified by their user Ids to the group's members.
  *
- * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param group_id The group ID returned by tanker_create_group
  * \param public_identities_to_add Array of the new group members' public

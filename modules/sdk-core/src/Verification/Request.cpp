@@ -135,6 +135,12 @@ RequestWithVerif makeRequestWithVerif(RequestVerification const& verification,
             checkNotEmpty(v.subject, "oidcSubject");
             return v;
           },
+          [&](OidcAuthorizationCode const& v) -> RequestVerificationPayload {
+            checkNotEmpty(v.provider_id, "oidcProviderID");
+            checkNotEmpty(v.authorization_code, "oidcAuthorizationCode");
+            checkNotEmpty(v.state, "oidcState");
+            return v;
+          },
       },
       verification);
   return {verif, withTokenNonce};
@@ -224,56 +230,59 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
     json& j, Tanker::Verification::RequestVerificationPayload const& request)
 {
   using namespace Tanker;
-  boost::variant2::visit(overloaded{
-                             [&](Verification::EncryptedEmailVerification const& e) {
-                               j["hashed_email"] = e.hashedEmail;
-                               j["verification_code"] = e.verificationCode;
-                               j["v2_encrypted_email"] = e.encryptedEmail;
-                             },
-                             [&](Verification::EncryptedPhoneNumberVerification const& e) {
-                               j["phone_number"] = e.phoneNumber;
-                               j["verification_code"] = e.verificationCode;
-                               j["encrypted_phone_number"] = e.encryptedPhoneNumber;
-                               j["user_salt"] = e.userSalt;
-                               if (e.provisionalSalt)
-                               {
-                                 j["provisional_salt"] = *e.provisionalSalt;
-                               }
-                             },
-                             [&](Trustchain::HashedPassphrase const& p) { j["hashed_passphrase"] = p; },
-                             [&](Trustchain::HashedE2ePassphrase const& p) { j["hashed_e2e_passphrase"] = p; },
-                             [&](OidcIdToken const& t) { j["oidc_id_token"] = t.token; },
-                             [&](Verification::OidcIdTokenWithChallenge const& t) {
-                               j["oidc_id_token"] = t.oidcIdToken.token;
-                               j["oidc_challenge"] = t.oidcChallenge.challenge;
-                               j["oidc_challenge_signature"] = t.oidcChallenge.signature;
-                               if (t.oidcTestNonce)
-                               {
-                                 j["oidc_test_nonce"] = *t.oidcTestNonce;
-                               }
-                             },
-                             [](VerificationKey const& v) {},
-                             [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
-                               j["hashed_email"] = e.hashedEmail;
-                               j["v2_encrypted_email"] = e.encryptedEmail;
-                               j["is_preverified"] = true;
-                             },
-                             [&](Verification::EncryptedPreverifiedPhoneNumberVerification const& e) {
-                               j["phone_number"] = e.phoneNumber;
-                               j["encrypted_phone_number"] = e.encryptedPhoneNumber;
-                               j["user_salt"] = e.userSalt;
-                               j["is_preverified"] = true;
-                               if (e.provisionalSalt)
-                               {
-                                 j["provisional_salt"] = *e.provisionalSalt;
-                               }
-                             },
-                             [&](PreverifiedOidc const& e) {
-                              j["oidc_provider_id"] = e.provider_id;
-                              j["oidc_subject"] = e.subject;
-                              j["is_preverified"] = true;
-                             }
-                         },
+  boost::variant2::visit(overloaded{[&](Verification::EncryptedEmailVerification const& e) {
+                                      j["hashed_email"] = e.hashedEmail;
+                                      j["verification_code"] = e.verificationCode;
+                                      j["v2_encrypted_email"] = e.encryptedEmail;
+                                    },
+                                    [&](Verification::EncryptedPhoneNumberVerification const& e) {
+                                      j["phone_number"] = e.phoneNumber;
+                                      j["verification_code"] = e.verificationCode;
+                                      j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+                                      j["user_salt"] = e.userSalt;
+                                      if (e.provisionalSalt)
+                                      {
+                                        j["provisional_salt"] = *e.provisionalSalt;
+                                      }
+                                    },
+                                    [&](Trustchain::HashedPassphrase const& p) { j["hashed_passphrase"] = p; },
+                                    [&](Trustchain::HashedE2ePassphrase const& p) { j["hashed_e2e_passphrase"] = p; },
+                                    [&](OidcIdToken const& t) { j["oidc_id_token"] = t.token; },
+                                    [&](Verification::OidcIdTokenWithChallenge const& t) {
+                                      j["oidc_id_token"] = t.oidcIdToken.token;
+                                      j["oidc_challenge"] = t.oidcChallenge.challenge;
+                                      j["oidc_challenge_signature"] = t.oidcChallenge.signature;
+                                      if (t.oidcTestNonce)
+                                      {
+                                        j["oidc_test_nonce"] = *t.oidcTestNonce;
+                                      }
+                                    },
+                                    [](VerificationKey const& v) {},
+                                    [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
+                                      j["hashed_email"] = e.hashedEmail;
+                                      j["v2_encrypted_email"] = e.encryptedEmail;
+                                      j["is_preverified"] = true;
+                                    },
+                                    [&](Verification::EncryptedPreverifiedPhoneNumberVerification const& e) {
+                                      j["phone_number"] = e.phoneNumber;
+                                      j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+                                      j["user_salt"] = e.userSalt;
+                                      j["is_preverified"] = true;
+                                      if (e.provisionalSalt)
+                                      {
+                                        j["provisional_salt"] = *e.provisionalSalt;
+                                      }
+                                    },
+                                    [&](PreverifiedOidc const& e) {
+                                      j["oidc_provider_id"] = e.provider_id;
+                                      j["oidc_subject"] = e.subject;
+                                      j["is_preverified"] = true;
+                                    },
+                                    [&](OidcAuthorizationCode const& o) {
+                                      j["oidc_provider_id"] = o.provider_id;
+                                      j["oidc_authorization_code"] = o.authorization_code;
+                                      j["oidc_state"] = o.state;
+                                    }},
                          request);
 }
 

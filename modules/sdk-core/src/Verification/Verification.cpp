@@ -40,7 +40,8 @@ VerificationMethod VerificationMethod::from(Verification const& v)
                  [](ByPhoneNumber const& v) -> VerificationMethod { return v.phoneNumber; },
                  [](PreverifiedEmail const& v) -> VerificationMethod { return v; },
                  [](PreverifiedPhoneNumber const& v) -> VerificationMethod { return v; },
-                 [](PreverifiedOidc const& v) -> VerificationMethod { return v; }},
+                 [](PreverifiedOidc const& v) -> VerificationMethod { return v; },
+                 [](OidcAuthorizationCode const& v) -> VerificationMethod { return v; }},
       v);
 }
 

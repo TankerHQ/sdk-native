@@ -80,7 +80,8 @@ std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
   auto client = std::make_unique<Network::HttpClient>(
       fmt::format("{url}/v2/apps/{appId:#S}/", fmt::arg("url", url), fmt::arg("appId", info.trustchainId)),
       std::move(instanceId),
-      backend);
+      backend,
+      info);
   return client;
 }
 
@@ -945,6 +946,13 @@ tc::cotask<void> Core::verifyProvisionalIdentity(Verification::Verification cons
                                       _session->userSecret(),
                                       identity->appSignatureKeyPair,
                                       std::nullopt))));
+}
+
+tc::cotask<OidcAuthorizationCode> Core::authenticateWithIdp(std::string const& providerId, std::string const& cookie)
+{
+  assertStatus({Status::IdentityRegistrationNeeded, Status::IdentityVerificationNeeded, Status::Ready},
+               "authenticateWithIdp");
+  TC_RETURN(TC_AWAIT(_session->requesters().oidcSignIn(_session->userId(), providerId, cookie)));
 }
 
 void Core::nukeDatabase()

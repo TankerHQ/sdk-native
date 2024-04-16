@@ -38,6 +38,10 @@ enum class AppdErrc
   MissingUserGroupMembers,
   FeatureNotEnabled,
   Conflict,
+  InvalidAuthorizationCode,
+  OidcProviderInteractionRequired,
+  OidcProviderNotConfigured,
+  OidcProviderNotSupported,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;

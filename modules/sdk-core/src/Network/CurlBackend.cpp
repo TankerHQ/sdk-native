@@ -37,19 +37,14 @@ std::shared_ptr<tcurl::request> makeRequest(SdkInfo sdkInfo, HttpRequest const& 
   {
     curl_easy_setopt(creq->get_curl(), CURLOPT_POSTFIELDSIZE, long(req.body.size()));
     curl_easy_setopt(creq->get_curl(), CURLOPT_COPYPOSTFIELDS, req.body.data());
-    creq->add_header("Content-type: application/json");
   }
   else
   {
     creq->add_header("Content-Length: 0");
   }
 
-  creq->add_header("Accept: application/json");
-  creq->add_header(fmt::format("X-Tanker-SdkType: {}", sdkInfo.sdkType));
-  creq->add_header(fmt::format("X-Tanker-SdkVersion: {}", sdkInfo.version));
-  creq->add_header(fmt::format("X-Tanker-Instanceid: {}", req.instanceId));
-  if (!req.authorization.empty())
-    creq->add_header(fmt::format("Authorization: {}", req.authorization));
+  for (auto const& [name, value] : req.headers)
+    creq->add_header(fmt::format("{}: {}", name, value));
 
   return creq;
 }
@@ -71,10 +66,17 @@ tc::cotask<HttpResponse> CurlBackend::fetch(HttpRequest req)
     curl_easy_getinfo(creq->get_curl(), CURLINFO_RESPONSE_CODE, &httpcode);
     res.statusCode = httpcode;
 
-    char* pcontenttype;
-    curl_easy_getinfo(creq->get_curl(), CURLINFO_CONTENT_TYPE, &pcontenttype);
-    if (pcontenttype)
-      res.contentType = pcontenttype;
+    struct curl_header* prev = NULL;
+    struct curl_header* h;
+    int last_request = -1;
+    // All headers except HTTP 2/3 pseudo-headers and CONNECT proxy responses
+    unsigned int header_types = CURLH_HEADER | CURLH_1XX | CURLH_TRAILER;
+    while ((h = curl_easy_nextheader(creq->get_curl(), header_types, last_request, prev)))
+    {
+      res.headers.append(h->name, h->value);
+      prev = h;
+    }
+
     res.body = std::string(cres.data.begin(), cres.data.end());
     TC_RETURN(res);
   }

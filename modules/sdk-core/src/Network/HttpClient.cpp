@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Network/HttpHeaderMap.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -53,6 +54,10 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"missing_user_group_members", AppdErrc::MissingUserGroupMembers},
     {"feature_not_enabled", AppdErrc::FeatureNotEnabled},
     {"conflict", AppdErrc::Conflict},
+    {"invalid_authorization_code", AppdErrc::InvalidAuthorizationCode},
+    {"oidc_provider_interaction_required", AppdErrc::OidcProviderInteractionRequired},
+    {"oidc_provider_not_configured", AppdErrc::OidcProviderNotConfigured},
+    {"oidc_provider_not_supported", AppdErrc::OidcProviderNotSupported},
 };
 
 AppdErrc getErrorFromCode(std::string_view code)
@@ -63,26 +68,37 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
+HttpError handleErrorResponse(HttpResponse const& res, HttpRequest const& req) {
+  auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
+
+  if (!(contentType && boost::algorithm::starts_with(*contentType, "application/json")))
+  {
+    throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                            "{} {}, status: {}",
+                            httpMethodToString(req.method),
+                            req.url,
+                            res.statusCode);
+  }
+
+  try
+  {
+    auto const json = nlohmann::json::parse(res.body);
+    auto error = json.at("error").get<HttpError>();
+    error.method = req.method;
+    error.href = req.url;
+    return error;
+  }
+  catch (nlohmann::json::exception const& ex)
+  {
+    throw Errors::formatEx(Errors::AppdErrc::InternalError, "invalid {} http response format: {}", res.statusCode, res.body);
+  }
+}
+
 HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
 {
-  if (res.statusCode / 100 != 2)
+  if (res.statusCode < 200 || res.statusCode >= 300)
   {
-    if (boost::algorithm::starts_with(res.contentType, "application/json"))
-    {
-      auto const json = nlohmann::json::parse(res.body);
-      auto error = json.at("error").get<HttpError>();
-      error.method = req.method;
-      error.href = req.url;
-      return boost::outcome_v2::failure(std::move(error));
-    }
-    else
-    {
-      throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                             "{} {}, status: {}",
-                             httpMethodToString(req.method),
-                             req.url,
-                             res.statusCode);
-    }
+    return boost::outcome_v2::failure(handleErrorResponse(res, req));
   }
 
   try
@@ -120,8 +136,8 @@ std::error_code make_error_code(HttpError const& e)
       e.ec, "HTTP error occurred: {} {}: {} {}, traceID: {}", e.method, e.href, e.status, e.message, e.traceId);
 }
 
-HttpClient::HttpClient(std::string baseUrl, std::string instanceId, Backend* backend)
-  : _baseUrl(std::move(baseUrl)), _instanceId(std::move(instanceId)), _backend(backend)
+HttpClient::HttpClient(std::string baseUrl, std::string instanceId, Backend* backend, SdkInfo const& info)
+  : _baseUrl(std::move(baseUrl)), _instanceId(std::move(instanceId)), _backend(backend), _info(info)
 {
   if (!_baseUrl.empty() && _baseUrl.back() != '/')
     _baseUrl += '/';
@@ -293,29 +309,36 @@ tc::cotask<HttpResult> HttpClient::asyncUnauthPost(std::string_view target, nloh
 
 HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url, nlohmann::json const& data)
 {
-  HttpRequest req;
-  req.method = method;
-  req.url = url;
+  auto req = makeRequest(method, url);
+  req.headers.set({HttpHeader::CONTENT_TYPE, "application/json"});
   req.body = data.dump();
-  req.instanceId = _instanceId;
-  req.authorization = _accessToken;
   return req;
 }
 
 HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
 {
+  using namespace HttpHeader;
+
   HttpRequest req;
   req.method = method;
   req.url = url;
-  req.instanceId = _instanceId;
-  req.authorization = _accessToken;
+
+  req.headers = {{ACCEPT, "application/json"},
+                 {TANKER_INSTANCE_ID, _instanceId},
+                 {TANKER_SDK_TYPE, _info.sdkType},
+                 {TANKER_SDK_VERSION, _info.version}};
+  if (!_accessToken.empty())
+    req.headers.set({AUTHORIZATION, _accessToken});
+
   return req;
 }
 
 tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 {
+  using namespace HttpHeader;
+
   TC_AWAIT(_authenticating);
-  if (req.authorization.empty())
+  if (!req.headers.get(AUTHORIZATION))
   {
     // No access token yet, authenticate before failing the first API call.
     //
@@ -323,7 +346,7 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
     // the recovery process when this API call occurs after a previous
     // re-authentication failure (because authenticate() clears "_accessToken")
     TC_AWAIT(authenticate());
-    req.authorization = _accessToken;
+    req.headers.set(AUTHORIZATION, _accessToken);
   }
 
   auto response = TC_AWAIT(fetch(req));
@@ -337,13 +360,13 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
     if (!_authenticating.is_ready())
       TC_AWAIT(_authenticating);
     // 2. First re-authentication attempt after access token expiration
-    else if (_accessToken == req.authorization)
+    else if (*req.headers.get(AUTHORIZATION) == _accessToken)
       TC_AWAIT(authenticate());
     // (else)
     // 3. Another API call already completed a re-authentication
 
     // We can safely retry now with _accessToken
-    req.authorization = _accessToken;
+    req.headers.set(AUTHORIZATION, _accessToken);
     TC_RETURN(TC_AWAIT(fetch(std::move(req))));
   }
   TC_RETURN(response);
@@ -358,5 +381,36 @@ tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
   auto res = TC_AWAIT(_backend->fetch(req));
   TDEBUG("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
   TC_RETURN(handleResponse(std::move(res), req));
+}
+
+tc::cotask<std::string> HttpClient::asyncGetRedirectLocation(std::string_view target,
+                                                             std::optional<std::string> cookie)
+{
+  auto req = makeRequest(HttpMethod::Get, target);
+  if (cookie)
+    req.headers.set(HttpHeader::COOKIE, *cookie);
+
+  auto const lock = TC_AWAIT(_semaphore.get_scope_lock());
+
+  FUNC_TIMER(Net);
+  TDEBUG("{} {}", httpMethodToString(req.method), req.url);
+  auto res = TC_AWAIT(_backend->fetch(req));
+  TDEBUG("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
+
+  if (res.statusCode != 302)
+  {
+    outcome_throw_as_system_error_with_payload(handleErrorResponse(res, req));
+  }
+
+  auto const& location = res.headers.get(HttpHeader::LOCATION);
+  if (!location)
+  {
+    throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                           "{} {}, status: 302; missing Location header in the response",
+                           httpMethodToString(req.method),
+                           req.url);
+  }
+
+  TC_RETURN(*location);
 }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Network/HttpHeaderMap.hpp>
+
 #include <string>
 
 namespace Tanker::Network
@@ -7,7 +9,7 @@ namespace Tanker::Network
 struct HttpResponse
 {
   int statusCode;
-  std::string contentType;
+  HttpHeaderMap headers;
   std::string body;
 };
 }

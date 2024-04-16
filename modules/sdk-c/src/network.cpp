@@ -24,14 +24,19 @@ CTankerBackend::CTankerBackend(tanker_http_options_t const& options) : _options(
 
 tc::cotask<HttpResponse> CTankerBackend::fetch(HttpRequest req)
 {
+  using namespace HttpHeader;
+
   tanker_http_request_internal request{};
   request.request.method = httpMethodToString(req.method);
   request.request.url = req.url.c_str();
-  request.request.instance_id = req.instanceId.c_str();
-  if (!req.authorization.empty())
-    request.request.authorization = req.authorization.c_str();
   request.request.body = req.body.c_str();
   request.request.body_size = req.body.size();
+
+  std::vector<tanker_http_header_t> c_headers;
+  for (auto const& [name, value] : req.headers)
+    c_headers.push_back({name.c_str(), value.c_str()});
+  request.request.headers = c_headers.data();
+  request.request.num_headers = c_headers.size();
 
   // [&] capture is fine because we await the end just below
   tanker_http_request_handle_t* requestHandle;
@@ -64,7 +69,8 @@ void tanker_http_handle_response(tanker_http_request_t* pubRequest, tanker_http_
 
   HttpResponse response;
   response.statusCode = cresponse->status_code;
-  response.contentType = cresponse->content_type ? cresponse->content_type : std::string{};
+  for (int32_t i = 0; i < cresponse->num_headers; i++)
+    response.headers.append(cresponse->headers[i].name, cresponse->headers[i].value);
   response.body = std::string(cresponse->body, cresponse->body_size);
   crequest->promise.set_value(std::move(response));
 }

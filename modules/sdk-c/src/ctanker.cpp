@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
   {
     throw formatEx(Errc::InvalidArgument, "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 7)
+  if (cverification->version != 8)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported tanker_verification_t struct version: {}", cverification->version);
@@ -115,6 +115,18 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
       throw formatEx(Errc::InvalidArgument, "oidc provider id field is null");
     verification = PreverifiedOidc{cverification->preverified_oidc_verification.provider_id,
                                    cverification->preverified_oidc_verification.subject};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE: {
+    if (!cverification->oidc_authorization_code_verification.provider_id)
+      throw formatEx(Errc::InvalidArgument, "oidc provider id field is null");
+    if (!cverification->oidc_authorization_code_verification.authorization_code)
+      throw formatEx(Errc::InvalidArgument, "oidc authorization_code field is null");
+    if (!cverification->oidc_authorization_code_verification.state)
+      throw formatEx(Errc::InvalidArgument, "oidc state field is null");
+    verification = OidcAuthorizationCode{cverification->oidc_authorization_code_verification.provider_id,
+                                         cverification->oidc_authorization_code_verification.authorization_code,
+                                         cverification->oidc_authorization_code_verification.state};
     break;
   }
   default:
@@ -217,9 +229,10 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER, Verification::Method:
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL, Verification::Method::PreverifiedEmail);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER, Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC, Verification::Method::PreverifiedOidc);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE, Verification::Method::OidcAuthorizationCode);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 10,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 11,
               "Please update the assertions above if you added a new "
               "unlock method");
 
@@ -625,6 +638,20 @@ tanker_future_t* tanker_verify_provisional_identity(tanker_t* ctanker, tanker_ve
                     }).unwrap());
 }
 
+tanker_expected_t* tanker_authenticate_with_idp(tanker_t* ctanker, char const* provider_id, char const* cookie)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->authenticateWithIdp(provider_id, cookie)
+                        .and_then(tc::get_synchronous_executor(), [](OidcAuthorizationCode const& verification) {
+                          auto cVerification = new tanker_oidc_authorization_code_verification_t;
+                          cVerification->version = 1;
+                          cVerification->provider_id = duplicateString(verification.provider_id);
+                          cVerification->authorization_code = duplicateString(verification.authorization_code);
+                          cVerification->state = duplicateString(verification.state);
+                          return reinterpret_cast<void*>(cVerification);
+                        }));
+}
+
 void tanker_free_buffer(void const* buffer)
 {
   free(const_cast<void*>(buffer));
@@ -657,6 +684,14 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
       free(const_cast<char*>(result->method->value2));
     delete result->method;
   }
+  delete result;
+}
+
+void tanker_free_authenticate_with_idp_result(tanker_oidc_authorization_code_verification_t* result)
+{
+  free(const_cast<char*>(result->provider_id));
+  free(const_cast<char*>(result->authorization_code));
+  free(const_cast<char*>(result->state));
   delete result;
 }
 

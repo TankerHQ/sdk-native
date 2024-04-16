@@ -52,7 +52,10 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(Verification:
           },
           [](PreverifiedOidc const& v) -> VerificationMethodType {
             throw Errors::AssertionError("No verification method type for preverified oidc");
-          }
+          },
+          [](OidcAuthorizationCode const& v) -> VerificationMethodType {
+            throw Errors::AssertionError("No verification method type for oidc authorization code");
+          },
       },
       verification);
 }

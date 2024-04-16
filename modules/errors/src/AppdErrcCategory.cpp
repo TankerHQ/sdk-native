@@ -70,6 +70,16 @@ std::string AppdErrcCategory::message(int c) const
     return "feature not enabled";
   case AppdErrc::Conflict:
     return "conflict";
+  case AppdErrc::InvalidAuthorizationCode:
+    return "invalid authorization code";
+  case AppdErrc::OidcProviderInteractionRequired:
+    return "oidc provider interaction required";
+  case AppdErrc::OidcProviderNotConfigured:
+    return "oidc provider not configured";
+  case AppdErrc::OidcProviderNotSupported:
+    return "oidc provider not supported";
+  case AppdErrc::_Deprecated_VerificationNeeded:
+    return "deprecated error code";
   }
   return "unknown error";
 }
@@ -78,30 +88,34 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const noex
 {
   switch (static_cast<AppdErrc>(c))
   {
+  case AppdErrc::BadRequest:
+  case AppdErrc::DeviceNotFound:
   case AppdErrc::InternalError:
   case AppdErrc::InvalidBody:
-  case AppdErrc::BadRequest:
-  case AppdErrc::TrustchainIsNotTest:
-  case AppdErrc::DeviceNotFound:
-  case AppdErrc::ProvisionalIdentityNotFound:
-  case AppdErrc::UserNotFound:
-  case AppdErrc::InvalidToken:
-  case AppdErrc::InvalidChallengeSignature:
   case AppdErrc::InvalidChallengePublicKey:
+  case AppdErrc::InvalidChallengeSignature:
+  case AppdErrc::InvalidToken:
+  case AppdErrc::ProvisionalIdentityNotFound:
+  case AppdErrc::TrustchainIsNotTest:
   case AppdErrc::UnknownError:
+  case AppdErrc::UserNotFound:
     return make_error_condition(Errors::Errc::InternalError);
   case AppdErrc::ProvisionalIdentityAlreadyAttached:
     return make_error_condition(Errors::Errc::IdentityAlreadyAttached);
-  case AppdErrc::VerificationCodeNotFound:
+  case AppdErrc::InvalidAuthorizationCode:
+  case AppdErrc::InvalidDelegationSignature:
   case AppdErrc::InvalidPassphrase:
   case AppdErrc::InvalidVerificationCode:
-  case AppdErrc::InvalidDelegationSignature:
+  case AppdErrc::VerificationCodeNotFound:
     return make_error_condition(Errors::Errc::InvalidVerification);
   case AppdErrc::AppNotFound:
-  case AppdErrc::VerificationMethodNotSet:
-  case AppdErrc::VerificationKeyNotFound:
   case AppdErrc::Blocked:
   case AppdErrc::FeatureNotEnabled:
+  case AppdErrc::OidcProviderInteractionRequired:
+  case AppdErrc::OidcProviderNotConfigured:
+  case AppdErrc::OidcProviderNotSupported:
+  case AppdErrc::VerificationKeyNotFound:
+  case AppdErrc::VerificationMethodNotSet:
     return make_error_condition(Errors::Errc::PreconditionFailed);
   case AppdErrc::TooManyAttempts:
     return make_error_condition(Errors::Errc::TooManyAttempts);
@@ -111,9 +125,9 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const noex
     return make_error_condition(Errors::Errc::GroupTooBig);
   case AppdErrc::UpgradeRequired:
     return make_error_condition(Errors::Errc::UpgradeRequired);
-  case AppdErrc::NotAUserGroupMember:
   case AppdErrc::EmptyUserGroup:
   case AppdErrc::MissingUserGroupMembers:
+  case AppdErrc::NotAUserGroupMember:
     return make_error_condition(Errors::Errc::InvalidArgument);
   case AppdErrc::Conflict:
     return make_error_condition(Errors::Errc::Conflict);

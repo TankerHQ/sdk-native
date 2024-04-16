@@ -288,6 +288,14 @@ tc::future<void> AsyncCore::verifyProvisionalIdentity(Verification::Verification
       [=, this]() -> tc::cotask<void> { TC_AWAIT(this->_core.verifyProvisionalIdentity(verification)); });
 }
 
+tc::future<OidcAuthorizationCode> AsyncCore::authenticateWithIdp(std::string const& provider_id,
+                                                                 std::string const& cookie)
+{
+  return runResumable([=, this]() -> tc::cotask<OidcAuthorizationCode> {
+    TC_RETURN(TC_AWAIT(this->_core.authenticateWithIdp(provider_id, cookie)));
+  });
+}
+
 void AsyncCore::connectSessionClosed(std::function<void()> cb)
 {
   this->_core.setSessionClosedHandler(makeEventHandler(this->_taskCanceler, std::move(cb)));
