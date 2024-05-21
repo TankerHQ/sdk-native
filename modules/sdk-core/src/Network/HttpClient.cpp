@@ -386,7 +386,11 @@ tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
 tc::cotask<std::string> HttpClient::asyncGetRedirectLocation(std::string_view target,
                                                              std::optional<std::string> cookie)
 {
-  auto req = makeRequest(HttpMethod::Get, target);
+  HttpRequest req;
+  req.method = HttpMethod::Get;
+  req.url = target;
+  req.headers = {{HttpHeader::ACCEPT, "application/json"}};
+
   if (cookie)
     req.headers.set(HttpHeader::COOKIE, *cookie);
 
