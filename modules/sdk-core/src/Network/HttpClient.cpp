@@ -68,17 +68,24 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-HttpError handleErrorResponse(HttpResponse const& res, HttpRequest const& req) {
+// We assume non-JSON responses come from a proxy or other middlebox
+Exception newMiddleboxError(HttpResponse const& res, HttpRequest const& req)
+{
+  return Errors::formatEx(Errors::Errc::NetworkError,
+                          "Request may have been intercepted by proxy, received non-JSON response for "
+                          "{} {}, status: {}, body: {}",
+                          httpMethodToString(req.method),
+                          req.url,
+                          res.statusCode,
+                          res.body);
+}
+
+HttpError handleErrorResponse(HttpResponse const& res, HttpRequest const& req)
+{
   auto contentType = res.headers.get(HttpHeader::CONTENT_TYPE);
 
   if (!(contentType && boost::algorithm::starts_with(*contentType, "application/json")))
-  {
-    throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                            "{} {}, status: {}",
-                            httpMethodToString(req.method),
-                            req.url,
-                            res.statusCode);
-  }
+    throw newMiddleboxError(res, req);
 
   try
   {
@@ -90,7 +97,7 @@ HttpError handleErrorResponse(HttpResponse const& res, HttpRequest const& req) {
   }
   catch (nlohmann::json::exception const& ex)
   {
-    throw Errors::formatEx(Errors::AppdErrc::InternalError, "invalid {} http response format: {}", res.statusCode, res.body);
+    throw newMiddleboxError(res, req);
   }
 }
 
@@ -110,7 +117,7 @@ HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
   }
   catch (nlohmann::json::exception const& ex)
   {
-    throw Errors::formatEx(Errors::AppdErrc::InternalError, "invalid http response format: {}", res.body);
+    throw newMiddleboxError(res, req);
   }
 }
 }
@@ -383,8 +390,7 @@ tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
   TC_RETURN(handleResponse(std::move(res), req));
 }
 
-tc::cotask<std::string> HttpClient::asyncGetRedirectLocation(std::string_view target,
-                                                             std::optional<std::string> cookie)
+tc::cotask<std::string> HttpClient::asyncGetRedirectLocation(std::string_view target, std::optional<std::string> cookie)
 {
   HttpRequest req;
   req.method = HttpMethod::Get;
