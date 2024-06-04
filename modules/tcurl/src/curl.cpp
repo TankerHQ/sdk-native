@@ -403,6 +403,8 @@ request::request() : _easy(curl_easy_init())
   if (!_easy)
     throw std::runtime_error("curl_easy_init() failed");
 
+  curl_easy_setopt(_easy.get(), CURLOPT_USERAGENT, curl_version());
+
   curl_easy_setopt(_easy.get(), CURLOPT_WRITEFUNCTION, &write_cb_c);
   curl_easy_setopt(_easy.get(), CURLOPT_WRITEDATA, this);
   // curl_easy_setopt(_easy.get(), CURLOPT_VERBOSE, 1L);
