@@ -48,19 +48,21 @@ tc::cotask<void> TrustchainFactory::enableOidc(Tanker::Trustchain::TrustchainId 
   adminOidcConf.displayName = oidcConfig.displayName;
   adminOidcConf.clientId = oidcConfig.clientId;
   adminOidcConf.issuer = oidcConfig.issuer;
+  adminOidcConf.oidcProviderGroupId = "qYjh0nn2C5s8mj9d-F4Oy8UhFqVTNZpnuwE55lWHV7Y";
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id)
+tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id, std::string const& issuer, std::string const& providerGroupId)
 {
   auto const& fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
   Admin::OidcConfiguration adminOidcConf{};
   adminOidcConf.displayName = "fake-oidc";
   adminOidcConf.clientId = "tanker";
-  adminOidcConf.issuer = fakeOidcIssuerUrl;
+  adminOidcConf.issuer = fakeOidcIssuerUrl + "/" + issuer;
+  adminOidcConf.oidcProviderGroupId = providerGroupId;
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;
@@ -87,6 +89,7 @@ tc::cotask<void> TrustchainFactory::enablePSCOidc(Tanker::Trustchain::Trustchain
   adminOidcConf.displayName = to_string(provider);
   adminOidcConf.clientId = "doctolib-dev";
   adminOidcConf.issuer = "https://auth.bas.psc.esante.gouv.fr/auth/realms/esante-wallet";
+  adminOidcConf.oidcProviderGroupId = "m-DsT9cPgBqoQJPFI3IOMBPobofKvjzXEPA6kOfnCuA";
 
   Admin::AppUpdateOptions options{};
   options.oidcProvider = adminOidcConf;

@@ -23,6 +23,7 @@ struct OidcConfiguration
   std::string displayName;
   std::string clientId;
   std::string issuer;
+  std::string oidcProviderGroupId;
 };
 
 struct App

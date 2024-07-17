@@ -986,7 +986,7 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
   auto martinePhone = martineDevice2.createCore();
 
   auto const subjectCookie = "fake_oidc_subject=martine";
-  auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
+  auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl + "/main";
   auto const providerId =
       oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl, "tanker");
 
