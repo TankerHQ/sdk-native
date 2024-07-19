@@ -138,6 +138,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId, App
     auto providerJson = nlohmann::json{{"client_id", provider.clientId},
                                        {"issuer", provider.issuer},
                                        {"display_name", provider.displayName},
+                                       {"oidc_provider_group_id", provider.oidcProviderGroupId},
                                        {"ignore_token_expiration", ignoreTokenExpiration}};
     body["oidc_providers"] = nlohmann::json::array({providerJson});
   }
