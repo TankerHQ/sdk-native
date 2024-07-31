@@ -207,6 +207,7 @@ build/bridge-dotenv:
     - poetry run python run-ci.py write-bridge-dotenv --downstream sdk-android
                                                       --downstream sdk-ios
                                                       --downstream sdk-python
+                                                      --downstream sdk-react-native
                                                       --downstream sdk-ruby
                                                       --downstream sdk-rust
                                                       --downstream benchmarks
@@ -641,6 +642,26 @@ bridge/python/deploy:
   trigger:
     project: TankerHQ/sdk-python
     branch: $SDK_PYTHON_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/react-native/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/react-native
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/android/deploy
+    - bridge/ios/deploy
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    SDK_REACT_NATIVE_RELEASE_VERSION: $SDK_REACT_NATIVE_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-react-native
+    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
     strategy: depend
 
 bridge/ruby/deploy:
