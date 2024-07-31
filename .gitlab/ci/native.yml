@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /common.yml
-  ref: 2023-08-09-267
+  ref: 2024-07-29-279
 
 workflow:
   rules:
@@ -20,6 +20,7 @@ workflow:
           && $SDK_NATIVE_RELEASE_VERSION == null
           && $SDK_ANDROID_RELEASE_VERSION == null
           && $SDK_PYTHON_RELEASE_VERSION == null
+          && $SDK_REACT_NATIVE_RELEASE_VERSION == null
           && $SDK_RUBY_RELEASE_VERSION == null
           && $SDK_RUST_RELEASE_VERSION == null'
       when: never
@@ -28,6 +29,8 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_REACT_NATIVE_RELEASE_VERSION != null && $SDK_REACT_NATIVE_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(-(alpha|beta)\d+)?\z/)
       when: never
     - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A\d+\.\d+\.\d+(\.(alpha|beta)\.\d+)?\z/)
       when: never
@@ -60,6 +63,12 @@ default:
   rules:
     - !reference [.rules/only/web/auto, rules]
     - !reference [.rules/valid-python-release-version, rules]
+    - when: on_success
+
+.rules/bridge-release/react-native:
+  rules:
+    - !reference [.rules/only/web/auto, rules]
+    - !reference [.rules/valid-react-native-release-version, rules]
     - when: on_success
 
 .rules/bridge-release/ruby:
