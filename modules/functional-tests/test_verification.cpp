@@ -986,9 +986,9 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
   auto martinePhone = martineDevice2.createCore();
 
   auto const subjectCookie = "fake_oidc_subject=martine";
-  auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl + "/main";
+  auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
   auto const providerId =
-      oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl, "tanker");
+      oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl + "/main", "tanker");
 
   TC_AWAIT(enableFakeOidc());
 
@@ -1037,6 +1037,27 @@ TEST_CASE_METHOD(TrustchainFixture, "verification by oidc authorization code")
     REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
     auto const verification2 = TC_AWAIT(martinePhone->authenticateWithIdp(providerId, subjectCookie));
     REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(verification2)));
+    REQUIRE(martinePhone->status() == Status::Ready);
+  }
+
+  SECTION("registers and verifies with different oidc providers from the same provider group")
+  {
+    TC_AWAIT(enableFakeOidc());
+    auto const altProviderId =
+        oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl + "/alt", "tanker");
+    auto const wrongProviderId =
+        oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl + "/wrong-group", "tanker");
+
+    auto const verification1 = TC_AWAIT(martineLaptop->authenticateWithIdp(providerId, subjectCookie));
+    auto const verification2 = TC_AWAIT(martineLaptop->authenticateWithIdp(wrongProviderId, subjectCookie));
+    auto const verification3 = TC_AWAIT(martineLaptop->authenticateWithIdp(altProviderId, subjectCookie));
+
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(verification1)));
+
+    REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) == Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(martinePhone->verifyIdentity(verification2)), Errc::PreconditionFailed);
+
+    REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(verification3)));
     REQUIRE(martinePhone->status() == Status::Ready);
   }
 }
@@ -1103,6 +1124,32 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified oidc")
     };
     REQUIRE_NOTHROW(
         checkVerificationMethods(TC_AWAIT(martinePhone->getVerificationMethods()), {Passphrase{}, expectedOidc}));
+  }
+
+  SECTION("sets a verification method for every oidc provider from the same oidc provider group at once")
+  {
+    auto const fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
+    auto const mainProviderId =
+        oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl + "/main", "tanker");
+    auto const altProviderId =
+        oidcProviderId(martineLaptop->sdkInfo().trustchainId, fakeOidcIssuerUrl + "/alt", "tanker");
+    auto expectedMainOidc = OidcIdToken{
+        {},
+        mainProviderId,
+        "fake-oidc",
+    };
+    auto expectedAltOidc = OidcIdToken{
+        {},
+        altProviderId,
+        "fake-oidc/alt",
+    };
+
+    auto const pass = Passphrase{"******"};
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->setVerificationMethod(PreverifiedOidc{mainProviderId, subject})));
+
+    REQUIRE_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(martineLaptop->getVerificationMethods()), {Passphrase{}, expectedMainOidc, expectedAltOidc}));
   }
 }
 

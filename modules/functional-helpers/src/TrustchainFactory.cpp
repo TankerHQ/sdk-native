@@ -51,21 +51,22 @@ tc::cotask<void> TrustchainFactory::enableOidc(Tanker::Trustchain::TrustchainId 
   adminOidcConf.oidcProviderGroupId = "qYjh0nn2C5s8mj9d-F4Oy8UhFqVTNZpnuwE55lWHV7Y";
 
   Admin::AppUpdateOptions options{};
-  options.oidcProvider = adminOidcConf;
+  options.oidcProviders = {adminOidcConf};
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id, std::string const& issuer, std::string const& providerGroupId)
+tc::cotask<void> TrustchainFactory::enableFakeOidc(Tanker::Trustchain::TrustchainId const& id)
 {
   auto const& fakeOidcIssuerUrl = TestConstants::oidcConfig().fakeOidcIssuerUrl;
-  Admin::OidcConfiguration adminOidcConf{};
-  adminOidcConf.displayName = "fake-oidc";
-  adminOidcConf.clientId = "tanker";
-  adminOidcConf.issuer = fakeOidcIssuerUrl + "/" + issuer;
-  adminOidcConf.oidcProviderGroupId = providerGroupId;
-
   Admin::AppUpdateOptions options{};
-  options.oidcProvider = adminOidcConf;
+
+  auto fakeOidcProviderGroupID = "BxFm1n2_wR2V02gbO-tRK68rTiOwPps0L_hGjxkHofM";
+  auto wrongFakeOidcProviderGroupID = "s5XXhLYMKOn6aMKmtdu1590Nyri0XEEHyKMWueiieOk";
+  options.oidcProviders = std::vector<Admin::OidcConfiguration>{
+    { "fake-oidc",  "tanker", fakeOidcIssuerUrl + "/main", fakeOidcProviderGroupID},
+    { "fake-oidc/alt",  "tanker", fakeOidcIssuerUrl + "/alt", fakeOidcProviderGroupID},
+    { "fake-oidc/wrong-group",  "tanker", fakeOidcIssuerUrl + "/wrong-group", wrongFakeOidcProviderGroupID},
+  };
   TC_AWAIT(_admin->update(id, options));
 }
 
@@ -92,7 +93,7 @@ tc::cotask<void> TrustchainFactory::enablePSCOidc(Tanker::Trustchain::Trustchain
   adminOidcConf.oidcProviderGroupId = "m-DsT9cPgBqoQJPFI3IOMBPobofKvjzXEPA6kOfnCuA";
 
   Admin::AppUpdateOptions options{};
-  options.oidcProvider = adminOidcConf;
+  options.oidcProviders = {adminOidcConf};
   TC_AWAIT(_admin->update(id, options));
 }
 
