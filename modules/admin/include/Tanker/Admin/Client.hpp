@@ -35,7 +35,7 @@ struct App
 
 struct AppUpdateOptions
 {
-  std::optional<OidcConfiguration> oidcProvider;
+  std::optional<std::vector<OidcConfiguration>> oidcProviders;
   std::optional<bool> preverifiedVerification;
   std::optional<bool> userEnrollment;
 };

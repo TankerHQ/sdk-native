@@ -58,6 +58,8 @@ void from_json(nlohmann::json const& j, OidcConfiguration& config)
     config.clientId = value;
   if (auto value = j.at("issuer").get<std::string>(); !value.empty())
     config.issuer = value;
+  if (auto value = j.at("oidc_provider_group_id").get<std::string>(); !value.empty())
+    config.oidcProviderGroupId = value;
 }
 void from_json(nlohmann::json const& j, App& app)
 {
@@ -131,16 +133,19 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId, App
 {
   TINFO("updating trustchain {:#S}", trustchainId);
   auto body = nlohmann::json{};
-  if (options.oidcProvider)
+  if (options.oidcProviders)
   {
-    auto const& provider = options.oidcProvider.value();
-    bool ignoreTokenExpiration = provider.displayName == "pro-sante-bas-no-expiry";
-    auto providerJson = nlohmann::json{{"client_id", provider.clientId},
-                                       {"issuer", provider.issuer},
-                                       {"display_name", provider.displayName},
-                                       {"oidc_provider_group_id", provider.oidcProviderGroupId},
-                                       {"ignore_token_expiration", ignoreTokenExpiration}};
-    body["oidc_providers"] = nlohmann::json::array({providerJson});
+    auto providersJson = nlohmann::json::array();
+    for (auto const& oidcProvider : options.oidcProviders.value()) {
+      auto const& provider = oidcProvider;
+      bool ignoreTokenExpiration = provider.displayName == "pro-sante-bas-no-expiry";
+      providersJson.push_back(nlohmann::json{{"client_id", provider.clientId},
+                                        {"issuer", provider.issuer},
+                                        {"display_name", provider.displayName},
+                                        {"oidc_provider_group_id", provider.oidcProviderGroupId},
+                                        {"ignore_token_expiration", ignoreTokenExpiration}});
+    }
+    body["oidc_providers"] = providersJson;
   }
 
   if (options.preverifiedVerification)
