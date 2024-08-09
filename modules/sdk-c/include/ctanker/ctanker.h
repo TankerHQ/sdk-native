@@ -190,9 +190,9 @@ struct tanker_oidc_authorization_code_verification
   char const* state;
 };
 
-#define TANKER_OIDC_AUTHORIZATION_CODE_INIT       \
-  {                                               \
-    1, NULL, NULL, NULL                           \
+#define TANKER_OIDC_AUTHORIZATION_CODE_INIT \
+  {                                         \
+    1, NULL, NULL, NULL                     \
   }
 
 struct tanker_verification
@@ -213,10 +213,10 @@ struct tanker_verification
   tanker_oidc_authorization_code_verification_t oidc_authorization_code_verification;
 };
 
-#define TANKER_VERIFICATION_INIT                                                                               \
-  {                                                                                                            \
-    8, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, \
-    NULL, TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT, TANKER_OIDC_AUTHORIZATION_CODE_INIT                       \
+#define TANKER_VERIFICATION_INIT                                                                                     \
+  {                                                                                                                  \
+    8, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL, \
+        TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT, TANKER_OIDC_AUTHORIZATION_CODE_INIT                               \
   }
 
 struct tanker_verification_method
@@ -597,14 +597,17 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(tanker_t* ses
  *
  * \pre tanker_status != TANKER_STATUS_STOPPED
  * \param provider_id oidc provider id of the trusted identity provider (as returned by the app managment API)
- * \param cookie a cookie-list added to the authorization HTTP request (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
+ * \param cookie a cookie-list added to the authorization HTTP request
+ *               (see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie)
  *
  * \return A future of tanker_oidc_authorization_code_verification*
  *
  * \throws TANKER_PRECONDITION_FAILED the requested provider is not authorized for the OIDC authorization code flow
  * \throws TANKER_PRECONDITION_FAILED an error occured during OIDC authorization
  */
-CTANKER_EXPORT tanker_future_t* tanker_authenticate_with_idp(tanker_t* session, char const* provider_id, char const* cookie);
+CTANKER_EXPORT tanker_future_t* tanker_authenticate_with_idp(tanker_t* session,
+                                                             char const* provider_id,
+                                                             char const* cookie);
 
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
@@ -636,6 +639,19 @@ CTANKER_EXPORT void tanker_free_authenticate_with_idp_result(tanker_oidc_authori
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p password is null or empty
  */
 CTANKER_EXPORT tanker_expected_t* tanker_prehash_password(char const* password);
+
+/*!
+ * Prepare for a fork() by stopping all async work and worker threads
+ *
+ * \pre All tanker instances must be stopped or idle
+ */
+CTANKER_EXPORT void tanker_before_fork();
+/*!
+ * Call immediately after a fork() to resume work
+ *
+ * \pre Must have called tanker_before_fork() just before
+ */
+CTANKER_EXPORT void tanker_after_fork();
 
 #ifdef __cplusplus
 }

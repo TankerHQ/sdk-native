@@ -703,3 +703,13 @@ tanker_expected_t* tanker_prehash_password(char const* password)
     return static_cast<void*>(duplicateString(mgs::base64::encode(Crypto::prehashPassword(password))));
   }));
 }
+
+void tanker_before_fork()
+{
+  tc::get_default_executor().stop_before_fork();
+}
+
+void tanker_after_fork()
+{
+  tc::get_default_executor().resume_after_fork();
+}

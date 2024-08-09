@@ -103,7 +103,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.37.0-r1", private=private)
         self.requires("nlohmann_json/3.10.5-r1", private=private)
         self.requires("libsodium/1.0.19-r1", private=private)
-        self.requires("tconcurrent/0.40.0-r7", private=private)
+        self.requires("tconcurrent/0.40.1-r1", private=private)
         self.requires("date/3.0.0-r5", private=private)
         # catch2 is needed to export datastore tests
         self.requires("catch2/3.4.0-r1", private=private)
@@ -114,7 +114,7 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.test_requires("docopt.cpp/0.6.2-r2")
         if self.should_build_tests:
-            self.test_requires("catch2-async/3.4.0-r2")
+            self.test_requires("catch2-async/3.4.0-r3")
             self.test_requires("trompeloeil/38-r1")
 
     def generate(self):
