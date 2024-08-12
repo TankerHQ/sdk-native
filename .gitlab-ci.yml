@@ -270,22 +270,22 @@ bridge/compat/linux:
     branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
     strategy: depend
 
-bridge/ios:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/ios
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_JOB_TARGET: ios
-    UPSTREAM_JOB_NAME: build/ios
-    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: TankerHQ/sdk-ios
-    branch: $SDK_IOS_BRIDGE_BRANCH
-    strategy: depend
+# bridge/ios:
+#   stage: bridge-check
+#   extends:
+#     - .rules/bridge/auto
+#     - .variables/bridge-common
+#   needs:
+#     - build/ios
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_JOB_TARGET: ios
+#     UPSTREAM_JOB_NAME: build/ios
+#     UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: TankerHQ/sdk-ios
+#     branch: $SDK_IOS_BRIDGE_BRANCH
+#     strategy: depend
 
 bridge/android:
   extends:
@@ -389,22 +389,22 @@ bridge/rust/macos/arm:
     branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
-bridge/rust/android:
-  extends:
-    - .bridge-check
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/android
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_JOB_TARGET: android
-    UPSTREAM_JOB_NAME: build/android
-    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: TankerHQ/sdk-rust
-    branch: $SDK_RUST_BRIDGE_BRANCH
-    strategy: depend
+# bridge/rust/android:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge/auto
+#     - .variables/bridge-common
+#   needs:
+#     - build/android
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_JOB_TARGET: android
+#     UPSTREAM_JOB_NAME: build/android
+#     UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: TankerHQ/sdk-rust
+#     branch: $SDK_RUST_BRIDGE_BRANCH
+#     strategy: depend
 
 bridge/python/linux:
   extends:
@@ -588,23 +588,23 @@ bridge/bump-native-compat-tests:
     strategy: depend
   allow_failure: true
 
-bridge/ios/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/ios
-    - .variables/bridge-common
-  needs:
-    - bridge/ios
-    - deploy
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-ios
-    branch: $SDK_IOS_BRIDGE_BRANCH
-    strategy: depend
+# bridge/ios/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/ios
+#     - .variables/bridge-common
+#   needs:
+#     - bridge/ios
+#     - deploy
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+#     SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+#   trigger:
+#     project: TankerHQ/sdk-ios
+#     branch: $SDK_IOS_BRIDGE_BRANCH
+#     strategy: depend
 
 bridge/android/deploy:
   extends:
@@ -644,25 +644,25 @@ bridge/python/deploy:
     branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
-bridge/react-native/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/react-native
-    - .variables/bridge-common
-  needs:
-    - deploy
-    - bridge/android/deploy
-    - bridge/ios/deploy
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_REACT_NATIVE_RELEASE_VERSION: $SDK_REACT_NATIVE_RELEASE_VERSION
-  trigger:
-    project: TankerHQ/sdk-react-native
-    branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
-    strategy: depend
+# bridge/react-native/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/react-native
+#     - .variables/bridge-common
+#   needs:
+#     - deploy
+#     - bridge/android/deploy
+#     - bridge/ios/deploy
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+#     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+#     SDK_REACT_NATIVE_RELEASE_VERSION: $SDK_REACT_NATIVE_RELEASE_VERSION
+#   trigger:
+#     project: TankerHQ/sdk-react-native
+#     branch: $SDK_REACT_NATIVE_BRIDGE_BRANCH
+#     strategy: depend
 
 bridge/ruby/deploy:
   extends:
@@ -684,25 +684,25 @@ bridge/ruby/deploy:
     branch: $SDK_RUBY_BRIDGE_BRANCH
     strategy: depend
 
-bridge/rust/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/rust
-    - .variables/bridge-common
-  needs:
-    - deploy
-    - bridge/rust/android
-    - bridge/rust/ios
-    - bridge/rust/linux
-    - bridge/rust/macos/arm
-    - bridge/rust/macos/x86_64
-    - bridge/rust/windows
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_RUST_RELEASE_VERSION: $SDK_RUST_RELEASE_VERSION
-    SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-rust
-    branch: $SDK_RUST_BRIDGE_BRANCH
-    strategy: depend
+# bridge/rust/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/rust
+#     - .variables/bridge-common
+#   needs:
+#     - deploy
+#     - bridge/rust/android
+#     - bridge/rust/ios
+#     - bridge/rust/linux
+#     - bridge/rust/macos/arm
+#     - bridge/rust/macos/x86_64
+#     - bridge/rust/windows
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_RUST_RELEASE_VERSION: $SDK_RUST_RELEASE_VERSION
+#     SDK_NATIVE_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+#   trigger:
+#     project: TankerHQ/sdk-rust
+#     branch: $SDK_RUST_BRIDGE_BRANCH
+#     strategy: depend
