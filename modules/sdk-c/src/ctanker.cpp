@@ -384,6 +384,13 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker, enum tanker_event 
 
 tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 {
+  auto exec = tc::get_default_executor();
+  if (!exec.is_single_threaded())
+  {
+    printf("@@@ TANKER EXECUTOR THREADS NOT READY!\n");
+    throw formatEx(Errc::InternalError, FMT_STRING("@@@ TANKER EXECUTOR THREADS NOT READY!"));
+  }
+
   if (identity == nullptr)
     return makeFuture(
         tc::make_exceptional_future<void>(Exception(make_error_code(Errc::InvalidArgument), "identity is null")));
