@@ -1,4 +1,5 @@
 #include <ctanker.h>
+#include <unistd.h>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -267,6 +268,8 @@ char const* tanker_version_string(void)
 
 void tanker_init()
 {
+  printf("@@@ PID=%d ctanker tanker_init\n", getpid());
+  fflush(stdout);
   Tanker::init();
 }
 
@@ -384,10 +387,13 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker, enum tanker_event 
 
 tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 {
+  printf("@@@ PID=%d ctanker tanker_start\n", getpid());
+  fflush(stdout);
   auto exec = tc::get_default_executor();
   if (!exec.is_single_threaded())
   {
-    printf("@@@ TANKER EXECUTOR THREADS NOT READY!\n");
+    printf("@@@ PID=%d TANKER EXECUTOR THREADS NOT READY!\n", getpid());
+    fflush(stdout);
     throw formatEx(Errc::InternalError, FMT_STRING("@@@ TANKER EXECUTOR THREADS NOT READY!"));
   }
 
