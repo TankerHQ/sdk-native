@@ -1,5 +1,10 @@
 #include <ctanker.h>
+
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
