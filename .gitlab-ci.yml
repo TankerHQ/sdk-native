@@ -76,17 +76,17 @@ build/linux/shared/no-http-backend:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared no-http-backend
   tags: !reference [.tags/compilation-linux, tags]
 
-build/windows/shared:
-  extends:
-    - .build
-    - .rules/build/manual
-    - .build-artifacts
-    - .before-script/bump-files-on-release/powershell
-    - .after-script/branch_name
-  script:
-    - $env:TANKER_MAX_TEST_EXECUTION_TIMEOUT = '10'
-    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile windows-x86_64 shared
-  tags: !reference [.tags/compilation-windows, tags]
+# build/windows/shared:
+#   extends:
+#     - .build
+#     - .rules/build/manual
+#     - .build-artifacts
+#     - .before-script/bump-files-on-release/powershell
+#     - .after-script/branch_name
+#   script:
+#     - $env:TANKER_MAX_TEST_EXECUTION_TIMEOUT = '10'
+#     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile windows-x86_64 shared
+#   tags: !reference [.tags/compilation-windows, tags]
 
 build/macos/x86_64:
   extends:
@@ -321,22 +321,22 @@ bridge/compat/linux:
 #     branch: $SDK_RUST_BRIDGE_BRANCH
 #     strategy: depend
 
-bridge/rust/windows:
-  extends:
-    - .bridge-check
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/windows/shared
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_JOB_TARGET: windows
-    UPSTREAM_JOB_NAME: build/windows/shared
-    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: TankerHQ/sdk-rust
-    branch: $SDK_RUST_BRIDGE_BRANCH
-    strategy: depend
+# bridge/rust/windows:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge/auto
+#     - .variables/bridge-common
+#   needs:
+#     - build/windows/shared
+#     - build/bridge-dotenv
+#   variables:
+#     UPSTREAM_JOB_TARGET: windows
+#     UPSTREAM_JOB_NAME: build/windows/shared
+#     UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: TankerHQ/sdk-rust
+#     branch: $SDK_RUST_BRIDGE_BRANCH
+#     strategy: depend
 
 # bridge/rust/ios:
 #   extends:
