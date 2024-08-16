@@ -7,6 +7,12 @@
 
 #include <tconcurrent/promise.hpp>
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
+
 TLOG_CATEGORY(CTankerBackend);
 
 using namespace Tanker::Network;
@@ -24,6 +30,9 @@ CTankerBackend::CTankerBackend(tanker_http_options_t const& options) : _options(
 
 tc::cotask<HttpResponse> CTankerBackend::fetch(HttpRequest req)
 {
+  printf("@@@ PID=%d ctanker CTankerBackend::fetch reached\n", getpid());
+  fflush(stdout);
+
   using namespace HttpHeader;
 
   tanker_http_request_internal request{};
@@ -43,13 +52,23 @@ tc::cotask<HttpResponse> CTankerBackend::fetch(HttpRequest req)
   auto const scope = request.promise.get_cancelation_token().make_scope_canceler([&] {
     tc::dispatch_on_thread_context([&] { _options.cancel_request(&request.request, requestHandle, _options.data); });
   });
-  requestHandle =
-      tc::dispatch_on_thread_context([&] { return _options.send_request(&request.request, _options.data); });
+  printf("@@@ PID=%d ctanker CTankerBackend::fetch about to dispatch_on_thread_context\n", getpid());
+  fflush(stdout);
+  requestHandle = tc::dispatch_on_thread_context([&] {
+    printf("@@@ PID=%d ctanker CTankerBackend::fetch inside dispatch_on_thread_context, calling ruby\n", getpid());
+    fflush(stdout);
+    return _options.send_request(&request.request, _options.data);
+  });
+  printf("@@@ PID=%d ctanker CTankerBackend::fetch received promise, waiting on Ruby response\n", getpid());
+  fflush(stdout);
   TC_RETURN(TC_AWAIT(request.promise.get_future()));
 }
 
 void tanker_http_handle_response(tanker_http_request_t* pubRequest, tanker_http_response_t* cresponse)
 {
+  printf("@@@ PID=%d ctanker tanker_http_handle_response reached\n", getpid());
+  fflush(stdout);
+
   auto const crequest = reinterpret_cast<tanker_http_request_internal*>(pubRequest);
 
   if (cresponse->error_msg)
@@ -72,5 +91,6 @@ void tanker_http_handle_response(tanker_http_request_t* pubRequest, tanker_http_
   for (int32_t i = 0; i < cresponse->num_headers; i++)
     response.headers.append(cresponse->headers[i].name, cresponse->headers[i].value);
   response.body = std::string(cresponse->body, cresponse->body_size);
+  printf("@@@ PID=%d ctanker tanker_http_handle_response set promise value\n", getpid());
   crequest->promise.set_value(std::move(response));
 }
