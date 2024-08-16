@@ -20,12 +20,16 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 
 tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(Trustchain::UserId const& userId)
 {
+  printf("@@@ PID=%d ctanker Requester::userStatus about to await asyncUnauthGet request\n", getpid());
+  fflush(stdout);
   using namespace fmt::literals;
   auto res = TC_AWAIT(
       _httpClient->asyncUnauthGet(_httpClient->makeUrl(fmt::format("users/{userId:#S}", "userId"_a = userId))));
   if (res.has_error() && res.error().ec == Errors::AppdErrc::UserNotFound)
     TC_RETURN(std::nullopt);
 
+  printf("@@@ PID=%d ctanker Requester::userStatus got response\n", getpid());
+  fflush(stdout);
   TC_RETURN(res.value().at("user").at("public_encryption_key").get<Crypto::PublicEncryptionKey>());
 }
 

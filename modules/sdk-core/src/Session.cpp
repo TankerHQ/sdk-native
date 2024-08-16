@@ -246,6 +246,9 @@ tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
 
 tc::cotask<void> Session::finalizeOpening()
 {
+  printf("@@@ PID=%d ctanker Session::finalizeOpening start\n", getpid());
+  fflush(stdout);
+
   auto shareCallback = [&](auto const& session, auto const& users, auto const& groups) {
     TC_AWAIT(transparentSessionShareImpl(session, users, groups));
     TC_RETURN();
@@ -257,6 +260,9 @@ tc::cotask<void> Session::finalizeOpening()
       shareCallback);
   _httpClient->setDeviceAuthData(TC_AWAIT(storage().localUserStore.getDeviceId()),
                                  TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
+
+  printf("@@@ PID=%d ctanker Session::finalizeOpening done\n", getpid());
+  fflush(stdout);
   setStatus(Status::Ready);
 }
 

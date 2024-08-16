@@ -60,6 +60,12 @@
 #include <stdexcept>
 #include <utility>
 
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
+
 using namespace Tanker::Errors;
 
 using boost::container::flat_map;
@@ -347,11 +353,20 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
                            _info.trustchainId,
                            identity.trustchainId);
   }
+  printf("@@@ PID=%d ctanker Core::startImpl about to open storage (SQLite)\n", getpid());
+  fflush(stdout);
   TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
+  printf("@@@ PID=%d ctanker Core::startImpl storage ready (SQLite)\n", getpid());
+  fflush(stdout);
+
   auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
   if (!optDeviceKeys.has_value())
   {
+    printf("@@@ PID=%d ctanker Core::startImpl no device keys, will send user status request\n", getpid());
+    fflush(stdout);
     auto const optPubUserEncKey = TC_AWAIT(_session->requesters().userStatus(_session->userId()));
+    printf("@@@ PID=%d ctanker Core::startImpl no device keys, received user status response\n", getpid());
+    fflush(stdout);
     if (!optPubUserEncKey)
       _session->setStatus(Status::IdentityRegistrationNeeded);
     else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys()); !optDeviceKeys.has_value())
@@ -359,6 +374,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
   }
   else
   {
+
     TC_AWAIT(_session->finalizeOpening());
   }
   TC_RETURN(status());
