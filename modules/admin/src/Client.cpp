@@ -150,8 +150,6 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId, App
 
   if (options.preverifiedVerification)
     body["preverified_verification_enabled"] = *options.preverifiedVerification;
-  if (options.userEnrollment)
-    body["enroll_users_enabled"] = *options.userEnrollment;
 
   auto const message = body.dump();
 

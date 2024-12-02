@@ -136,11 +136,6 @@ tc::cotask<void> TrustchainFixtureSimple::enablePSCOidc(PSCProvider const& provi
   TC_AWAIT(trustchainFactory().enablePSCOidc(trustchain.id, provider));
 }
 
-tc::cotask<void> TrustchainFixtureSimple::enableUserEnrollment()
-{
-  TC_AWAIT(trustchainFactory().setUserEnrollmentEnabled(trustchain.id));
-}
-
 TrustchainFixture::TrustchainFixture()
   : alice(*testState.alice),
     bob(*testState.bob),
