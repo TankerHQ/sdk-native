@@ -97,13 +97,6 @@ tc::cotask<void> TrustchainFactory::enablePSCOidc(Tanker::Trustchain::Trustchain
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::setUserEnrollmentEnabled(Tanker::Trustchain::TrustchainId const& id, bool state)
-{
-  Admin::AppUpdateOptions options;
-  options.userEnrollment = state;
-  TC_AWAIT(_admin->update(id, options));
-}
-
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(std::string configPath)
 {
   auto config = loadTrustchainConfig(std::move(configPath));

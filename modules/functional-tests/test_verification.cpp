@@ -1153,34 +1153,6 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified oidc")
   }
 }
 
-TEST_CASE_METHOD(TrustchainFixture, "User enrollment throws when the feature is not enabled")
-{
-  auto serverUser = trustchain.makeUser();
-  auto sDevice = serverUser.makeDevice();
-  auto server = sDevice.createCore();
-
-  auto const email = PreverifiedEmail{"kirby@tanker.io"};
-  auto const emailVerification = Verification::Verification{email};
-  auto const phoneNumber = PreverifiedPhoneNumber{"+33639982233"};
-  auto const phoneNumberVerification = Verification::Verification{phoneNumber};
-  auto const oidcVerification = PreverifiedOidc{"provider_id", "subject"};
-
-  auto enrolledUser = trustchain.makeUser();
-
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification})),
-                                AppdErrc::FeatureNotEnabled);
-
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(server->enrollUser(enrolledUser.identity, {phoneNumberVerification})),
-                                AppdErrc::FeatureNotEnabled);
-
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(server->enrollUser(enrolledUser.identity, {oidcVerification})),
-                                AppdErrc::FeatureNotEnabled);
-
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification})),
-      AppdErrc::FeatureNotEnabled);
-}
-
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
 {
   TC_AWAIT(enableOidc());
@@ -1200,8 +1172,6 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
   auto const oidcVerification = PreverifiedOidc{providerId, subject};
 
   auto enrolledUser = trustchain.makeUser();
-
-  TC_AWAIT(enableUserEnrollment());
 
   SECTION("throws when tanker is not STOPPED")
   {
@@ -1298,8 +1268,6 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
   auto const oidcVerification = PreverifiedOidc{providerId, subject};
 
   auto enrolledUser = trustchain.makeUser();
-
-  TC_AWAIT(enableUserEnrollment());
 
   SECTION("server")
   {
