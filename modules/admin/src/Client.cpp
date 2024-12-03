@@ -148,8 +148,6 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId, App
     body["oidc_providers"] = providersJson;
   }
 
-  if (options.preverifiedVerification)
-    body["preverified_verification_enabled"] = *options.preverifiedVerification;
 
   auto const message = body.dump();
 
