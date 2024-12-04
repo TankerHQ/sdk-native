@@ -36,7 +36,6 @@ struct App
 struct AppUpdateOptions
 {
   std::optional<std::vector<OidcConfiguration>> oidcProviders;
-  std::optional<bool> preverifiedVerification;
 };
 
 void from_json(nlohmann::json const& j, OidcConfiguration& oidcConfig);
