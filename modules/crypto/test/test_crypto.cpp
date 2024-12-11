@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -274,6 +275,26 @@ TEST_CASE("prehashPassword")
     auto const expected = mgs::base64::decode<Hash>("Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
 
     CHECK(prehashPassword(input) == expected);
+  }
+}
+
+TEST_CASE("prehashAndEncryptPassword")
+{
+  SECTION("throw on empty password")
+  {
+    auto const keyPair = makeEncryptionKeyPair();
+    TANKER_CHECK_THROWS_WITH_CODE(prehashAndEncryptPassword("", keyPair.publicKey), Errc::InvalidBufferSize);
+  }
+
+  SECTION("should match the generically-hashed password after being decrypted")
+  {
+    auto const input = "super secretive password";
+    auto const keyPair = makeEncryptionKeyPair();
+    auto const hashedPassword = generichash(input);
+    auto const prehashedAndEncryptedPassword = prehashAndEncryptPassword(input, keyPair.publicKey);
+    auto const decryptedPrehashedPassword = sealDecrypt(prehashedAndEncryptedPassword, keyPair);
+
+    CHECK(gsl::make_span(decryptedPrehashedPassword) == gsl::make_span(hashedPassword));
   }
 }
 

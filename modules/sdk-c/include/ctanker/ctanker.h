@@ -641,6 +641,25 @@ CTANKER_EXPORT void tanker_free_authenticate_with_idp_result(tanker_oidc_authori
 CTANKER_EXPORT tanker_expected_t* tanker_prehash_password(char const* password);
 
 /*!
+ * Hash and encrypt a password before sending it to the Tanker server through
+ * the application's server, where it will be hashed again.
+ *
+ * \warning This is not a password hash function, it is only used to
+ * solve the specific problem of having to send the passpharse through an
+ * untrusted server and still use it for enrollment later.
+ *
+ * \param password the password to prehash
+ * \param public_key b64-encoded public key to encrypt the prehashed password with
+ *
+ * \return an expected of the prehashed and encrypted password which must be
+ * freed with tanker_free_buffer
+ *
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p password is null or empty
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p public_key is null or empty
+ */
+CTANKER_EXPORT tanker_expected_t* tanker_prehash_and_encrypt_password(char const* password, char const* public_key);
+
+/*!
  * Prepare for a fork() by stopping all async work and worker threads
  *
  * \pre All tanker instances must be stopped or idle
