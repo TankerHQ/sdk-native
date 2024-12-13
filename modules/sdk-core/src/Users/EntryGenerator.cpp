@@ -56,6 +56,9 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(Verification:
           [](OidcAuthorizationCode const& v) -> VerificationMethodType {
             throw Errors::AssertionError("No verification method type for oidc authorization code");
           },
+          [](PrehashedAndEncryptedPassphrase const& v) -> VerificationMethodType {
+            throw Errors::AssertionError("No verification method type for prehashed and encrypted password");
+          },
       },
       verification);
 }

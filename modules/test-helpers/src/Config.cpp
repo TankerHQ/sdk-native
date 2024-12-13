@@ -91,5 +91,11 @@ std::string const& verificationApiToken()
   static auto const value = getSafeEnv("TANKER_VERIFICATION_API_TEST_TOKEN");
   return value;
 }
+
+Tanker::Crypto::PublicEncryptionKey const passphrasePublicEncryptionKey()
+{
+  static auto const value = getSafeEnv("TANKER_ENROLL_PASSPHRASE_PUBLIC_ENCRYPTION_KEY");
+  return mgs::base64::decode<Tanker::Crypto::PublicEncryptionKey>(value);
+}
 }
 }

@@ -15,6 +15,7 @@ target_sources(tankertypes INTERFACE
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/OidcNonce.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Overloaded.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Passphrase.hpp
+  ${PROJECT_SOURCE_DIR}/include/Tanker/Types/PrehashedAndEncryptedPassphrase.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/PreverifiedOidc.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/ProvisionalUserKeys.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SDeviceId.hpp

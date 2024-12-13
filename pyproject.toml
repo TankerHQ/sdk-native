@@ -8,7 +8,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 
-tankerci = { version = "== 2024.4.5172", source = "gitlab" }
+tankerci = { version = "== 2024.12.5467", source = "gitlab" }
 
 [tool.poetry.dev-dependencies]
 black = "24.3.0"

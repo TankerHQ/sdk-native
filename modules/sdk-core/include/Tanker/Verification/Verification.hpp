@@ -13,6 +13,7 @@
 #include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
+#include <Tanker/Types/PrehashedAndEncryptedPassphrase.hpp>
 #include <Tanker/Types/PreverifiedEmail.hpp>
 #include <Tanker/Types/PreverifiedOidc.hpp>
 #include <Tanker/Types/PreverifiedPhoneNumber.hpp>
@@ -53,7 +54,8 @@ using Verification = boost::variant2::variant<VerificationKey,
                                               PreverifiedEmail,
                                               PreverifiedPhoneNumber,
                                               PreverifiedOidc,
-                                              OidcAuthorizationCode>;
+                                              OidcAuthorizationCode,
+                                              PrehashedAndEncryptedPassphrase>;
 
 class VerificationMethod
 {
@@ -67,7 +69,8 @@ class VerificationMethod
                                                         PreverifiedEmail,
                                                         PreverifiedPhoneNumber,
                                                         PreverifiedOidc,
-                                                        OidcAuthorizationCode))
+                                                        OidcAuthorizationCode,
+                                                        PrehashedAndEncryptedPassphrase))
 
   static VerificationMethod from(Verification const& v);
 

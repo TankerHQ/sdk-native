@@ -12,6 +12,7 @@
 #include <Tanker/Types/EncryptedVerificationKeyForUserSecret.hpp>
 #include <Tanker/Types/OidcChallenge.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
+#include <Tanker/Types/PrehashedAndEncryptedPassphrase.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Verification/Verification.hpp>
 
@@ -71,7 +72,8 @@ using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      PreverifiedEmail,
                                                      PreverifiedPhoneNumber,
                                                      PreverifiedOidc,
-                                                     OidcAuthorizationCode>;
+                                                     OidcAuthorizationCode,
+                                                     PrehashedAndEncryptedPassphrase>;
 
 using RequestVerificationPayload = boost::variant2::variant<VerificationKey,
                                                             EncryptedEmailVerification,
@@ -83,7 +85,8 @@ using RequestVerificationPayload = boost::variant2::variant<VerificationKey,
                                                             EncryptedPreverifiedEmailVerification,
                                                             EncryptedPreverifiedPhoneNumberVerification,
                                                             PreverifiedOidc,
-                                                            OidcAuthorizationCode>;
+                                                            OidcAuthorizationCode,
+                                                            PrehashedAndEncryptedPassphrase>;
 
 struct RequestWithVerif
 {

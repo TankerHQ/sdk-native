@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
+
 #include <chrono>
 #include <map>
 #include <string>
@@ -39,5 +41,6 @@ std::string const& trustchaindUrl();
 std::string const& verificationApiToken();
 OidcConfig const& oidcConfig();
 std::chrono::minutes maxExecutionTimeout();
+Tanker::Crypto::PublicEncryptionKey const passphrasePublicEncryptionKey();
 }
 }

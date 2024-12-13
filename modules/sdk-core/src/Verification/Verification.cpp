@@ -41,7 +41,8 @@ VerificationMethod VerificationMethod::from(Verification const& v)
                  [](PreverifiedEmail const& v) -> VerificationMethod { return v; },
                  [](PreverifiedPhoneNumber const& v) -> VerificationMethod { return v; },
                  [](PreverifiedOidc const& v) -> VerificationMethod { return v; },
-                 [](OidcAuthorizationCode const& v) -> VerificationMethod { return v; }},
+                 [](OidcAuthorizationCode const& v) -> VerificationMethod { return v; },
+                 [](PrehashedAndEncryptedPassphrase const& v) -> VerificationMethod { return v; }},
       v);
 }
 
@@ -158,7 +159,7 @@ bool isPreverified(Verification const& v)
 {
   using boost::variant2::holds_alternative;
   return holds_alternative<PreverifiedEmail>(v) || holds_alternative<PreverifiedPhoneNumber>(v) ||
-         holds_alternative<PreverifiedOidc>(v);
+         holds_alternative<PreverifiedOidc>(v) || holds_alternative<PrehashedAndEncryptedPassphrase>(v) ;
 }
 
 bool isE2eVerification(Verification const& v)

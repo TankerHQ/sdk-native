@@ -403,15 +403,17 @@ tc::cotask<void> Core::enrollUser(std::string const& b64Identity,
   });
   uint64_t nbOidc = ranges::count_if(
       verifications, [](auto const& verif) { return boost::variant2::holds_alternative<PreverifiedOidc>(verif); });
+  uint64_t nbPAEP = ranges::count_if(
+      verifications, [](auto const& verif) { return boost::variant2::holds_alternative<PrehashedAndEncryptedPassphrase>(verif); });
 
-  if (nbEmails + nbPhones + nbOidc != verifications.size())
+  if (nbEmails + nbPhones + nbOidc + nbPAEP != verifications.size())
   {
     throw formatEx(Errc::InvalidArgument,
                    "verifications: can only enroll user with preverified "
                    "verification methods");
   }
 
-  if (nbEmails > 1 || nbPhones > 1 || nbOidc > 1)
+  if (nbEmails > 1 || nbPhones > 1 || nbOidc > 1 || nbPAEP > 1)
   {
     throw formatEx(Errc::InvalidArgument,
                    "verifications: contains at most one of each preverified "
@@ -786,6 +788,10 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(Verification:
   if (boost::variant2::holds_alternative<VerificationKey>(method))
   {
     throw formatEx(Errc::InvalidArgument, "cannot call setVerificationMethod with a verification key");
+  }
+  if (boost::variant2::holds_alternative<PrehashedAndEncryptedPassphrase>(method))
+  {
+    throw formatEx(Errc::InvalidArgument, "cannot call setVerificationMethod with a prehashed and encrypted passphrase");
   }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
 
