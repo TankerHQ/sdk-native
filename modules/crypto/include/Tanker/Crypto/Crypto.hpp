@@ -251,7 +251,6 @@ OutputContainer sealEncrypt(gsl::span<uint8_t const> clearData, PublicEncryption
   detail::sealEncryptImpl(clearData, res, recipientKey);
   return res;
 }
-
 template <typename T, typename = std::enable_if_t<IsCryptographicType<T>::value>>
 Sealed<T> sealEncrypt(T const& clearData, PublicEncryptionKey const& recipientKey)
 {
@@ -284,5 +283,15 @@ T sealDecrypt(Sealed<T> const& cipherData, EncryptionKeyPair const& recipientKey
 }
 
 Hash prehashPassword(std::string password);
+
+template <typename OutputContainer = std::vector<uint8_t>>
+OutputContainer prehashAndEncryptPassword(std::string password, PublicEncryptionKey const& publicKey)
+{
+  if (password.empty())
+    throw Errors::formatEx(Errc::InvalidBufferSize, "cannot hash an empty password");
+
+  auto const prehashedPassword = generichash(password);
+  return sealEncrypt(gsl::make_span(prehashedPassword.data(), prehashedPassword.size()), publicKey);
+}
 }
 }

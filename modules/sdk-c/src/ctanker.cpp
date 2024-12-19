@@ -6,9 +6,9 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Utils.hpp>
 #include <Tanker/Verification/Methods.hpp>
 
 #include <boost/algorithm/hex.hpp>
@@ -701,6 +701,20 @@ tanker_expected_t* tanker_prehash_password(char const* password)
     if (!password)
       throw formatEx(Errc::InvalidArgument, "password is null");
     return static_cast<void*>(duplicateString(mgs::base64::encode(Crypto::prehashPassword(password))));
+  }));
+}
+
+tanker_expected_t* tanker_prehash_and_encrypt_password(char const* password, char const* public_key)
+{
+  return makeFuture(tc::sync([&] {
+    if (!password)
+      throw formatEx(Errc::InvalidArgument, "password is null");
+    if (!public_key)
+      throw formatEx(Errc::InvalidArgument, "public_key is null");
+    auto const decodedPublicKey =
+        decodeArgument<mgs::base64, Crypto::PublicEncryptionKey>(std::string(public_key), "public_key");
+    return static_cast<void*>(
+        duplicateString(mgs::base64::encode(Crypto::prehashAndEncryptPassword(password, decodedPublicKey))));
   }));
 }
 
