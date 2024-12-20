@@ -19,6 +19,7 @@ enum class Method
   E2ePassphrase,
   PreverifiedOidc,
   OidcAuthorizationCode,
+  PrehashedAndEncryptedPassphrase,
 
   Last,
 };

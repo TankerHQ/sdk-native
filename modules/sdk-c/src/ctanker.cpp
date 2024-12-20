@@ -47,7 +47,7 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
   {
     throw formatEx(Errc::InvalidArgument, "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 8)
+  if (cverification->version != 9)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported tanker_verification_t struct version: {}", cverification->version);
@@ -127,6 +127,12 @@ Verification::Verification cverificationToVerification(tanker_verification_t con
     verification = OidcAuthorizationCode{cverification->oidc_authorization_code_verification.provider_id,
                                          cverification->oidc_authorization_code_verification.authorization_code,
                                          cverification->oidc_authorization_code_verification.state};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_PREHASHED_AND_ENCRYPTED_PASSPHRASE: {
+    if (!cverification->prehashed_and_encrypted_passphrase)
+      throw formatEx(Errc::InvalidArgument, "prehashed_and_encrypted_passphrase field is null");
+    verification = PrehashedAndEncryptedPassphrase{cverification->prehashed_and_encrypted_passphrase};
     break;
   }
   default:
@@ -230,9 +236,10 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL, Verification::Me
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER, Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC, Verification::Method::PreverifiedOidc);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE, Verification::Method::OidcAuthorizationCode);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREHASHED_AND_ENCRYPTED_PASSPHRASE, Verification::Method::PrehashedAndEncryptedPassphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 11,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 12,
               "Please update the assertions above if you added a new "
               "unlock method");
 

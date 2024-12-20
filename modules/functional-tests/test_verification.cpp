@@ -80,6 +80,13 @@ OidcIdToken alterOidcTokenSignature(OidcIdToken const& idToken)
   *itSig = b64::encode(alterSig);
   return OidcIdToken{ba::join(res, "."), {}, {}};
 }
+
+Verification::Verification createPAEPVerification(std::string password)
+{
+    auto const passphrasePublicEncryptionKey = TestConstants::passphrasePublicEncryptionKey();
+    std::string paep = mgs::base64::encode(Crypto::prehashAndEncryptPassword(password, passphrasePublicEncryptionKey));
+    return Verification::Verification{PrehashedAndEncryptedPassphrase{paep}};
+}
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Verification")
@@ -1153,6 +1160,50 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified oidc")
   }
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "Verification with prehashed and encrypted passphrase")
+{
+  auto gerard = trustchain.makeUser();
+  auto device1 = gerard.makeDevice();
+  auto laptop = device1.createCore();
+  auto device2 = gerard.makeDevice();
+  auto phone = device2.createCore();
+
+  REQUIRE(TC_AWAIT(laptop->start(gerard.identity)) == Status::IdentityRegistrationNeeded);
+
+  auto const email = makeEmail();
+  auto const prehashedAndEncryptedPassphraseVerification = createPAEPVerification("gErtruD");
+
+  SECTION("registerIdentity throws when verification method is prehashed and encrypted passphrase")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(laptop->registerIdentity(prehashedAndEncryptedPassphraseVerification)),
+                                  Errc::InvalidArgument);
+    REQUIRE(laptop->status() == Status::IdentityRegistrationNeeded);
+  }
+
+  SECTION("verifyIdentity throws when verification method is prehashed and encrypted passphrase")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        laptop->registerIdentity(Verification::Verification{Verification::ByEmail{email, verificationCode}})));
+
+    CHECK_NOTHROW(checkVerificationMethods(TC_AWAIT(laptop->getVerificationMethods()), {email}));
+
+    REQUIRE(TC_AWAIT(phone->start(gerard.identity)) == Status::IdentityVerificationNeeded);
+
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(phone->verifyIdentity(prehashedAndEncryptedPassphraseVerification)),
+                                  Errc::InvalidArgument);
+
+    REQUIRE(phone->status() == Status::IdentityVerificationNeeded);
+  }
+
+  SECTION("setVerificationMethod throws when verification method is prehashed and encrypted passphrase")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(laptop->registerIdentity(Passphrase{"******"})));
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(laptop->setVerificationMethod(prehashedAndEncryptedPassphraseVerification)),
+                                  Errc::InvalidArgument);
+  }
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
 {
   TC_AWAIT(enableOidc());
@@ -1170,6 +1221,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
   auto const providerId = oidcProviderId(server->sdkInfo().trustchainId, oidcConfig.issuer, oidcConfig.clientId);
   auto const subject = getOidcSubject(martineIdToken);
   auto const oidcVerification = PreverifiedOidc{providerId, subject};
+  auto const prehashedAndEncryptedPassphraseVerification = createPAEPVerification("Test:1-2-1-2");
 
   auto enrolledUser = trustchain.makeUser();
 
@@ -1215,6 +1267,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
         {emailVerification, emailVerification},
         {phoneNumberVerification, phoneNumberVerification},
         {oidcVerification, oidcVerification},
+        {prehashedAndEncryptedPassphraseVerification, prehashedAndEncryptedPassphraseVerification}
     };
 
     for (auto const& verifications : badPreverifiedVerifications)
@@ -1267,6 +1320,8 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
   auto const subject = getOidcSubject(martineIdToken);
   auto const oidcVerification = PreverifiedOidc{providerId, subject};
 
+  auto const clearPassphrase = "Prenez1ChewingGumEmile!";
+  auto const prehashedAndEncryptedPassphraseVerification = createPAEPVerification(clearPassphrase);
   auto enrolledUser = trustchain.makeUser();
 
   SECTION("server")
@@ -1289,7 +1344,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
     SECTION("enrolls a user with every preverified verification method")
     {
       REQUIRE_NOTHROW(TC_AWAIT(
-          server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification})));
+          server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification, prehashedAndEncryptedPassphraseVerification})));
     }
 
     SECTION("stays STOPPED after enrolling a user")
@@ -1306,7 +1361,7 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
     auto device1 = enrolledUser.makeDevice();
     auto enrolledUserLaptop = device1.createCore();
 
-    TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification}));
+    TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification, phoneNumberVerification, oidcVerification, prehashedAndEncryptedPassphraseVerification}));
     auto verificationCode = TC_AWAIT(getVerificationCode(verifEmail));
 
     auto const disposableIdentity = trustchain.makeUser();
@@ -1320,6 +1375,8 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
       auto enrolledUserPhone = device2.createCore();
       auto device3 = enrolledUser.makeDevice();
       auto enrolledUserTablet = device3.createCore();
+      auto device4 = enrolledUser.makeDevice();
+      auto enrolledUserLaptop2 = device4.createCore();
 
       REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) == Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(
@@ -1334,9 +1391,12 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
       auto testNonce = TC_AWAIT(enrolledUserTablet->createOidcNonce());
       enrolledUserTablet->setOidcTestNonce(testNonce);
       REQUIRE_NOTHROW(TC_AWAIT(enrolledUserTablet->verifyIdentity(martineIdToken)));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop2->start(enrolledUser.identity)) == Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop2->verifyIdentity(Passphrase{clearPassphrase})));
     }
 
-    SECTION("can attache a provisional identity")
+    SECTION("can attach a provisional identity")
     {
       std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(*server, clearData, {provisionalIdentity.publicIdentity}));
 

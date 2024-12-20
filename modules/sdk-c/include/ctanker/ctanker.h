@@ -42,6 +42,7 @@ enum tanker_verification_method_type
   TANKER_VERIFICATION_METHOD_E2E_PASSPHRASE,
   TANKER_VERIFICATION_METHOD_PREVERIFIED_OIDC,
   TANKER_VERIFICATION_METHOD_OIDC_AUTHORIZATION_CODE,
+  TANKER_VERIFICATION_METHOD_PREHASHED_AND_ENCRYPTED_PASSPHRASE,
 
   TANKER_VERIFICATION_METHOD_LAST,
 };
@@ -211,12 +212,13 @@ struct tanker_verification
   char const* preverified_phone_number;
   tanker_preverified_oidc_verification_t preverified_oidc_verification;
   tanker_oidc_authorization_code_verification_t oidc_authorization_code_verification;
+  char const* prehashed_and_encrypted_passphrase;
 };
 
 #define TANKER_VERIFICATION_INIT                                                                                     \
   {                                                                                                                  \
-    8, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL, \
-        TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT, TANKER_OIDC_AUTHORIZATION_CODE_INIT                               \
+    9, 0, NULL, TANKER_EMAIL_VERIFICATION_INIT, NULL, NULL, NULL, TANKER_PHONE_NUMBER_VERIFICATION_INIT, NULL, NULL, \
+        TANKER_PREVERIFIED_OIDC_VERIFICATION_INIT, TANKER_OIDC_AUTHORIZATION_CODE_INIT, NULL                         \
   }
 
 struct tanker_verification_method
