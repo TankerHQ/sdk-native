@@ -47,28 +47,10 @@ default:
 # Rules #
 #########
 
-.rules/bridge-release/android:
-  rules:
-    - !reference [.rules/only/web/auto, rules]
-    - !reference [.rules/valid-android-release-version, rules]
-    - when: on_success
-
-.rules/bridge-release/ios:
-  rules:
-    - !reference [.rules/only/web/auto, rules]
-    - !reference [.rules/valid-ios-release-version, rules]
-    - when: on_success
-
 .rules/bridge-release/python:
   rules:
     - !reference [.rules/only/web/auto, rules]
     - !reference [.rules/valid-python-release-version, rules]
-    - when: on_success
-
-.rules/bridge-release/react-native:
-  rules:
-    - !reference [.rules/only/web/auto, rules]
-    - !reference [.rules/valid-react-native-release-version, rules]
     - when: on_success
 
 .rules/bridge-release/ruby:
