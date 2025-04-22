@@ -177,7 +177,6 @@ check/test-matcher:
   rules:
     - !reference [.rules/push-master, rules]
     - !reference [.rules/mr/manual, rules]
-    - !reference [.rules/nightly, rules]
   script:
     - poetry run python run-ci.py --isolate-conan-user-home test-matcher --remote $CONAN_REMOTE --profile linux-x86_64
   artifacts:
