@@ -161,13 +161,12 @@ TEST_CASE_METHOD(TrustchainFixtureSimple, "createGroup with a user from another 
                                             "not in the trustchain");
 }
 
-TEST_CASE_METHOD(TrustchainFixtureSimple, "createGroup with an attached provisional identity", "[groups][create]")
+TEST_CASE_METHOD(TrustchainFixtureSimple, "createGroup with an attached provisional identity works", "[groups][create]")
 {
   auto alice = UserSession(trustchain);
   auto provisionalUser = ProvisionalUserSession(trustchain);
   TC_AWAIT(provisionalUser.attach());
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(alice.session->createGroup({provisionalUser.spublicIdentity()})),
-                                Errors::Errc::IdentityAlreadyAttached);
+  TC_AWAIT(alice.session->createGroup({provisionalUser.spublicIdentity()}));
 }
 
 TEST_CASE_METHOD(TrustchainFixtureSimple, "createGroup with too many users", "[groups][create]")
@@ -523,7 +522,7 @@ TEST_CASE_METHOD(TrustchainFixtureSimple, "update group members with invalid gro
 }
 
 TEST_CASE_METHOD(TrustchainFixtureSimple,
-                 "update group members with an attached provisional identity",
+                 "update group members to add an attached provisional identity works",
                  "[groups][remove]")
 {
   auto alice = UserSession(trustchain);
@@ -532,9 +531,21 @@ TEST_CASE_METHOD(TrustchainFixtureSimple,
       TC_AWAIT(alice.session->createGroup({alice.spublicIdentity(), provisionalUser.spublicIdentity()}));
   TC_AWAIT(provisionalUser.attach());
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(alice.session->updateGroupMembers(groupId, {provisionalUser.spublicIdentity()}, {})),
-      Errors::Errc::IdentityAlreadyAttached);
+  TC_AWAIT(alice.session->updateGroupMembers(groupId, {provisionalUser.spublicIdentity()}, {}));
+}
+
+TEST_CASE_METHOD(TrustchainFixtureSimple,
+                 "update group members to remove an attached provisional identity fails, as it's automatically removed",
+                 "[groups][remove]")
+{
+  auto alice = UserSession(trustchain);
+  auto provisionalUser = ProvisionalUserSession(trustchain);
+  auto const groupId =
+      TC_AWAIT(alice.session->createGroup({alice.spublicIdentity(), provisionalUser.spublicIdentity()}));
+  TC_AWAIT(alice.session->updateGroupMembers(groupId, {provisionalUser.spublicIdentity()}, {}));
+
+  TC_AWAIT(provisionalUser.attach());
+
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(alice.session->updateGroupMembers(groupId, {}, {provisionalUser.spublicIdentity()})),
       Errors::Errc::IdentityAlreadyAttached);
