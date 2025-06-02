@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /common.yml
-  ref: 2024-07-29-279
+  ref: 2025-06-02-284
 
 workflow:
   rules:
