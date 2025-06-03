@@ -250,22 +250,6 @@ bridge/bench/linux:
     branch: $BENCHMARKS_BRIDGE_BRANCH
     strategy: depend
 
-bridge/compat/linux:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/linux/x86_64
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_JOB_NAME: build/linux/x86_64
-    UPSTREAM_JOB_TARGET: linux
-  trigger:
-    project: TankerHQ/compatibility-tests
-    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
-    strategy: depend
-
 bridge/rust/linux/x86_64:
   extends:
     - .bridge-check
