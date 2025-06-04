@@ -43,7 +43,7 @@ workflow:
     - !reference [.rules/nightly, rules]
     - !reference [.rules/push-master-or-feat, rules]
 
-build/linux:
+build/linux/x86_64:
   extends:
     - .build
     - .rules/build/auto
@@ -54,7 +54,7 @@ build/linux:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64
   tags: !reference [.tags/compilation-linux, tags]
 
-build/linux/shared:
+build/linux/x86_64/shared:
   extends:
     - .build
     - .rules/build/auto
@@ -65,7 +65,7 @@ build/linux/shared:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared
   tags: !reference [.tags/compilation-linux, tags]
 
-build/linux/shared/no-http-backend:
+build/linux/x86_64/shared/no-http-backend:
   extends:
     - .build
     - .rules/build/auto
@@ -74,6 +74,17 @@ build/linux/shared/no-http-backend:
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --test --profile linux-x86_64 shared no-http-backend
+  tags: !reference [.tags/compilation-linux, tags]
+
+build/linux/arm/shared/no-http-backend:
+  extends:
+    - .build
+    - .rules/build/auto
+    - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build --remote $CONAN_REMOTE --profile linux-armv8 shared no-http-backend
   tags: !reference [.tags/compilation-linux, tags]
 
 build/windows/shared:
@@ -225,8 +236,8 @@ bridge/bench/linux:
   rules:
     - !reference [.rules/mr/manual, rules]
   needs:
-    - build/linux
-    - build/linux/shared
+    - build/linux/x86_64
+    - build/linux/x86_64/shared
     - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_NAME: build/linux:build/linux/shared
@@ -239,33 +250,17 @@ bridge/bench/linux:
     branch: $BENCHMARKS_BRIDGE_BRANCH
     strategy: depend
 
-bridge/compat/linux:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/linux
-    - build/bridge-dotenv
-  variables:
-    UPSTREAM_JOB_NAME: build/linux
-    UPSTREAM_JOB_TARGET: linux
-  trigger:
-    project: TankerHQ/compatibility-tests
-    branch: $COMPATIBILITY_TESTS_BRIDGE_BRANCH
-    strategy: depend
-
-bridge/rust/linux:
+bridge/rust/linux/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/linux
+    - build/linux/x86_64
     - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: linux
-    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_NAME: build/linux/x86_64
     UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-rust
@@ -357,17 +352,17 @@ bridge/rust/android:
     branch: $SDK_RUST_BRIDGE_BRANCH
     strategy: depend
 
-bridge/python/linux:
+bridge/python/linux/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/linux
+    - build/linux/x86_64
     - build/bridge-dotenv
   variables:
     UPSTREAM_JOB_TARGET: linux
-    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_NAME: build/linux/x86_64
   trigger:
     project: TankerHQ/sdk-python
     branch: $SDK_PYTHON_BRIDGE_BRANCH
@@ -406,17 +401,33 @@ bridge/python/macos/arm:
     branch: $SDK_PYTHON_BRIDGE_BRANCH
     strategy: depend
 
-bridge/ruby/linux:
+bridge/ruby/linux/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/linux/shared/no-http-backend
+    - build/linux/x86_64/shared/no-http-backend
     - build/bridge-dotenv
   variables:
-    UPSTREAM_JOB_TARGET: linux
-    UPSTREAM_JOB_NAME: build/linux/shared/no-http-backend
+    UPSTREAM_JOB_TARGET: linux-x86_64
+    UPSTREAM_JOB_NAME: build/linux/x86_64/shared/no-http-backend
+  trigger:
+    project: TankerHQ/sdk-ruby
+    branch: $SDK_RUBY_BRIDGE_BRANCH
+    strategy: depend
+
+bridge/ruby/linux/arm:
+  extends:
+    - .bridge-check
+    - .rules/bridge/manual
+    - .variables/bridge-common
+  needs:
+    - build/linux/arm/shared/no-http-backend
+    - build/bridge-dotenv
+  variables:
+    UPSTREAM_JOB_TARGET: linux-arm
+    UPSTREAM_JOB_NAME: build/linux/arm/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
     branch: $SDK_RUBY_BRIDGE_BRANCH
@@ -468,7 +479,7 @@ check/e2e:
     - .before-script/bump-files-on-release/bash
   image: registry.gitlab.com/tankerhq/docker/e2e:latest
   needs:
-    - build/linux
+    - build/linux/x86_64
   script:
     - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile linux-x86_64 --remote $CONAN_REMOTE
   tags: !reference [.tags/compilation-linux, tags]
@@ -548,7 +559,7 @@ bridge/python/deploy:
     - deploy
     - bridge/python/macos/x86_64
     - bridge/python/macos/arm
-    - bridge/python/linux
+    - bridge/python/linux/x86_64
     - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
@@ -568,7 +579,8 @@ bridge/ruby/deploy:
     - deploy
     - bridge/ruby/macos/x86_64
     - bridge/ruby/macos/arm
-    - bridge/ruby/linux
+    - bridge/ruby/linux/x86_64
+    - bridge/ruby/linux/arm
     - build/bridge-dotenv
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
@@ -588,7 +600,7 @@ bridge/rust/deploy:
     - deploy
     - bridge/rust/android
     - bridge/rust/ios
-    - bridge/rust/linux
+    - bridge/rust/linux/x86_64
     - bridge/rust/macos/arm
     - bridge/rust/macos/x86_64
     - bridge/rust/windows
